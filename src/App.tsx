@@ -16,17 +16,19 @@ import {
   Volume2,
   Loader2,
   Menu,
-  X
+  X,
+  Brain
 } from 'lucide-react';
 import { VOCABULARY_DATA } from './data';
-import { WordEntry, WordBlock } from './types';
+import { WordEntry, WordBlock, QuizScore } from './types';
 import { speakWord } from './services/aiService';
+import { Quiz } from './components/Quiz';
 
 type WordStatus = 'new' | 'mastered' | 'review';
 
 export default function App() {
   const [currentBlockId, setCurrentBlockId] = useState<string | null>(VOCABULARY_DATA[0].id);
-  const [view, setView] = useState<'study' | 'list'>('study');
+  const [view, setView] = useState<'study' | 'list' | 'quiz'>('study');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
@@ -143,6 +145,18 @@ export default function App() {
                 <div className="flex items-center gap-3">
                   <Search size={16} />
                   Dictionary
+                </div>
+              </button>
+              <button 
+                onClick={() => {
+                  setView('quiz');
+                  setIsSidebarOpen(false);
+                }}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-sm text-sm font-medium transition-all ${view === 'quiz' ? 'bg-editorial-accent text-editorial-text' : 'text-editorial-muted hover:text-editorial-text hover:bg-neutral-50'}`}
+              >
+                <div className="flex items-center gap-3">
+                  <Brain size={16} />
+                  Intelligence Quiz
                 </div>
               </button>
             </div>
@@ -278,6 +292,13 @@ export default function App() {
                 )}
               </div>
             </motion.div>
+          )}
+
+          {view === 'quiz' && (
+            <Quiz 
+              blocks={VOCABULARY_DATA} 
+              onClose={() => setView('study')} 
+            />
           )}
         </AnimatePresence>
       </main>
