@@ -4,6 +4,8 @@ export interface WordEntry {
   definition: string;
   nuance?: string;
   example: string;
+  synonyms?: string[];
+  antonyms?: string[];
 }
 
 export interface WordBlock {
