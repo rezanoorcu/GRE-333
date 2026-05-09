@@ -21,7 +21,8 @@ import {
   Brain,
   BarChart3,
   Sparkles,
-  ChevronDown
+  ChevronDown,
+  Star
 } from 'lucide-react';
 import { VOCABULARY_DATA } from './data';
 import { WordEntry, WordBlock, QuizScore } from './types';
@@ -33,12 +34,38 @@ type WordStatus = 'new' | 'mastered' | 'review';
 
 export default function App() {
   const [currentBlockId, setCurrentBlockId] = useState<string | null>(VOCABULARY_DATA[0].id);
-  const [view, setView] = useState<'study' | 'list' | 'quiz' | 'analytics'>('study');
+  const [view, setView] = useState<'study' | 'list' | 'quiz' | 'analytics' | 'bookmarks'>('study');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [lastAction, setLastAction] = useState<{word: string, status: WordStatus} | null>(null);
   
+  // Persistent Bookmarks
+  const [bookmarks, setBookmarks] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem('lexicon_bookmarks');
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch (e) {
+      return new Set();
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('lexicon_bookmarks', JSON.stringify(Array.from(bookmarks)));
+  }, [bookmarks]);
+
+  const toggleBookmark = (word: string) => {
+    setBookmarks(prev => {
+      const next = new Set(prev);
+      if (next.has(word)) {
+        next.delete(word);
+      } else {
+        next.add(word);
+      }
+      return next;
+    });
+  };
+
   // Persistent Word Status
   const [wordStatus, setWordStatus] = useState<Record<string, WordStatus>>(() => {
     try {
@@ -202,6 +229,7 @@ export default function App() {
                     <Shortcut label="Previous Entry" keys={['←']} />
                     <Shortcut label="Mark Mastered" keys={['M']} />
                     <Shortcut label="Mark Review" keys={['R']} />
+                    <Shortcut label="Bookmark Entry" keys={['B']} />
                     <Shortcut label="Pronunciation" keys={['S']} />
                   </div>
                 </div>
@@ -304,6 +332,19 @@ export default function App() {
                   <Search size={16} />
                   Dictionary
                 </div>
+              </button>
+              <button 
+                onClick={() => {
+                  setView('bookmarks');
+                  setIsSidebarOpen(false);
+                }}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-sm text-sm font-medium transition-all ${view === 'bookmarks' ? 'bg-editorial-accent text-editorial-text' : 'text-editorial-muted hover:text-editorial-text hover:bg-neutral-50'}`}
+              >
+                <div className="flex items-center gap-3">
+                  <Star size={16} fill={view === 'bookmarks' ? "currentColor" : "none"} />
+                  Bookmarks
+                </div>
+                <span className="text-[10px] font-mono text-editorial-meta">{bookmarks.size}</span>
               </button>
               <button 
                 onClick={() => {
@@ -419,7 +460,57 @@ export default function App() {
                 onToggleStatus={toggleStatus}
                 onBulkUpdateStatus={bulkUpdateStatus}
                 isSidebarOpen={isSidebarOpen}
+                bookmarks={bookmarks}
+                onToggleBookmark={toggleBookmark}
               />
+            </motion.div>
+          )}
+
+          {view === 'bookmarks' && (
+            <motion.div
+              key="bookmarks-view"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="p-5 md:p-12 max-w-5xl mx-auto w-full"
+            >
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 md:mb-16 border-b border-editorial-border pb-8">
+                <div>
+                  <h2 className="text-2xl md:text-5xl font-serif tracking-tight text-editorial-text mb-2 md:mb-4">Personal Archive</h2>
+                  <p className="text-editorial-muted uppercase text-[8px] md:text-[10px] tracking-[0.2em] font-bold">Bookmarked Vocabulary for Review</p>
+                </div>
+                <div className="text-[10px] uppercase font-bold tracking-widest text-editorial-meta">
+                  {bookmarks.size} {bookmarks.size === 1 ? 'Entry' : 'Entries'}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-1">
+                {allWords.filter(w => bookmarks.has(w.word)).map((word, idx) => (
+                  <WordListEntry 
+                    key={word.word + idx} 
+                    word={word} 
+                    status={wordStatus[word.word] || 'new'}
+                    onToggleStatus={toggleStatus}
+                    isBookmarked={true}
+                    onToggleBookmark={toggleBookmark}
+                  />
+                ))}
+                {bookmarks.size === 0 && (
+                  <div className="py-24 text-center">
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-neutral-100 rounded-full mb-6 text-editorial-meta">
+                      <Star size={32} />
+                    </div>
+                    <h3 className="text-2xl font-serif italic text-editorial-text mb-4">No bookmarks yet</h3>
+                    <p className="text-sm text-editorial-muted max-w-sm mx-auto mb-8">Mark words you find challenging by clicking the star icon to save them here for later study.</p>
+                    <button 
+                      onClick={() => setView('study')}
+                      className="px-8 py-3 bg-editorial-text text-white text-[10px] uppercase font-bold tracking-widest rounded-sm hover:translate-y-[-2px] transition-transform shadow-lg"
+                    >
+                      Return to Study Mode
+                    </button>
+                  </div>
+                )}
+              </div>
             </motion.div>
           )}
 
@@ -485,6 +576,8 @@ export default function App() {
                     word={word} 
                     status={wordStatus[word.word] || 'new'}
                     onToggleStatus={toggleStatus}
+                    isBookmarked={bookmarks.has(word.word)}
+                    onToggleBookmark={toggleBookmark}
                   />
                 ))}
                 {filteredWords.length === 0 && (
@@ -568,13 +661,17 @@ function StudySession({
   wordStatus, 
   onToggleStatus,
   onBulkUpdateStatus,
-  isSidebarOpen
+  isSidebarOpen,
+  bookmarks,
+  onToggleBookmark
 }: { 
   block: WordBlock; 
   wordStatus: Record<string, WordStatus>;
   onToggleStatus: (word: string, status: WordStatus) => void;
   onBulkUpdateStatus: (words: string[], status: WordStatus) => void;
   isSidebarOpen: boolean;
+  bookmarks: Set<string>;
+  onToggleBookmark: (word: string) => void;
 }) {
   const [index, setIndex] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -582,6 +679,7 @@ function StudySession({
   const word = block.words[index];
   const blockIdx = VOCABULARY_DATA.findIndex(b => b.id === block.id) + 1;
   const status = wordStatus[word.word] || 'new';
+  const isBookmarked = bookmarks.has(word.word);
 
   const handleNext = () => {
     setIndex((prev) => (prev + 1) % block.words.length);
@@ -616,6 +714,7 @@ function StudySession({
       if (e.key.toLowerCase() === 'm') onToggleStatus(word.word, 'mastered');
       if (e.key.toLowerCase() === 'r') onToggleStatus(word.word, 'review');
       if (e.key.toLowerCase() === 's') handleSpeak();
+      if (e.key.toLowerCase() === 'b') onToggleBookmark(word.word);
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -666,6 +765,16 @@ function StudySession({
         </div>
       </header>
 
+      {/* Block Progress Bar */}
+      <div className="h-1 w-full bg-editorial-border overflow-hidden relative z-10 shrink-0">
+        <motion.div 
+          initial={{ width: 0 }}
+          animate={{ width: `${((index + 1) / block.words.length) * 100}%` }}
+          className="h-full bg-editorial-text"
+          transition={{ type: 'spring', damping: 20, stiffness: 100 }}
+        />
+      </div>
+
       <section className="flex-1 flex items-center px-4 md:px-12 py-6 md:py-8 relative z-10 overflow-visible">
         <div className="max-w-4xl w-full mx-auto">
           <AnimatePresence mode="wait">
@@ -675,11 +784,19 @@ function StudySession({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
+              className="relative"
             >
+              <button 
+                onClick={() => onToggleBookmark(word.word)}
+                className={`absolute -top-4 -right-4 md:-right-8 p-3 md:p-5 rounded-full border-2 transition-all shadow-lg hover:scale-110 active:scale-95 ${isBookmarked ? 'bg-editorial-text text-white border-editorial-text' : 'bg-white border-editorial-border text-editorial-meta hover:border-editorial-text hover:text-editorial-text'}`}
+                title="Bookmark Word (B)"
+              >
+                <Star size={24} fill={isBookmarked ? "currentColor" : "none"} />
+              </button>
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 md:gap-8 mb-6 md:mb-10">
                 <div className="flex items-center gap-4 md:gap-6 overflow-visible">
                   <h2 
-                    className="text-3xl sm:text-5xl md:text-7xl lg:text-[120px] font-serif leading-none tracking-tight text-editorial-text select-all cursor-pointer hover:text-editorial-muted transition-colors break-words max-w-[200px] sm:max-w-none"
+                    className="text-3xl sm:text-5xl md:text-7xl lg:text-[120px] font-serif leading-none tracking-tight text-editorial-text select-all cursor-pointer hover:text-editorial-muted transition-colors break-words"
                     onClick={handleSpeak}
                   >
                     {word.word}
@@ -689,7 +806,7 @@ function StudySession({
                     disabled={isSpeaking}
                     className={`p-2.5 sm:p-3 md:p-4 rounded-full border-2 border-editorial-border hover:border-editorial-text transition-all shrink-0 ${isSpeaking ? 'animate-pulse text-editorial-muted' : 'text-editorial-meta hover:text-editorial-text'}`}
                   >
-                    {isSpeaking ? <Loader2 size={18} className="animate-spin sm:size-24 md:size-32" /> : <Volume2 size={18} className="sm:size-24 md:size-32" />}
+                    {isSpeaking ? <Loader2 size={18} className="animate-spin" /> : <Volume2 size={18} />}
                   </button>
                 </div>
                 <div className="flex gap-2 md:gap-3 shrink-0">
@@ -729,49 +846,48 @@ function StudySession({
                       </div>
                     )}
 
-                    <div className="mt-8 flex flex-col gap-6">
+                    <div className="mt-8 space-y-8">
                       {word.derivatives && word.derivatives.length > 0 && (
-                        <div>
-                          <p className="text-[9px] uppercase font-bold tracking-widest text-editorial-meta mb-2">Derivatives</p>
-                          <div className="flex flex-wrap gap-x-6 gap-y-2">
+                        <div className="bg-neutral-50 border border-editorial-border p-4 rounded-sm">
+                          <p className="text-[9px] uppercase font-bold tracking-widest text-editorial-meta mb-3 border-b border-editorial-border pb-2">Morphological Derivatives</p>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                             {word.derivatives.map((d, i) => (
-                              <div key={i} className="flex items-center gap-2">
-                                <span className="text-[10px] font-bold text-editorial-meta uppercase">{d.form}:</span>
-                                <span className="text-base font-serif italic text-editorial-text">{d.word}</span>
+                              <div key={i} className="flex flex-col">
+                                <span className="text-[8px] font-black text-editorial-meta uppercase mb-0.5">{d.form}</span>
+                                <span className="text-sm font-serif italic text-editorial-text">{d.word}</span>
                               </div>
                             ))}
                           </div>
                         </div>
                       )}
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        {word.synonyms && word.synonyms.length > 0 && (
+                          <div>
+                            <p className="text-[9px] uppercase font-bold tracking-widest text-editorial-meta mb-2">Architectural Synonyms</p>
+                            <div className="flex flex-wrap gap-2">
+                              {word.synonyms.map(s => (
+                                <span key={s} className="px-3 py-1 bg-editorial-accent text-[11px] font-bold tracking-tight border border-editorial-border rounded-sm hover:translate-y-[-1px] transition-transform cursor-default">
+                                  {s}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {word.antonyms && word.antonyms.length > 0 && (
+                          <div>
+                            <p className="text-[9px] uppercase font-bold tracking-widest text-editorial-meta mb-2">Lexical Antonyms</p>
+                            <div className="flex flex-wrap gap-2">
+                              {word.antonyms.map(a => (
+                                <span key={a} className="px-3 py-1 bg-white text-[11px] font-bold tracking-tight border border-editorial-border rounded-sm italic text-editorial-muted hover:translate-y-[-1px] transition-transform cursor-default">
+                                  {a}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  
-                  {/* Synonyms and Antonyms */}
-                  <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    {word.synonyms && word.synonyms.length > 0 && (
-                      <div>
-                        <p className="text-[9px] uppercase font-bold tracking-widest text-editorial-meta mb-2">Synonyms</p>
-                        <div className="flex flex-wrap gap-2">
-                          {word.synonyms.map(s => (
-                            <span key={s} className="px-2 py-1 bg-editorial-accent text-[11px] font-medium border border-editorial-border rounded-sm">
-                              {s}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {word.antonyms && word.antonyms.length > 0 && (
-                      <div>
-                        <p className="text-[9px] uppercase font-bold tracking-widest text-editorial-meta mb-2">Antonyms</p>
-                        <div className="flex flex-wrap gap-2">
-                          {word.antonyms.map(a => (
-                            <span key={a} className="px-2 py-1 bg-white text-[11px] font-medium border border-editorial-border rounded-sm italic">
-                              {a}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
@@ -856,6 +972,10 @@ function StudySession({
           <kbd className="px-2 py-1 bg-neutral-100 border border-editorial-border rounded-sm shadow-sm font-mono text-[10px] text-editorial-text font-black">R</kbd>
           Review
         </div>
+        <div className="flex items-center gap-3 text-[10px] text-editorial-meta font-bold uppercase tracking-widest">
+          <kbd className="px-2 py-1 bg-neutral-100 border border-editorial-border rounded-sm shadow-sm font-mono text-[10px] text-editorial-text font-black">B</kbd>
+          Bookmark
+        </div>
       </div>
 
       {/* Floating Sticky Navigation Bar - High Visibility for Quick Actions */}
@@ -883,6 +1003,13 @@ function StudySession({
                   title="Mastered (M)"
                 >
                   <CheckCircle2 size={20} />
+                </button>
+                <button 
+                  onClick={() => onToggleBookmark(word.word)}
+                  className={`p-2 rounded-full transition-all ${isBookmarked ? 'bg-editorial-text text-white' : 'text-editorial-meta hover:bg-editorial-muted'}`}
+                  title="Bookmark (B)"
+                >
+                  <Star size={20} fill={isBookmarked ? "currentColor" : "none"} />
                 </button>
                 <button 
                   onClick={() => onToggleStatus(word.word, 'review')}
@@ -961,7 +1088,9 @@ const WordListEntry: React.FC<{
   word: WordEntry; 
   status: WordStatus;
   onToggleStatus: (word: string, status: WordStatus) => void;
-}> = ({ word, status, onToggleStatus }) => {
+  isBookmarked: boolean;
+  onToggleBookmark: (word: string) => void;
+}> = ({ word, status, onToggleStatus, isBookmarked, onToggleBookmark }) => {
   const [expanded, setExpanded] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
 
@@ -985,34 +1114,41 @@ const WordListEntry: React.FC<{
           </button>
           <div className="flex items-baseline flex-wrap gap-x-3 md:gap-x-8 cursor-pointer" onClick={() => setExpanded(!expanded)}>
             <h4 className="text-xl md:text-2xl font-serif italic tracking-tight text-editorial-text group-hover:underline underline-offset-8 decoration-editorial-muted">{word.word}</h4>
-            <div className="flex items-center gap-1.5 md:gap-2">
+                <div className="flex items-center gap-1.5 md:gap-2">
+                  <button 
+                    onClick={handleSpeak}
+                    className={`p-1.5 md:p-2 rounded-full transition-all ${isSpeaking ? 'text-editorial-text animate-pulse' : 'text-editorial-meta hover:text-editorial-text hover:bg-editorial-accent'}`}
+                  >
+                    {isSpeaking ? <Loader2 size={12} className="animate-spin md:size-16" /> : <Volume2 size={12} className="md:size-16" />}
+                  </button>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); onToggleBookmark(word.word); }}
+                    className={`p-1.5 md:p-2 rounded-full transition-all ${isBookmarked ? 'text-editorial-text bg-editorial-accent' : 'text-editorial-meta hover:text-editorial-text hover:bg-editorial-accent'}`}
+                    title="Bookmark Word"
+                  >
+                    <Star size={12} fill={isBookmarked ? "currentColor" : "none"} className="md:size-16" />
+                  </button>
+                  <span className="text-[8px] md:text-[9px] text-editorial-meta font-bold uppercase tracking-[0.25em]">{word.context}</span>
+                </div>
+          </div>
+        </div>
+          <div className="flex items-center justify-between sm:justify-end gap-4 md:gap-10">
+            <p className="text-editorial-muted text-sm md:text-base max-w-[200px] md:max-w-sm truncate hidden lg:block">{word.definition}</p>
+            <div className="flex items-center gap-2 md:gap-4 overflow-x-auto">
+              {status === 'review' && (
+                <span className="whitespace-nowrap text-[8px] md:text-[9px] uppercase font-bold text-amber-700 px-2 md:px-3 py-1 md:py-1.5 bg-amber-100 rounded-sm border border-amber-200">Review</span>
+              )}
+              {status === 'mastered' && (
+                <span className="whitespace-nowrap text-[8px] md:text-[9px] uppercase font-bold text-emerald-700 px-2 md:px-3 py-1 md:py-1.5 bg-emerald-100 rounded-sm border border-emerald-200">Mastered</span>
+              )}
               <button 
-                onClick={handleSpeak}
-                className={`p-1.5 md:p-2 rounded-full transition-all ${isSpeaking ? 'text-editorial-text animate-pulse' : 'text-editorial-meta hover:text-editorial-text hover:bg-editorial-accent'}`}
+                onClick={() => setExpanded(!expanded)}
+                className={`p-2 md:p-3 transition-transform duration-500 border border-transparent rounded-full hover:bg-editorial-accent shrink-0 ${expanded ? 'rotate-180 text-editorial-text bg-editorial-accent' : 'text-editorial-meta'}`}
               >
-                {isSpeaking ? <Loader2 size={12} className="animate-spin md:size-16" /> : <Volume2 size={12} className="md:size-16" />}
+                <ChevronRight size={16} className="rotate-90 md:size-18" />
               </button>
-              <span className="text-[8px] md:text-[9px] text-editorial-meta font-bold uppercase tracking-[0.25em]">{word.context}</span>
             </div>
           </div>
-        </div>
-        <div className="flex items-center justify-between sm:justify-end gap-4 md:gap-10">
-          <p className="text-editorial-muted text-sm md:text-base max-w-[200px] md:max-w-sm truncate hidden lg:block">{word.definition}</p>
-          <div className="flex items-center gap-2 md:gap-4 overflow-x-auto">
-            {status === 'review' && (
-              <span className="whitespace-nowrap text-[8px] md:text-[9px] uppercase font-bold text-amber-700 px-2 md:px-3 py-1 md:py-1.5 bg-amber-100 rounded-sm border border-amber-200">Review</span>
-            )}
-            {status === 'mastered' && (
-              <span className="whitespace-nowrap text-[8px] md:text-[9px] uppercase font-bold text-emerald-700 px-2 md:px-3 py-1 md:py-1.5 bg-emerald-100 rounded-sm border border-emerald-200">Mastered</span>
-            )}
-            <button 
-              onClick={() => setExpanded(!expanded)}
-              className={`p-2 md:p-3 transition-transform duration-500 border border-transparent rounded-full hover:bg-editorial-accent shrink-0 ${expanded ? 'rotate-180 text-editorial-text bg-editorial-accent' : 'text-editorial-meta'}`}
-            >
-              <ChevronRight size={16} className="rotate-90 md:size-18" />
-            </button>
-          </div>
-        </div>
       </div>
       
       <AnimatePresence>
@@ -1035,48 +1171,43 @@ const WordListEntry: React.FC<{
                   </div>
                 )}
 
-                <div className="mt-8 flex flex-col sm:flex-row flex-wrap gap-x-12 gap-y-6">
+                <div className="mt-8 space-y-8">
                   {word.derivatives && word.derivatives.length > 0 && (
-                    <div>
-                      <p className="text-[9px] uppercase font-bold tracking-widest text-editorial-meta mb-3">Derivatives</p>
-                      <div className="flex flex-wrap gap-x-6 gap-y-2">
+                    <div className="bg-editorial-accent/20 border border-editorial-border p-4 rounded-sm">
+                      <p className="text-[9px] uppercase font-bold tracking-widest text-editorial-meta mb-3 border-b border-editorial-border pb-2">Morphological Derivatives</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                         {word.derivatives.map((d, i) => (
-                          <div key={i} className="flex items-center gap-2">
-                            <span className="text-[9px] font-bold text-editorial-meta uppercase">{d.form}:</span>
+                          <div key={i} className="flex flex-col">
+                            <span className="text-[8px] font-black text-editorial-meta uppercase mb-0.5">{d.form}</span>
                             <span className="text-sm font-serif italic text-editorial-text">{d.word}</span>
                           </div>
                         ))}
                       </div>
                     </div>
                   )}
-                </div>
 
-                {/* Synonyms and Antonyms in List View */}
-                <div className="mt-8 flex flex-wrap gap-x-12 gap-y-6">
-                  {word.synonyms && word.synonyms.length > 0 && (
-                    <div>
-                      <p className="text-[9px] uppercase font-bold tracking-widest text-editorial-meta mb-3">Synonyms</p>
-                      <div className="flex flex-wrap gap-2">
-                        {word.synonyms.map(s => (
-                          <span key={s} className="px-2 py-1 bg-editorial-accent text-[10px] font-medium border border-editorial-border rounded-sm">
-                            {s}
-                          </span>
-                        ))}
+                  <div className="flex flex-col sm:flex-row flex-wrap gap-x-12 gap-y-6">
+                    {word.synonyms && word.synonyms.length > 0 && (
+                      <div>
+                        <p className="text-[9px] uppercase font-bold tracking-widest text-editorial-meta mb-3">Architectural Synonyms</p>
+                        <div className="flex flex-wrap gap-2">
+                          {word.synonyms.map(s => (
+                            <span key={s} className="px-3 py-1 bg-white text-[11px] font-bold tracking-tight border border-editorial-border rounded-sm">{s}</span>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                  {word.antonyms && word.antonyms.length > 0 && (
-                    <div>
-                      <p className="text-[9px] uppercase font-bold tracking-widest text-editorial-meta mb-3">Antonyms</p>
-                      <div className="flex flex-wrap gap-2">
-                        {word.antonyms.map(a => (
-                          <span key={a} className="px-2 py-1 bg-white text-[10px] font-medium border border-editorial-border rounded-sm italic">
-                            {a}
-                          </span>
-                        ))}
+                    )}
+                    {word.antonyms && word.antonyms.length > 0 && (
+                      <div>
+                        <p className="text-[9px] uppercase font-bold tracking-widest text-editorial-meta mb-3">Lexical Antonyms</p>
+                        <div className="flex flex-wrap gap-2">
+                          {word.antonyms.map(a => (
+                            <span key={a} className="px-3 py-1 bg-white text-[11px] font-bold tracking-tight border border-editorial-border rounded-sm italic text-editorial-muted">{a}</span>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-4 md:gap-6 mt-8 md:mt-12">
                   <button 
@@ -1090,6 +1221,12 @@ const WordListEntry: React.FC<{
                     className={`flex items-center justify-center gap-2 md:gap-3 px-4 md:px-6 py-2.5 md:py-3 text-[10px] md:text-xs font-bold uppercase tracking-widest border-2 transition-all duration-300 ${status === 'review' ? 'bg-amber-600 text-white border-amber-600 shadow-md' : 'bg-white border-editorial-border hover:border-editorial-text hover:shadow-md'}`}
                   >
                     <AlertCircle size={14} className="md:size-16" /> {status === 'review' ? 'In Review' : 'Mark Review'}
+                  </button>
+                  <button 
+                    onClick={() => onToggleBookmark(word.word)}
+                    className={`flex items-center justify-center gap-2 md:gap-3 px-4 md:px-6 py-2.5 md:py-3 text-[10px] md:text-xs font-bold uppercase tracking-widest border-2 transition-all duration-300 ${isBookmarked ? 'bg-editorial-text text-white border-editorial-text shadow-md' : 'bg-white border-editorial-border hover:border-editorial-text hover:shadow-md'}`}
+                  >
+                    <Star size={14} fill={isBookmarked ? "currentColor" : "none"} className="md:size-16" /> {isBookmarked ? 'Bookmarked' : 'Bookmark'}
                   </button>
                 </div>
               </div>
