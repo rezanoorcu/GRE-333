@@ -124,6 +124,16 @@ export default function App() {
   };
 
   useEffect(() => {
+    // Warm up speech synthesis voices
+    if (window.speechSynthesis) {
+      window.speechSynthesis.getVoices();
+      const handleVoicesChanged = () => window.speechSynthesis.getVoices();
+      window.speechSynthesis.addEventListener('voiceschanged', handleVoicesChanged);
+      return () => window.speechSynthesis.removeEventListener('voiceschanged', handleVoicesChanged);
+    }
+  }, []);
+
+  useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       if (e.key === '?') {
         setShowHelp(prev => !prev);
@@ -202,6 +212,19 @@ export default function App() {
                     <Shortcut label="Show / Hide Help" keys={['?']} />
                     <Shortcut label="Close Modals" keys={['ESC']} />
                   </div>
+                </div>
+
+                <div className="space-y-4 pt-4 border-t border-editorial-border">
+                  <p className="text-[10px] uppercase font-bold tracking-widest text-editorial-meta">Troubleshooting</p>
+                  <button 
+                    onClick={() => {
+                      window.speechSynthesis.cancel();
+                      speakWord('Audio system reset.');
+                    }}
+                    className="w-full py-2 bg-neutral-100 text-editorial-text text-[9px] uppercase font-bold tracking-widest border border-editorial-border hover:bg-neutral-200 transition-colors"
+                  >
+                    Reset Audio System
+                  </button>
                 </div>
               </div>
 
