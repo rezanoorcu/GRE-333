@@ -6,7 +6,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Send, Loader2, Sparkles, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { evaluateSentence, EvaluationResult } from '../services/gemini';
+import { evaluateSentence, EvaluationResult } from '../services/evaluationService';
 
 interface SentenceEvaluatorProps {
   word: string;
@@ -31,7 +31,7 @@ export const SentenceEvaluator: React.FC<SentenceEvaluatorProps> = ({ word, defi
       setResult(evaluation);
     } catch (err) {
       console.error(err);
-      setError('The AI scribe is currently unavailable. Please try again shortly.');
+      setError('The evaluation service is currently unavailable. Please try again shortly.');
     } finally {
       setIsEvaluating(false);
     }
@@ -41,7 +41,7 @@ export const SentenceEvaluator: React.FC<SentenceEvaluatorProps> = ({ word, defi
     <div className="mt-8 md:mt-12 bg-white border border-editorial-border p-4 md:p-8 rounded-sm shadow-sm">
       <div className="flex items-center gap-3 mb-5 md:mb-6">
         <Sparkles className="text-editorial-text" size={18} />
-        <h3 className="text-base md:text-lg font-serif italic text-editorial-text">AI Sentence Practice</h3>
+        <h3 className="text-base md:text-lg font-serif italic text-editorial-text">Sentence Practice</h3>
       </div>
 
       <form onSubmit={handleSubmit} className="mb-6 md:mb-8">

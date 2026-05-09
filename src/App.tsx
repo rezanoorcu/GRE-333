@@ -421,7 +421,7 @@ function WordPracticeToggle({ word }: { word: WordEntry }) {
       >
         <div className="flex items-center gap-3 text-[10px] uppercase font-bold tracking-widest text-editorial-meta group-hover:text-editorial-text transition-colors">
           <Sparkles size={14} className={isOpen ? 'text-editorial-text' : 'opacity-40'} />
-          {isOpen ? 'Conclude Practice' : 'Initiate AI Practice Field'}
+          {isOpen ? 'Conclude Practice' : 'Initiate Practice Field'}
         </div>
         <div className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
           <ChevronDown size={14} className="text-editorial-meta" />
