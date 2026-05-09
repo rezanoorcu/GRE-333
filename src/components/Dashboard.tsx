@@ -186,6 +186,40 @@ export const Dashboard: React.FC<DashboardProps> = ({ blocks, wordStatus }) => {
           </div>
         </motion.div>
       </div>
+
+      {/* Mastery Guidelines */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="mt-12 bg-editorial-text text-white p-8 md:p-12 rounded-sm shadow-xl"
+      >
+        <div className="flex items-center gap-3 mb-8">
+          <BookOpen size={24} />
+          <h3 className="text-2xl font-serif italic">Lexical Mastery Guidelines</h3>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
+          <div className="space-y-4">
+            <h4 className="text-[10px] uppercase font-bold tracking-[0.25em] text-white/60">01. Systematic Recurrence</h4>
+            <p className="text-sm border-l-2 border-white/20 pl-4 leading-relaxed font-serif italic text-white/90">
+              The brain requires at least seven exposures to a new lexeme to move it from short-term memory to functional mastery. Revisit the "Review" queue daily.
+            </p>
+          </div>
+          <div className="space-y-4">
+            <h4 className="text-[10px] uppercase font-bold tracking-[0.25em] text-white/60">02. Semantic Contextualization</h4>
+            <p className="text-sm border-l-2 border-white/20 pl-4 leading-relaxed font-serif italic text-white/90">
+              Abstraction is the enemy of recall. Always read the "In Practice" examples aloud. Vocalizing the word in context builds emotional and muscle memory.
+            </p>
+          </div>
+          <div className="space-y-4">
+            <h4 className="text-[10px] uppercase font-bold tracking-[0.25em] text-white/60">03. The Power of Derivation</h4>
+            <p className="text-sm border-l-2 border-white/20 pl-4 leading-relaxed font-serif italic text-white/90">
+              Learn the roots. Identifying that "Ambi-" means "both" unlocks dozens of related words across the lexicon. Study derivatives to expand your archive exponentially.
+            </p>
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 };

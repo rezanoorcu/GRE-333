@@ -15,6 +15,7 @@ import { WordEntry, WordBlock, QuizQuestion, QuizScore } from '../types';
 interface QuizProps {
   blocks: WordBlock[];
   onClose: () => void;
+  onBulkUpdateStatus?: (words: string[], status: any) => void;
 }
 
 // Sub-component for Matching Question
@@ -107,7 +108,7 @@ const MatchingUI: React.FC<{
   );
 };
 
-export const Quiz: React.FC<QuizProps> = ({ blocks, onClose }) => {
+export const Quiz: React.FC<QuizProps> = ({ blocks, onClose, onBulkUpdateStatus }) => {
   const [step, setStep] = useState<'setup' | 'active' | 'result'>('setup');
   const [selectedBlockIds, setSelectedBlockIds] = useState<string[]>([]);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -509,7 +510,17 @@ export const Quiz: React.FC<QuizProps> = ({ blocks, onClose }) => {
 
                 {missedWords.length > 0 && (
                   <div className="w-full mb-16">
-                    <h4 className="text-[10px] uppercase font-bold tracking-widest text-editorial-meta mb-6 text-center">Identified Vulnerabilities</h4>
+                    <div className="flex items-center justify-between mb-6">
+                      <h4 className="text-[10px] uppercase font-bold tracking-widest text-editorial-meta">Identified Vulnerabilities</h4>
+                      {onBulkUpdateStatus && (
+                        <button 
+                          onClick={() => onBulkUpdateStatus(missedWords, 'review')}
+                          className="text-[10px] uppercase font-bold tracking-widest text-amber-700 hover:underline flex items-center gap-2"
+                        >
+                          <AlertCircle size={14} /> Mark all for review
+                        </button>
+                      )}
+                    </div>
                     <div className="flex flex-wrap justify-center gap-3">
                       {missedWords.map(w => (
                         <span key={w} className="px-4 py-2 bg-white border border-editorial-border text-editorial-text font-serif italic text-sm">

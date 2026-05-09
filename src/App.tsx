@@ -28,7 +28,6 @@ import { WordEntry, WordBlock, QuizScore } from './types';
 import { speakWord } from './services/aiService';
 import { Quiz } from './components/Quiz';
 import { Dashboard } from './components/Dashboard';
-import { SentenceEvaluator } from './components/SentenceEvaluator';
 
 type WordStatus = 'new' | 'mastered' | 'review';
 
@@ -37,6 +36,8 @@ export default function App() {
   const [view, setView] = useState<'study' | 'list' | 'quiz' | 'analytics'>('study');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+  const [lastAction, setLastAction] = useState<{word: string, status: WordStatus} | null>(null);
   
   // Persistent Word Status
   const [wordStatus, setWordStatus] = useState<Record<string, WordStatus>>(() => {
@@ -53,10 +54,16 @@ export default function App() {
   }, [wordStatus]);
 
   const toggleStatus = (word: string, status: WordStatus) => {
+    const isNewStatus = wordStatus[word] !== status;
     setWordStatus(prev => ({
       ...prev,
       [word]: prev[word] === status ? 'new' : status
     }));
+    
+    if (isNewStatus) {
+      setLastAction({ word, status });
+      setTimeout(() => setLastAction(null), 2000);
+    }
   };
 
   const bulkUpdateStatus = (words: string[], status: WordStatus) => {
@@ -116,8 +123,98 @@ export default function App() {
     setIsSidebarOpen(false);
   };
 
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (e.key === '?') {
+        setShowHelp(prev => !prev);
+      }
+      if (e.key === 'Escape') {
+        setShowHelp(false);
+        setIsSidebarOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
+
   return (
     <div className="flex h-screen w-full bg-editorial-bg text-editorial-text font-sans overflow-hidden relative">
+      {/* HUD Notification for Status Changes */}
+      <AnimatePresence>
+        {lastAction && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20, x: '-50%' }}
+            animate={{ opacity: 1, y: 0, x: '-50%' }}
+            exit={{ opacity: 0, y: -20, x: '-50%' }}
+            className="fixed top-8 left-1/2 z-[100] px-6 py-3 bg-editorial-text text-white rounded-full shadow-2xl flex items-center gap-3 border border-white/20 backdrop-blur-md"
+          >
+            {lastAction.status === 'mastered' ? <CheckCircle2 size={16} className="text-emerald-400" /> : <AlertCircle size={16} className="text-amber-400" />}
+            <span className="text-[10px] uppercase tracking-widest font-bold">
+              <span className="italic font-serif normal-case text-xs mr-2">{lastAction.word}</span>
+              marked for {lastAction.status}
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Help Modal */}
+      <AnimatePresence>
+        {showHelp && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-editorial-text/80 backdrop-blur-sm flex items-center justify-center p-6"
+            onClick={() => setShowHelp(false)}
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white border border-editorial-border p-8 md:p-12 max-w-lg w-full rounded-sm shadow-2xl"
+            >
+              <div className="flex justify-between items-center mb-8 border-b border-editorial-border pb-6">
+                <div>
+                  <h3 className="text-2xl font-serif italic text-editorial-text">Lexical Commander</h3>
+                  <p className="text-[10px] uppercase font-bold tracking-widest text-editorial-meta mt-1">Application Shortcuts & Guidance</p>
+                </div>
+                <button onClick={() => setShowHelp(false)} className="p-2 hover:bg-neutral-100 rounded-full">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 gap-6">
+                <div className="space-y-4">
+                  <p className="text-[10px] uppercase font-bold tracking-widest text-editorial-meta">Study Mode</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <Shortcut label="Next Entry" keys={['→']} />
+                    <Shortcut label="Previous Entry" keys={['←']} />
+                    <Shortcut label="Mark Mastered" keys={['M']} />
+                    <Shortcut label="Mark Review" keys={['R']} />
+                    <Shortcut label="Pronunciation" keys={['S']} />
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-4 border-t border-editorial-border">
+                  <p className="text-[10px] uppercase font-bold tracking-widest text-editorial-meta">Global</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <Shortcut label="Show / Hide Help" keys={['?']} />
+                    <Shortcut label="Close Modals" keys={['ESC']} />
+                  </div>
+                </div>
+              </div>
+
+              <button 
+                onClick={() => setShowHelp(false)}
+                className="w-full mt-10 py-4 bg-editorial-text text-white text-[10px] uppercase font-bold tracking-widest rounded-sm hover:bg-editorial-muted transition-colors"
+              >
+                Return to Archive
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {/* Mobile Menu Overlay */}
       <AnimatePresence>
         {isSidebarOpen && (
@@ -368,8 +465,18 @@ export default function App() {
                   />
                 ))}
                 {filteredWords.length === 0 && (
-                  <div className="py-20 text-center font-serif italic text-editorial-muted text-xl">
-                    No matching records found in the archive.
+                  <div className="py-24 text-center">
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-neutral-100 rounded-full mb-6 text-editorial-meta">
+                      <Search size={32} />
+                    </div>
+                    <h3 className="text-2xl font-serif italic text-editorial-text mb-4">No matching records found</h3>
+                    <p className="text-sm text-editorial-muted max-w-sm mx-auto mb-8">The term "<span className="font-bold text-editorial-text">{searchQuery}</span>" could not be located in our current lexical archive.</p>
+                    <button 
+                      onClick={() => setSearchQuery('')}
+                      className="px-8 py-3 bg-editorial-text text-white text-[10px] uppercase font-bold tracking-widest rounded-sm hover:translate-y-[-2px] transition-transform shadow-lg"
+                    >
+                      Clear Search Filters
+                    </button>
                   </div>
                 )}
               </div>
@@ -380,6 +487,7 @@ export default function App() {
             <Quiz 
               blocks={VOCABULARY_DATA} 
               onClose={() => setView('study')} 
+              onBulkUpdateStatus={bulkUpdateStatus}
             />
           )}
 
@@ -401,52 +509,33 @@ export default function App() {
       </main>
 
       {/* Visual Detail: The Vert Rail */}
-      <div className="w-14 border-l border-editorial-border hidden md:flex flex-col items-center justify-center bg-white shrink-0">
+      <div className="w-14 border-l border-editorial-border hidden md:flex flex-col items-center justify-between py-8 bg-white shrink-0">
         <p className="rotate-90 whitespace-nowrap text-[10px] uppercase tracking-[0.5em] font-bold text-editorial-meta h-fit">
           GRE Vocabulary System • 2024 Edition
         </p>
+        <button 
+          onClick={() => setShowHelp(prev => !prev)}
+          className="p-3 text-editorial-meta hover:text-editorial-text transition-colors rounded-full hover:bg-neutral-50 mb-4"
+          title="Keyboard Shortcuts (?)"
+        >
+          <Sparkles size={18} />
+        </button>
       </div>
     </div>
   );
 }
 
-function WordPracticeToggle({ word }: { word: WordEntry }) {
-  const [isOpen, setIsOpen] = useState(false);
-  
+function Shortcut({ label, keys }: { label: string, keys: string[] }) {
   return (
-    <div className="border-t border-editorial-border py-4">
-      <button 
-        id="practice-toggle-btn"
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between group py-2"
-      >
-        <div className="flex items-center gap-3 text-[10px] uppercase font-bold tracking-widest text-editorial-meta group-hover:text-editorial-text transition-colors">
-          <Sparkles size={14} className={isOpen ? 'text-editorial-text' : 'opacity-40'} />
-          {isOpen ? 'Conclude Practice' : 'Initiate Practice Field'}
-        </div>
-        <div className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
-          <ChevronDown size={14} className="text-editorial-meta" />
-        </div>
-      </button>
-      
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
-          >
-            <div className="pt-4">
-              <SentenceEvaluator 
-                word={word.word} 
-                definition={word.definition} 
-                nuance={word.nuance || ''} 
-              />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+    <div className="flex items-center justify-between gap-4">
+      <span className="text-xs text-editorial-muted">{label}</span>
+      <div className="flex gap-1">
+        {keys.map(k => (
+          <kbd key={k} className="px-2 py-1 bg-neutral-100 border border-editorial-border rounded-sm shadow-sm font-mono text-[10px] text-editorial-text font-black min-w-[24px] text-center">
+            {k}
+          </kbd>
+        ))}
+      </div>
     </div>
   );
 }
@@ -504,6 +593,7 @@ function StudySession({
       if (e.code === 'ArrowLeft') handlePrev();
       if (e.key.toLowerCase() === 'm') onToggleStatus(word.word, 'mastered');
       if (e.key.toLowerCase() === 'r') onToggleStatus(word.word, 'review');
+      if (e.key.toLowerCase() === 's') handleSpeak();
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -674,10 +764,6 @@ function StudySession({
                       : part
                   ))}”
                 </div>
-              </div>
-
-              <div className="mt-12 overflow-hidden">
-                <WordPracticeToggle word={word} />
               </div>
             </motion.div>
           </AnimatePresence>
