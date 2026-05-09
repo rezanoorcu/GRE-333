@@ -34,7 +34,7 @@ type WordStatus = 'new' | 'mastered' | 'review';
 
 export default function App() {
   const [currentBlockId, setCurrentBlockId] = useState<string | null>(VOCABULARY_DATA[0].id);
-  const [view, setView] = useState<'study' | 'list' | 'quiz' | 'analytics' | 'bookmarks'>('study');
+  const [view, setView] = useState<'study' | 'list' | 'quiz' | 'analytics' | 'bookmarks' | 'review-stack'>('study');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
@@ -348,6 +348,19 @@ export default function App() {
               </button>
               <button 
                 onClick={() => {
+                  setView('review-stack');
+                  setIsSidebarOpen(false);
+                }}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-sm text-sm font-medium transition-all ${view === 'review-stack' ? 'bg-editorial-accent text-editorial-text' : 'text-editorial-muted hover:text-editorial-text hover:bg-neutral-50'}`}
+              >
+                <div className="flex items-center gap-3">
+                  <AlertCircle size={16} />
+                  Review Stack
+                </div>
+                <span className="text-[10px] font-mono text-editorial-meta">{Object.values(wordStatus).filter(s => s === 'review').length}</span>
+              </button>
+              <button 
+                onClick={() => {
                   setView('quiz');
                   setIsSidebarOpen(false);
                 }}
@@ -592,6 +605,54 @@ export default function App() {
                       className="px-8 py-3 bg-editorial-text text-white text-[10px] uppercase font-bold tracking-widest rounded-sm hover:translate-y-[-2px] transition-transform shadow-lg"
                     >
                       Clear Search Filters
+                    </button>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+
+          {view === 'review-stack' && (
+            <motion.div
+              key="review-stack-view"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="p-5 md:p-12 max-w-5xl mx-auto w-full"
+            >
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 md:mb-16 border-b border-editorial-border pb-8">
+                <div>
+                  <h2 className="text-2xl md:text-5xl font-serif tracking-tight text-editorial-text mb-2 md:mb-4">Review Queue</h2>
+                  <p className="text-editorial-muted uppercase text-[8px] md:text-[10px] tracking-[0.2em] font-bold">Consolidated Review from All Blocks</p>
+                </div>
+                <div className="text-[10px] uppercase font-bold tracking-widest text-editorial-meta">
+                  {Object.values(wordStatus).filter(s => s === 'review').length} Items Remaining
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-1">
+                {allWords.filter(w => wordStatus[w.word] === 'review').map((word, idx) => (
+                  <WordListEntry 
+                    key={word.word + idx} 
+                    word={word} 
+                    status="review"
+                    onToggleStatus={toggleStatus}
+                    isBookmarked={bookmarks.has(word.word)}
+                    onToggleBookmark={toggleBookmark}
+                  />
+                ))}
+                {Object.values(wordStatus).filter(s => s === 'review').length === 0 && (
+                  <div className="py-24 text-center">
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-neutral-100 rounded-full mb-6 text-editorial-meta">
+                      <CheckCircle2 size={32} />
+                    </div>
+                    <h3 className="text-2xl font-serif italic text-editorial-text mb-4">Review stack cleared</h3>
+                    <p className="text-sm text-editorial-muted max-w-sm mx-auto mb-8">You've mastered everything currently on your plate. Browse the full list to find new challenges.</p>
+                    <button 
+                      onClick={() => setView('list')}
+                      className="px-8 py-3 bg-editorial-text text-white text-[10px] uppercase font-bold tracking-widest rounded-sm hover:translate-y-[-2px] transition-transform shadow-lg"
+                    >
+                      Browse Vocabulary
                     </button>
                   </div>
                 )}
