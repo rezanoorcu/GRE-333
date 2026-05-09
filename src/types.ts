@@ -6,6 +6,7 @@ export interface WordEntry {
   example: string;
   synonyms?: string[];
   antonyms?: string[];
+  derivatives?: { form: string; word: string }[];
 }
 
 export interface WordBlock {
@@ -17,9 +18,10 @@ export interface WordBlock {
 export interface QuizQuestion {
   id: string;
   word: WordEntry;
-  type: 'definition' | 'synonym' | 'antonym';
+  type: 'definition' | 'synonym' | 'antonym' | 'context' | 'lexeme-definition' | 'matching' | 'nuance' | 'derivative';
   options: string[];
   correctAnswer: string;
+  matchingPairs?: { word: string; definition: string }[];
 }
 
 export interface QuizScore {

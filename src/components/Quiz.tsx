@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Trophy, 
@@ -16,6 +16,96 @@ interface QuizProps {
   blocks: WordBlock[];
   onClose: () => void;
 }
+
+// Sub-component for Matching Question
+const MatchingUI: React.FC<{ 
+  pairs: { word: string; definition: string }[]; 
+  onComplete: (isCorrect: boolean) => void 
+}> = ({ pairs, onComplete }) => {
+  const [selectedWord, setSelectedWord] = useState<string | null>(null);
+  const [selectedDef, setSelectedDef] = useState<string | null>(null);
+  const [matches, setMatches] = useState<{ [word: string]: string }>({});
+  const [wrongMatch, setWrongMatch] = useState<[string, string] | null>(null);
+
+  const shuffledWords = useMemo(() => [...pairs].sort(() => Math.random() - 0.5), [pairs]);
+  const shuffledDefs = useMemo(() => [...pairs].sort(() => Math.random() - 0.5), [pairs]);
+
+  useEffect(() => {
+    if (selectedWord && selectedDef) {
+      const correctPair = pairs.find(p => p.word === selectedWord);
+      if (correctPair && correctPair.definition === selectedDef) {
+        setMatches(prev => ({ ...prev, [selectedWord]: selectedDef }));
+        setSelectedWord(null);
+        setSelectedDef(null);
+      } else {
+        setWrongMatch([selectedWord, selectedDef]);
+        setTimeout(() => {
+          setWrongMatch(null);
+          setSelectedWord(null);
+          setSelectedDef(null);
+        }, 1000);
+      }
+    }
+  }, [selectedWord, selectedDef, pairs]);
+
+  useEffect(() => {
+    if (Object.keys(matches).length === pairs.length && Object.keys(matches).length > 0) {
+      onComplete(true);
+    }
+  }, [matches, pairs.length, onComplete]);
+
+  return (
+    <div className="grid grid-cols-2 gap-12 w-full">
+      <div className="flex flex-col gap-3">
+        <p className="text-[10px] uppercase font-bold tracking-widest text-editorial-meta mb-2">Lexemes</p>
+        {shuffledWords.map(p => (
+          <motion.button
+            key={p.word}
+            layout
+            whileHover={!matches[p.word] ? { scale: 1.02 } : {}}
+            whileTap={!matches[p.word] ? { scale: 0.98 } : {}}
+            animate={wrongMatch?.[0] === p.word ? { x: [-4, 4, -4, 4, 0] } : {}}
+            onClick={() => !matches[p.word] && setSelectedWord(p.word)}
+            disabled={!!matches[p.word]}
+            className={`
+              p-4 border text-left font-serif italic transition-all
+              ${matches[p.word] ? 'bg-editorial-accent/30 border-transparent text-editorial-muted opacity-50' : 
+                selectedWord === p.word ? 'bg-editorial-text text-white border-editorial-text' : 
+                wrongMatch?.[0] === p.word ? 'bg-red-50 border-red-500 text-red-700' : 'bg-white border-editorial-border hover:border-editorial-text'}
+            `}
+          >
+            {p.word}
+          </motion.button>
+        ))}
+      </div>
+      <div className="flex flex-col gap-3">
+        <p className="text-[10px] uppercase font-bold tracking-widest text-editorial-meta mb-2">Definitions</p>
+        {shuffledDefs.map(p => {
+          const isMatched = Object.values(matches).includes(p.definition);
+          return (
+            <motion.button
+              key={p.definition}
+              layout
+              whileHover={!isMatched ? { scale: 1.01 } : {}}
+              whileTap={!isMatched ? { scale: 0.99 } : {}}
+              animate={wrongMatch?.[1] === p.definition ? { x: [-4, 4, -4, 4, 0] } : {}}
+              onClick={() => !isMatched && setSelectedDef(p.definition)}
+              disabled={isMatched}
+              className={`
+                p-4 border text-left text-sm font-serif leading-tight transition-all h-full
+                ${isMatched ? 'bg-editorial-accent/30 border-transparent text-editorial-muted opacity-50' : 
+                  selectedDef === p.definition ? 'bg-editorial-text text-white border-editorial-text' : 
+                  wrongMatch?.[1] === p.definition ? 'bg-red-50 border-red-500 text-red-700' : 'bg-white border-editorial-border hover:border-editorial-text'}
+              `}
+            >
+              {p.definition}
+            </motion.button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
 
 export const Quiz: React.FC<QuizProps> = ({ blocks, onClose }) => {
   const [step, setStep] = useState<'setup' | 'active' | 'result'>('setup');
@@ -44,17 +134,33 @@ export const Quiz: React.FC<QuizProps> = ({ blocks, onClose }) => {
 
     const newQuestions: QuizQuestion[] = quizWords.map((word, idx) => {
       // Choose question type based on available data
-      const types: Array<'definition' | 'synonym' | 'antonym'> = ['definition'];
+      const types: QuizQuestion['type'][] = ['definition', 'lexeme-definition', 'context', 'matching'];
       if (word.synonyms && word.synonyms.length > 0) types.push('synonym');
       if (word.antonyms && word.antonyms.length > 0) types.push('antonym');
+      if (word.nuance) types.push('nuance');
+      if (word.derivatives && word.derivatives.length > 0) types.push('derivative');
       
       const type = types[Math.floor(Math.random() * types.length)];
       
       let correctAnswer = '';
       let options: string[] = [];
       let distractorsPool: string[] = [];
+      let matchingPairs: { word: string; definition: string }[] | undefined = undefined;
 
-      if (type === 'definition') {
+      if (type === 'matching') {
+        const otherWords = pool.filter(w => w.word !== word.word).sort(() => Math.random() - 0.5).slice(0, 3);
+        const pairs = [word, ...otherWords].map(w => ({ word: w.word, definition: w.definition }));
+        matchingPairs = pairs;
+        correctAnswer = 'COMPLETED'; // Special value
+      } else if (type === 'definition') {
+        correctAnswer = word.word;
+        distractorsPool = pool.filter(w => w.word !== word.word).map(w => w.word);
+        options = [correctAnswer, ...distractorsPool.sort(() => Math.random() - 0.5).slice(0, 3)];
+      } else if (type === 'lexeme-definition') {
+        correctAnswer = word.definition;
+        distractorsPool = pool.filter(w => w.word !== word.word).map(w => w.definition);
+        options = [correctAnswer, ...distractorsPool.sort(() => Math.random() - 0.5).slice(0, 3)];
+      } else if (type === 'context') {
         correctAnswer = word.word;
         distractorsPool = pool.filter(w => w.word !== word.word).map(w => w.word);
         options = [correctAnswer, ...distractorsPool.sort(() => Math.random() - 0.5).slice(0, 3)];
@@ -63,10 +169,19 @@ export const Quiz: React.FC<QuizProps> = ({ blocks, onClose }) => {
         distractorsPool = pool.filter(w => w.word !== word.word).flatMap(w => w.synonyms || []).filter(s => !word.synonyms?.includes(s));
         if (distractorsPool.length < 3) distractorsPool = pool.map(w => w.word);
         options = [correctAnswer, ...distractorsPool.sort(() => Math.random() - 0.5).slice(0, 3)];
-      } else {
+      } else if (type === 'antonym') {
         correctAnswer = word.antonyms![0];
         distractorsPool = pool.filter(w => w.word !== word.word).flatMap(w => w.antonyms || []).filter(a => !word.antonyms?.includes(a));
         if (distractorsPool.length < 3) distractorsPool = pool.map(w => w.word);
+        options = [correctAnswer, ...distractorsPool.sort(() => Math.random() - 0.5).slice(0, 3)];
+      } else if (type === 'nuance') {
+        correctAnswer = word.nuance!;
+        distractorsPool = pool.filter(w => w.word !== word.word && !!w.nuance).map(w => w.nuance!);
+        options = [correctAnswer, ...distractorsPool.sort(() => Math.random() - 0.5).slice(0, 3)];
+      } else if (type === 'derivative') {
+        const derivative = word.derivatives![0];
+        correctAnswer = derivative.word;
+        distractorsPool = pool.filter(w => w.word !== word.word).map(w => w.word);
         options = [correctAnswer, ...distractorsPool.sort(() => Math.random() - 0.5).slice(0, 3)];
       }
 
@@ -75,7 +190,8 @@ export const Quiz: React.FC<QuizProps> = ({ blocks, onClose }) => {
         word,
         type,
         correctAnswer,
-        options: options.sort(() => Math.random() - 0.5)
+        options: options.sort(() => Math.random() - 0.5),
+        matchingPairs
       };
     });
 
@@ -117,6 +233,12 @@ export const Quiz: React.FC<QuizProps> = ({ blocks, onClose }) => {
       prev.includes(id) ? prev.filter(bid => bid !== id) : [...prev, id]
     );
   };
+
+  const handleMatchingComplete = useCallback((correct: boolean) => {
+    setSelectedOption('COMPLETED');
+    setIsCorrect(correct);
+    if (correct) setScore(s => s + 1);
+  }, []);
 
   return (
     <div className="fixed inset-0 z-[100] bg-editorial-bg flex flex-col overflow-hidden">
@@ -213,13 +335,26 @@ export const Quiz: React.FC<QuizProps> = ({ blocks, onClose }) => {
                     <h3 className="text-5xl md:text-7xl font-serif text-editorial-text italic">
                       {questions[currentIdx].type === 'definition' 
                         ? 'Identify Lexeme:' 
-                        : questions[currentIdx].type === 'synonym' 
-                          ? 'Synonym of:' 
-                          : 'Antonym of:'}
+                        : questions[currentIdx].type === 'lexeme-definition'
+                          ? 'Define Lexeme:'
+                          : questions[currentIdx].type === 'context'
+                            ? 'Contextual Cloze:'
+                            : questions[currentIdx].type === 'matching'
+                              ? 'Lexical Correspondence:'
+                              : questions[currentIdx].type === 'nuance'
+                                ? 'Semantic Nuance:'
+                                : questions[currentIdx].type === 'derivative'
+                                  ? `Identify ${questions[currentIdx].word.derivatives?.[0].form}:`
+                                  : questions[currentIdx].type === 'synonym' 
+                                    ? 'Synonym of:' 
+                                    : 'Antonym of:'}
                     </h3>
                   </div>
                   <div className="text-right">
-                    {questions[currentIdx].type !== 'definition' && (
+                    {questions[currentIdx].type !== 'definition' && 
+                     questions[currentIdx].type !== 'context' && 
+                     questions[currentIdx].type !== 'matching' && 
+                     questions[currentIdx].type !== 'nuance' && (
                       <p className="text-xl font-serif italic text-editorial-text border-b-2 border-editorial-text inline-block">
                         {questions[currentIdx].word.word}
                       </p>
@@ -227,46 +362,99 @@ export const Quiz: React.FC<QuizProps> = ({ blocks, onClose }) => {
                   </div>
                 </div>
 
-                {questions[currentIdx].type !== 'definition' ? (
-                  <div className="mb-12 p-8 bg-editorial-accent/30 border border-editorial-border rounded-sm italic text-editorial-muted text-lg font-serif">
-                    “{questions[currentIdx].word.definition}”
+                {questions[currentIdx].type === 'matching' ? (
+                  <div className="flex-1 flex flex-col py-8">
+                    <div className="mb-12 p-6 bg-editorial-accent/30 border border-editorial-border rounded-sm italic text-editorial-muted text-lg font-serif">
+                       Connect each lexeme with its corresponding semantic definition.
+                    </div>
+                    <MatchingUI 
+                      pairs={questions[currentIdx].matchingPairs || []} 
+                      onComplete={handleMatchingComplete} 
+                    />
                   </div>
                 ) : (
-                  <div className="mb-12 p-8 bg-editorial-accent/30 border border-editorial-border rounded-sm italic text-editorial-muted text-lg font-serif">
-                    “{questions[currentIdx].word.definition}”
-                  </div>
+                  <>
+                    {questions[currentIdx].type === 'context' ? (
+                      <div className="mb-12 p-8 bg-editorial-accent/30 border border-editorial-border rounded-sm italic text-editorial-muted text-lg md:text-xl font-serif leading-relaxed">
+                        “{questions[currentIdx].word.example.replace(new RegExp(questions[currentIdx].word.word, 'gi'), '__________')}”
+                      </div>
+                    ) : questions[currentIdx].type === 'lexeme-definition' ? (
+                      <div className="mb-12 p-8 bg-editorial-accent/30 border border-editorial-border rounded-sm italic text-editorial-muted text-lg font-serif">
+                        Select the accurate definition for the term displayed above.
+                      </div>
+                    ) : questions[currentIdx].type === 'nuance' ? (
+                      <div className="mb-12 p-8 bg-editorial-accent/30 border border-editorial-border rounded-sm flex flex-col items-center gap-4">
+                        <p className="text-xl font-serif italic text-editorial-text border-b-2 border-editorial-text inline-block">{questions[currentIdx].word.word}</p>
+                        <p className="text-editorial-muted text-lg font-serif italic text-center">Which of the following best describes the subtle nuance of this lexeme?</p>
+                      </div>
+                    ) : questions[currentIdx].type === 'derivative' ? (
+                      <div className="mb-12 p-8 bg-editorial-accent/30 border border-editorial-border rounded-sm flex flex-col items-center gap-4">
+                        <p className="text-xl font-serif italic text-editorial-text border-b-2 border-editorial-text inline-block">{questions[currentIdx].word.word}</p>
+                        <p className="text-editorial-muted text-lg font-serif italic text-center">
+                          Which of the following is the standard <span className="font-bold underline">{questions[currentIdx].word.derivatives?.[0].form}</span> form of this word?
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="mb-12 p-8 bg-editorial-accent/30 border border-editorial-border rounded-sm italic text-editorial-muted text-lg font-serif">
+                        “{questions[currentIdx].word.definition}”
+                      </div>
+                    )}
+
+                    <div className={`grid grid-cols-1 ${questions[currentIdx].type === 'lexeme-definition' ? 'md:grid-cols-1 gap-4' : 'md:grid-cols-2 gap-4'}`}>
+                      {questions[currentIdx].options.map((option) => {
+                        const isSelected = selectedOption === option;
+                        const isCorrectOption = option === questions[currentIdx].correctAnswer;
+                        const isIncorrectSelected = isSelected && !isCorrectOption;
+                        
+                        let bgClass = 'bg-white border-editorial-border hover:border-editorial-text';
+                        if (selectedOption !== null) {
+                          if (isCorrectOption) bgClass = 'bg-green-50 border-green-500 text-green-700 shadow-sm shadow-green-100';
+                          else if (isSelected) bgClass = 'bg-red-50 border-red-500 text-red-700 shadow-sm shadow-red-100';
+                          else bgClass = 'bg-white border-editorial-border opacity-50 cursor-default';
+                        }
+
+                        return (
+                          <motion.button
+                            key={option}
+                            layout
+                            whileHover={selectedOption === null ? { scale: 1.01, x: 4 } : {}}
+                            whileTap={selectedOption === null ? { scale: 0.99 } : {}}
+                            animate={
+                              isIncorrectSelected 
+                                ? { x: [-4, 4, -4, 4, 0], transition: { duration: 0.4 } } 
+                                : isCorrectOption && selectedOption !== null 
+                                  ? { scale: [1, 1.02, 1], transition: { duration: 0.3 } }
+                                  : {}
+                            }
+                            onClick={() => handleOptionClick(option)}
+                            disabled={selectedOption !== null}
+                            className={`p-6 border text-left italic transition-all relative ${questions[currentIdx].type === 'lexeme-definition' ? 'text-base font-serif' : 'text-lg font-serif'} ${bgClass}`}
+                          >
+                            <span className="relative z-10">{option}</span>
+                            {selectedOption !== null && isCorrectOption && (
+                              <motion.div 
+                                initial={{ scale: 0, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-green-500"
+                              >
+                                <CheckCircle2 size={24} />
+                              </motion.div>
+                            )}
+                            {selectedOption !== null && isSelected && !isCorrectOption && (
+                              <motion.div 
+                                initial={{ scale: 0, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-red-500"
+                              >
+                                <AlertCircle size={24} />
+                              </motion.div>
+                            )}
+                          </motion.button>
+                        );
+                      })}
+                    </div>
+                  </>
                 )}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {questions[currentIdx].options.map((option) => {
-                    const isSelected = selectedOption === option;
-                    const isCorrectOption = option === questions[currentIdx].correctAnswer;
-                    
-                    let bgClass = 'bg-white border-editorial-border hover:border-editorial-text';
-                    if (selectedOption !== null) {
-                      if (isCorrectOption) bgClass = 'bg-green-50 border-green-500 text-green-700';
-                      else if (isSelected) bgClass = 'bg-red-50 border-red-500 text-red-700';
-                      else bgClass = 'bg-white border-editorial-border opacity-50 cursor-default';
-                    }
-
-                    return (
-                      <button
-                        key={option}
-                        onClick={() => handleOptionClick(option)}
-                        disabled={selectedOption !== null}
-                        className={`p-6 border text-left text-lg font-serif italic transition-all relative ${bgClass}`}
-                      >
-                        {option}
-                        {selectedOption !== null && isCorrectOption && (
-                          <CheckCircle2 className="absolute right-4 top-1/2 -translate-y-1/2 text-green-500" size={20} />
-                        )}
-                        {selectedOption !== null && isSelected && !isCorrectOption && (
-                          <AlertCircle className="absolute right-4 top-1/2 -translate-y-1/2 text-red-500" size={20} />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
 
                 {selectedOption !== null && (
                   <motion.div 

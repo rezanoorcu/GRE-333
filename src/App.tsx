@@ -3,8 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import Fuse from 'fuse.js';
 import { 
   BookOpen, 
   Search, 
@@ -17,18 +18,23 @@ import {
   Loader2,
   Menu,
   X,
-  Brain
+  Brain,
+  BarChart3,
+  Sparkles,
+  ChevronDown
 } from 'lucide-react';
 import { VOCABULARY_DATA } from './data';
 import { WordEntry, WordBlock, QuizScore } from './types';
 import { speakWord } from './services/aiService';
 import { Quiz } from './components/Quiz';
+import { Dashboard } from './components/Dashboard';
+import { SentenceEvaluator } from './components/SentenceEvaluator';
 
 type WordStatus = 'new' | 'mastered' | 'review';
 
 export default function App() {
   const [currentBlockId, setCurrentBlockId] = useState<string | null>(VOCABULARY_DATA[0].id);
-  const [view, setView] = useState<'study' | 'list' | 'quiz'>('study');
+  const [view, setView] = useState<'study' | 'list' | 'quiz' | 'analytics'>('study');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
@@ -53,6 +59,16 @@ export default function App() {
     }));
   };
 
+  const bulkUpdateStatus = (words: string[], status: WordStatus) => {
+    setWordStatus(prev => {
+      const next = { ...prev };
+      words.forEach(word => {
+        next[word] = status;
+      });
+      return next;
+    });
+  };
+
   // Current active block
   const currentBlock = useMemo(() => 
     VOCABULARY_DATA.find(b => b.id === currentBlockId) || VOCABULARY_DATA[0], 
@@ -60,17 +76,39 @@ export default function App() {
 
   // Flattened words for search
   const allWords = useMemo(() => VOCABULARY_DATA.flatMap(b => b.words), []);
+
+  // Fuse configuration
+  const fuse = useMemo(() => new Fuse(allWords, {
+    keys: ['word', 'definition', 'context'],
+    threshold: 0.4,
+    includeScore: true,
+  }), [allWords]);
   
   // Filtered words for list view
   const filteredWords = useMemo(() => {
     if (!searchQuery) return allWords;
-    const query = searchQuery.toLowerCase();
-    return allWords.filter(w => 
-      w.word.toLowerCase().includes(query) || 
-      w.definition.toLowerCase().includes(query) || 
-      w.context.toLowerCase().includes(query)
-    );
-  }, [searchQuery, allWords]);
+    const results = fuse.search(searchQuery);
+    return results.map(r => r.item);
+  }, [searchQuery, allWords, fuse]);
+
+  const suggestions = useMemo(() => {
+    if (!searchQuery || searchQuery.length < 2) return [];
+    // Only show top 5 suggestions
+    return fuse.search(searchQuery).slice(0, 5).map(r => r.item.word);
+  }, [searchQuery, fuse]);
+
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [searchRef]);
 
   const handleSelectBlock = (blockId: string) => {
     setCurrentBlockId(blockId);
@@ -99,7 +137,7 @@ export default function App() {
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div 
-          className="p-8 pb-10 cursor-pointer"
+          className="p-6 md:p-8 pb-8 md:pb-10 cursor-pointer"
           onClick={() => { setView('study'); }}
         >
           <div className="flex items-center gap-3 mb-4">
@@ -157,6 +195,18 @@ export default function App() {
                 <div className="flex items-center gap-3">
                   <Brain size={16} />
                   Intelligence Quiz
+                </div>
+              </button>
+              <button 
+                onClick={() => {
+                  setView('analytics');
+                  setIsSidebarOpen(false);
+                }}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-sm text-sm font-medium transition-all ${view === 'analytics' ? 'bg-editorial-accent text-editorial-text' : 'text-editorial-muted hover:text-editorial-text hover:bg-neutral-50'}`}
+              >
+                <div className="flex items-center gap-3">
+                  <BarChart3 size={16} />
+                  Analytics Hub
                 </div>
               </button>
             </div>
@@ -247,6 +297,7 @@ export default function App() {
                 block={currentBlock} 
                 wordStatus={wordStatus}
                 onToggleStatus={toggleStatus}
+                onBulkUpdateStatus={bulkUpdateStatus}
               />
             </motion.div>
           )}
@@ -257,22 +308,52 @@ export default function App() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="p-6 md:p-12 max-w-5xl mx-auto w-full"
+              className="p-5 md:p-12 max-w-5xl mx-auto w-full"
             >
-              <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 md:mb-16 border-b border-editorial-border pb-8">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 md:mb-16 border-b border-editorial-border pb-8">
                 <div>
-                  <h2 className="text-3xl md:text-5xl font-serif tracking-tight text-editorial-text mb-2 md:mb-4">The Lexicon</h2>
+                  <h2 className="text-2xl md:text-5xl font-serif tracking-tight text-editorial-text mb-2 md:mb-4">The Lexicon</h2>
                   <p className="text-editorial-muted uppercase text-[8px] md:text-[10px] tracking-[0.2em] font-bold">Systematic Vocabulary Archive</p>
                 </div>
-                <div className="relative w-full md:w-80">
+                <div className="relative w-full md:w-80" ref={searchRef}>
                   <Search className="absolute left-0 top-1/2 -translate-y-1/2 text-editorial-meta" size={16} />
                   <input
                     type="text"
                     placeholder="Search entry..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setShowSuggestions(true);
+                    }}
+                    onFocus={() => setShowSuggestions(true)}
                     className="w-full pl-6 pr-4 py-2 bg-transparent border-b border-editorial-border focus:outline-none focus:border-editorial-text transition-all text-sm font-medium"
                   />
+                  
+                  {/* Suggestions Dropdown */}
+                  <AnimatePresence>
+                    {showSuggestions && suggestions.length > 0 && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="absolute top-full left-0 right-0 mt-2 bg-white border border-editorial-border shadow-xl z-50 rounded-sm overflow-hidden"
+                      >
+                        {suggestions.map((suggestion, index) => (
+                          <div
+                            key={suggestion + index}
+                            onClick={() => {
+                              setSearchQuery(suggestion);
+                              setShowSuggestions(false);
+                            }}
+                            className="px-4 py-3 text-sm font-medium hover:bg-editorial-accent cursor-pointer border-b border-editorial-border last:border-0 flex items-center justify-between group"
+                          >
+                            <span className="text-editorial-text font-serif italic">{suggestion}</span>
+                            <Search size={12} className="text-editorial-meta opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </div>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
 
@@ -300,6 +381,21 @@ export default function App() {
               onClose={() => setView('study')} 
             />
           )}
+
+          {view === 'analytics' && (
+            <motion.div
+              key="analytics-view"
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              className="flex-1 overflow-y-auto"
+            >
+              <Dashboard 
+                blocks={VOCABULARY_DATA} 
+                wordStatus={wordStatus} 
+              />
+            </motion.div>
+          )}
         </AnimatePresence>
       </main>
 
@@ -313,17 +409,61 @@ export default function App() {
   );
 }
 
+function WordPracticeToggle({ word }: { word: WordEntry }) {
+  const [isOpen, setIsOpen] = useState(false);
+  
+  return (
+    <div className="border-t border-editorial-border py-4">
+      <button 
+        id="practice-toggle-btn"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between group py-2"
+      >
+        <div className="flex items-center gap-3 text-[10px] uppercase font-bold tracking-widest text-editorial-meta group-hover:text-editorial-text transition-colors">
+          <Sparkles size={14} className={isOpen ? 'text-editorial-text' : 'opacity-40'} />
+          {isOpen ? 'Conclude Practice' : 'Initiate AI Practice Field'}
+        </div>
+        <div className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
+          <ChevronDown size={14} className="text-editorial-meta" />
+        </div>
+      </button>
+      
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+          >
+            <div className="pt-4">
+              <SentenceEvaluator 
+                word={word.word} 
+                definition={word.definition} 
+                nuance={word.nuance || ''} 
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 function StudySession({ 
   block, 
   wordStatus, 
-  onToggleStatus 
+  onToggleStatus,
+  onBulkUpdateStatus
 }: { 
   block: WordBlock; 
   wordStatus: Record<string, WordStatus>;
   onToggleStatus: (word: string, status: WordStatus) => void;
+  onBulkUpdateStatus: (words: string[], status: WordStatus) => void;
 }) {
   const [index, setIndex] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [bulkConfirm, setBulkConfirm] = useState<'mastered' | 'review' | null>(null);
   const word = block.words[index];
   const blockIdx = VOCABULARY_DATA.findIndex(b => b.id === block.id) + 1;
   const status = wordStatus[word.word] || 'new';
@@ -344,8 +484,31 @@ function StudySession({
     setTimeout(() => setIsSpeaking(false), 1000);
   };
 
+  const handleBulkAction = (status: 'mastered' | 'review') => {
+    onBulkUpdateStatus(block.words.map(w => w.word), status);
+    setBulkConfirm(null);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if user is typing in an input or textarea
+      if (
+        document.activeElement?.tagName === 'INPUT' || 
+        document.activeElement?.tagName === 'TEXTAREA'
+      ) return;
+
+      if (e.code === 'ArrowRight') handleNext();
+      if (e.code === 'ArrowLeft') handlePrev();
+      if (e.key.toLowerCase() === 'm') onToggleStatus(word.word, 'mastered');
+      if (e.key.toLowerCase() === 'r') onToggleStatus(word.word, 'review');
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [index, word.word, onToggleStatus]);
+
   return (
-    <div className="flex-1 flex flex-col h-full min-h-0">
+    <div className="flex-1 flex flex-col h-full min-h-0 relative">
       <div className="absolute top-0 right-0 p-6 md:p-12 pointer-events-none z-0">
         <p className="text-6xl md:text-8xl font-serif text-editorial-border opacity-50 select-none">
           {String(blockIdx).padStart(2, '0')}
@@ -353,38 +516,55 @@ function StudySession({
       </div>
 
       <header className="p-6 md:p-12 pb-0 flex flex-col sm:flex-row items-center gap-4 justify-between relative z-10">
-        <div className="flex items-center gap-2 md:gap-4 text-[8px] md:text-[10px] uppercase tracking-[0.25em] font-bold text-editorial-muted">
-          <span>Block {blockIdx}</span>
-          <span className="w-4 md:w-8 h-[1px] bg-editorial-border"></span>
-          <span>Study Mode</span>
-          <span className="w-4 md:w-8 h-[1px] bg-editorial-border"></span>
+        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 md:gap-4 text-[8px] md:text-[10px] uppercase tracking-[0.25em] font-bold text-editorial-muted">
+          <span className="shrink-0">Block {blockIdx}</span>
+          <span className="hidden sm:inline w-8 h-[1px] bg-editorial-border"></span>
+          <span className="shrink-0">Study Mode</span>
+          <span className="hidden sm:inline w-8 h-[1px] bg-editorial-border"></span>
           {status === 'mastered' ? (
-            <span className="text-emerald-700 flex items-center gap-1 md:gap-2 font-black"><CheckCircle2 size={10} /> Mastered</span>
+            <span className="text-emerald-700 flex items-center gap-1 md:gap-2 font-black shrink-0"><CheckCircle2 size={10} /> Mastered</span>
           ) : status === 'review' ? (
-            <span className="text-amber-700 flex items-center gap-1 md:gap-2 font-black"><AlertCircle size={10} /> Review</span>
+            <span className="text-amber-700 flex items-center gap-1 md:gap-2 font-black shrink-0"><AlertCircle size={10} /> Review</span>
           ) : (
-            <span className="font-bold">New Entry</span>
+            <span className="font-bold shrink-0">New Entry</span>
           )}
+          
+          <div className="flex items-center gap-4 border-l border-editorial-border pl-4 md:pl-6 ml-2 md:ml-4">
+            <button 
+              onClick={() => setBulkConfirm('mastered')}
+              className="text-[9px] uppercase font-bold tracking-widest text-emerald-700/60 hover:text-emerald-700 transition-colors flex items-center gap-2"
+              title="Mark All as Mastered"
+            >
+              <CheckCircle2 size={12} className="sm:size-14" /> <span className="hidden sm:inline">Bulk Master</span>
+            </button>
+            <button 
+              onClick={() => setBulkConfirm('review')}
+              className="text-[9px] uppercase font-bold tracking-widest text-amber-700/60 hover:text-amber-700 transition-colors flex items-center gap-2"
+              title="Mark All for Review"
+            >
+              <AlertCircle size={12} className="sm:size-14" /> <span className="hidden sm:inline">Bulk Review</span>
+            </button>
+          </div>
         </div>
         <div className="text-[9px] md:text-[10px] font-mono text-editorial-meta bg-editorial-accent px-3 py-1.5 rounded-sm font-bold border border-editorial-border shadow-sm">
           WORD {index + 1} / {block.words.length}
         </div>
       </header>
 
-      <section className="flex-1 flex items-center px-6 md:px-12 py-8 relative z-10 overflow-visible">
+      <section className="flex-1 flex items-center px-4 md:px-12 py-6 md:py-8 relative z-10 overflow-visible">
         <div className="max-w-4xl w-full mx-auto">
           <AnimatePresence mode="wait">
             <motion.div
               key={word.word}
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              transition={{ duration: 0.3 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
             >
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 md:gap-8 mb-8 md:mb-10">
-                <div className="flex items-center gap-4 md:gap-6 overflow-hidden">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 md:gap-8 mb-6 md:mb-10">
+                <div className="flex items-center gap-4 md:gap-6 overflow-visible">
                   <h2 
-                    className="text-5xl md:text-7xl lg:text-[120px] font-serif leading-none tracking-tight text-editorial-text select-all cursor-pointer hover:text-editorial-muted transition-colors truncate"
+                    className="text-3xl sm:text-5xl md:text-7xl lg:text-[120px] font-serif leading-none tracking-tight text-editorial-text select-all cursor-pointer hover:text-editorial-muted transition-colors break-words max-w-[200px] sm:max-w-none"
                     onClick={handleSpeak}
                   >
                     {word.word}
@@ -392,27 +572,27 @@ function StudySession({
                   <button 
                     onClick={handleSpeak}
                     disabled={isSpeaking}
-                    className={`p-3 md:p-4 rounded-full border-2 border-editorial-border hover:border-editorial-text transition-all shrink-0 ${isSpeaking ? 'animate-pulse text-editorial-muted' : 'text-editorial-meta hover:text-editorial-text'}`}
+                    className={`p-2.5 sm:p-3 md:p-4 rounded-full border-2 border-editorial-border hover:border-editorial-text transition-all shrink-0 ${isSpeaking ? 'animate-pulse text-editorial-muted' : 'text-editorial-meta hover:text-editorial-text'}`}
                   >
-                    {isSpeaking ? <Loader2 size={24} className="animate-spin md:size-32" /> : <Volume2 size={24} className="md:size-32" />}
+                    {isSpeaking ? <Loader2 size={18} className="animate-spin sm:size-24 md:size-32" /> : <Volume2 size={18} className="sm:size-24 md:size-32" />}
                   </button>
                 </div>
                 <div className="flex gap-2 md:gap-3 shrink-0">
                   <button 
                     onClick={() => onToggleStatus(word.word, 'mastered')}
-                    className={`flex-1 md:flex-none flex items-center justify-center p-3 md:p-4 rounded-sm border-2 transition-all duration-300 shadow-md md:shadow-lg ${status === 'mastered' ? 'bg-editorial-text text-editorial-bg border-editorial-text' : 'bg-white text-editorial-meta border-editorial-border hover:border-editorial-text'}`}
+                    className={`flex-1 md:flex-none flex items-center justify-center p-3 md:p-4 rounded-sm border-2 transition-all duration-300 shadow-sm md:shadow-lg ${status === 'mastered' ? 'bg-editorial-text text-editorial-bg border-editorial-text' : 'bg-white text-editorial-meta border-editorial-border hover:border-editorial-text'}`}
                     title="Toggle Mastery"
                   >
-                    <CheckCircle2 size={20} className="md:size-24" />
-                    <span className="md:hidden ml-2 text-[10px] font-bold uppercase tracking-widest">Mastered</span>
+                    <CheckCircle2 size={18} className="md:size-24" />
+                    <span className="md:hidden ml-2 text-[9px] font-bold uppercase tracking-widest">Master</span>
                   </button>
                   <button 
                     onClick={() => onToggleStatus(word.word, 'review')}
-                    className={`flex-1 md:flex-none flex items-center justify-center p-3 md:p-4 rounded-sm border-2 transition-all duration-300 shadow-md md:shadow-lg ${status === 'review' ? 'bg-amber-600 text-white border-amber-600' : 'bg-white text-editorial-meta border-editorial-border hover:border-editorial-text'}`}
+                    className={`flex-1 md:flex-none flex items-center justify-center p-3 md:p-4 rounded-sm border-2 transition-all duration-300 shadow-sm md:shadow-lg ${status === 'review' ? 'bg-amber-600 text-white border-amber-600' : 'bg-white text-editorial-meta border-editorial-border hover:border-editorial-text'}`}
                     title="Mark for Review"
                   >
-                    <AlertCircle size={20} className="md:size-24" />
-                    <span className="md:hidden ml-2 text-[10px] font-bold uppercase tracking-widest">Review</span>
+                    <AlertCircle size={18} className="md:size-24" />
+                    <span className="md:hidden ml-2 text-[9px] font-bold uppercase tracking-widest">Review</span>
                   </button>
                 </div>
               </div>
@@ -433,6 +613,22 @@ function StudySession({
                         “{word.nuance}”
                       </div>
                     )}
+
+                    <div className="mt-8 flex flex-col gap-6">
+                      {word.derivatives && word.derivatives.length > 0 && (
+                        <div>
+                          <p className="text-[9px] uppercase font-bold tracking-widest text-editorial-meta mb-2">Derivatives</p>
+                          <div className="flex flex-wrap gap-x-6 gap-y-2">
+                            {word.derivatives.map((d, i) => (
+                              <div key={i} className="flex items-center gap-2">
+                                <span className="text-[10px] font-bold text-editorial-meta uppercase">{d.form}:</span>
+                                <span className="text-base font-serif italic text-editorial-text">{d.word}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   
                   {/* Synonyms and Antonyms */}
@@ -465,10 +661,10 @@ function StudySession({
                 </div>
               </div>
 
-              <div className="bg-editorial-text text-white p-6 md:p-12 rounded-sm shadow-2xl relative overflow-hidden group">
+              <div className="bg-editorial-text text-white p-5 md:p-12 rounded-sm shadow-2xl relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-32 md:w-48 h-32 md:h-48 bg-white/5 -rotate-45 translate-x-12 md:translate-x-24 -translate-y-12 md:-translate-y-24 group-hover:scale-110 transition-transform"></div>
-                <p className="text-[9px] md:text-[10px] uppercase tracking-[0.4em] opacity-40 mb-6 md:mb-8 font-bold text-center">In Practice</p>
-                <div className="text-xl md:text-3xl lg:text-4xl font-serif italic text-center leading-relaxed max-w-3xl mx-auto tracking-wide">
+                <p className="text-[8px] md:text-[10px] uppercase tracking-[0.4em] opacity-40 mb-4 md:mb-8 font-bold text-center">In Practice</p>
+                <div className="text-lg md:text-3xl lg:text-4xl font-serif italic text-center leading-relaxed max-w-3xl mx-auto tracking-wide">
                   “{word.example.split(new RegExp(`(${word.word})`, 'gi')).map((part, i) => (
                     part.toLowerCase() === word.word.toLowerCase() 
                       ? <span key={i} className="text-[#C7B7A3] not-italic font-bold border-b border-[#C7B7A3]/30">{part}</span> 
@@ -476,23 +672,27 @@ function StudySession({
                   ))}”
                 </div>
               </div>
+
+              <div className="mt-12 overflow-hidden">
+                <WordPracticeToggle word={word} />
+              </div>
             </motion.div>
           </AnimatePresence>
         </div>
       </section>
 
       {/* Bottom Control Bar */}
-      <section className="h-40 md:h-44 border-t-2 border-editorial-text bg-white relative z-10 shrink-0">
+      <section className="h-28 md:h-44 border-t-2 border-editorial-text bg-white relative z-10 shrink-0">
         <div className="flex h-full divide-x divide-editorial-border">
           <button 
             onClick={handlePrev}
-            className="flex-1 p-4 md:p-8 flex flex-col justify-between hover:bg-editorial-accent transition-all text-left group"
+            className="flex-1 p-3 md:p-8 flex flex-col justify-between hover:bg-editorial-accent transition-all text-left group"
           >
             <p className="text-[8px] md:text-[9px] font-bold uppercase tracking-widest text-editorial-meta flex items-center gap-1 md:gap-2 group-hover:-translate-x-1 transition-transform">
               <ChevronLeft size={10} className="md:size-12" /> Prev
             </p>
             <div>
-              <p className="text-lg md:text-2xl font-serif italic text-editorial-text group-hover:opacity-60 transition-opacity truncate">
+              <p className="text-sm md:text-2xl font-serif italic text-editorial-text group-hover:opacity-60 transition-opacity truncate max-w-[120px] md:max-w-none">
                 {block.words[(index - 1 + block.words.length) % block.words.length].word}
               </p>
             </div>
@@ -500,13 +700,13 @@ function StudySession({
           
           <button 
             onClick={handleNext}
-            className="flex-1 p-4 md:p-8 flex flex-col justify-between hover:bg-editorial-accent transition-all text-left group"
+            className="flex-1 p-3 md:p-8 flex flex-col justify-between hover:bg-editorial-accent transition-all text-left group"
           >
             <p className="text-[8px] md:text-[9px] font-bold uppercase tracking-widest text-editorial-meta flex items-center justify-end gap-1 md:gap-2 group-hover:translate-x-1 transition-transform">
               Next <ChevronRight size={10} className="md:size-12" />
             </p>
             <div className="text-right">
-              <p className="text-lg md:text-2xl font-serif italic text-editorial-text group-hover:opacity-60 transition-opacity truncate">
+              <p className="text-sm md:text-2xl font-serif italic text-editorial-text group-hover:opacity-60 transition-opacity truncate max-w-[120px] md:max-w-none">
                 {block.words[(index + 1) % block.words.length].word}
               </p>
             </div>
@@ -531,16 +731,112 @@ function StudySession({
         </div>
       </section>
 
-      <div className="p-4 border-t border-editorial-border flex justify-center gap-12 bg-white">
+      <div className="hidden sm:flex p-4 border-t border-editorial-border justify-center gap-12 bg-white">
         <div className="flex items-center gap-3 text-[10px] text-editorial-meta font-bold uppercase tracking-widest">
           <kbd className="px-2 py-1 bg-neutral-100 border border-editorial-border rounded-sm shadow-sm font-mono text-[10px] text-editorial-text font-black">←</kbd>
-          Navigate
-        </div>
-        <div className="flex items-center gap-3 text-[10px] text-editorial-meta font-bold uppercase tracking-widest">
           <kbd className="px-2 py-1 bg-neutral-100 border border-editorial-border rounded-sm shadow-sm font-mono text-[10px] text-editorial-text font-black">→</kbd>
           Navigate
         </div>
+        <div className="flex items-center gap-3 text-[10px] text-editorial-meta font-bold uppercase tracking-widest">
+          <kbd className="px-2 py-1 bg-neutral-100 border border-editorial-border rounded-sm shadow-sm font-mono text-[10px] text-editorial-text font-black">M</kbd>
+          Mastery
+        </div>
+        <div className="flex items-center gap-3 text-[10px] text-editorial-meta font-bold uppercase tracking-widest">
+          <kbd className="px-2 py-1 bg-neutral-100 border border-editorial-border rounded-sm shadow-sm font-mono text-[10px] text-editorial-text font-black">R</kbd>
+          Review
+        </div>
       </div>
+
+      {/* Floating Sticky Navigation Bar - High Visibility for Quick Actions */}
+      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 pointer-events-none w-full max-w-sm px-6">
+        <motion.div 
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="pointer-events-auto bg-white/80 backdrop-blur-md border border-editorial-text/20 shadow-[0_20px_50px_rgba(0,0,0,0.15)] rounded-full px-6 py-3 flex items-center justify-between gap-4"
+        >
+          <button 
+            onClick={handlePrev}
+            className="p-2 text-editorial-muted hover:text-editorial-text transition-colors"
+            title="Previous (←)"
+          >
+            <ChevronLeft size={24} />
+          </button>
+          
+          <div className="flex items-center gap-2 border-x border-editorial-border px-4 mx-2">
+            <button 
+              onClick={() => onToggleStatus(word.word, 'mastered')}
+              className={`p-2 rounded-full transition-all ${status === 'mastered' ? 'bg-emerald-600 text-white' : 'text-emerald-700 hover:bg-emerald-50'}`}
+              title="Mastered (M)"
+            >
+              <CheckCircle2 size={20} />
+            </button>
+            <button 
+              onClick={() => onToggleStatus(word.word, 'review')}
+              className={`p-2 rounded-full transition-all ${status === 'review' ? 'bg-amber-600 text-white' : 'text-amber-700 hover:bg-amber-50'}`}
+              title="Review (R)"
+            >
+              <AlertCircle size={20} />
+            </button>
+          </div>
+
+          <button 
+            onClick={handleNext}
+            className="p-2 text-editorial-muted hover:text-editorial-text transition-colors"
+            title="Next (→)"
+          >
+            <ChevronRight size={24} />
+          </button>
+        </motion.div>
+      </div>
+
+      {/* Bulk Actions Confirmation Overlay */}
+      <AnimatePresence>
+        {bulkConfirm && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-editorial-text/40 backdrop-blur-md pointer-events-auto"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white p-8 md:p-12 max-w-sm w-full border border-editorial-border shadow-2xl rounded-sm text-center"
+            >
+              <div className="flex justify-center mb-6">
+                {bulkConfirm === 'mastered' ? (
+                  <div className="p-4 bg-emerald-50 rounded-full text-emerald-600 border border-emerald-100">
+                    <CheckCircle2 size={32} />
+                  </div>
+                ) : (
+                  <div className="p-4 bg-amber-50 rounded-full text-amber-600 border border-amber-100">
+                    <AlertCircle size={32} />
+                  </div>
+                )}
+              </div>
+              <h3 className="text-xl font-serif italic text-editorial-text mb-4">Bulk Systematic Update</h3>
+              <p className="text-xs text-editorial-muted mb-8 leading-relaxed">
+                Apply <span className={`font-bold ${bulkConfirm === 'mastered' ? 'text-emerald-700' : 'text-amber-700'}`}>{bulkConfirm === 'mastered' ? 'Mastery' : 'Review'}</span> status to all {block.words.length} lexemes in this block? This operation is comprehensive and will overwrite existing progress indicators for this specific set.
+              </p>
+              <div className="flex flex-col gap-3">
+                <button 
+                  onClick={() => handleBulkAction(bulkConfirm)}
+                  className={`w-full py-4 rounded-sm text-[10px] uppercase font-bold tracking-[0.2em] transition-all hover:shadow-lg active:scale-[0.98] ${bulkConfirm === 'mastered' ? 'bg-editorial-text text-white hover:bg-emerald-700' : 'bg-editorial-text text-white hover:bg-amber-700'}`}
+                >
+                  Verify and Execute
+                </button>
+                <button 
+                  onClick={() => setBulkConfirm(null)}
+                  className="w-full py-4 rounded-sm text-[10px] uppercase font-bold tracking-[0.2em] text-editorial-meta hover:text-editorial-text transition-colors bg-neutral-50"
+                >
+                  Cancel Operation
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -562,26 +858,26 @@ const WordListEntry: React.FC<{
   };
 
   return (
-    <div className={`group border-b border-editorial-border p-4 md:p-8 hover:bg-white transition-all ${status === 'mastered' ? 'bg-emerald-50/10' : status === 'review' ? 'bg-amber-50/10' : 'bg-transparent'}`}>
+    <div className={`group border-b border-editorial-border p-4 md:p-6 hover:bg-white transition-all ${status === 'mastered' ? 'bg-emerald-50/10' : status === 'review' ? 'bg-amber-50/10' : 'bg-transparent'}`}>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4 md:gap-6">
+        <div className="flex items-center gap-3 md:gap-6">
           <button 
             onClick={(e) => { e.stopPropagation(); onToggleStatus(word.word, 'mastered'); }}
             className={`transition-all duration-300 transform shrink-0 ${status === 'mastered' ? 'text-emerald-700 scale-110' : 'text-editorial-border hover:text-editorial-meta hover:scale-110'}`}
             title="Mark as Mastered"
           >
-            <CheckCircle2 size={24} />
+            <CheckCircle2 size={20} className="md:size-24" />
           </button>
-          <div className="flex items-baseline flex-wrap gap-x-4 md:gap-x-8 cursor-pointer" onClick={() => setExpanded(!expanded)}>
-            <h4 className="text-xl md:text-3xl font-serif italic tracking-tight text-editorial-text group-hover:underline underline-offset-8 decoration-editorial-muted">{word.word}</h4>
-            <div className="flex items-center gap-2">
+          <div className="flex items-baseline flex-wrap gap-x-3 md:gap-x-8 cursor-pointer" onClick={() => setExpanded(!expanded)}>
+            <h4 className="text-xl md:text-2xl font-serif italic tracking-tight text-editorial-text group-hover:underline underline-offset-8 decoration-editorial-muted">{word.word}</h4>
+            <div className="flex items-center gap-1.5 md:gap-2">
               <button 
                 onClick={handleSpeak}
                 className={`p-1.5 md:p-2 rounded-full transition-all ${isSpeaking ? 'text-editorial-text animate-pulse' : 'text-editorial-meta hover:text-editorial-text hover:bg-editorial-accent'}`}
               >
-                {isSpeaking ? <Loader2 size={14} className="animate-spin md:size-16" /> : <Volume2 size={14} className="md:size-16" />}
+                {isSpeaking ? <Loader2 size={12} className="animate-spin md:size-16" /> : <Volume2 size={12} className="md:size-16" />}
               </button>
-              <span className="text-[8px] md:text-[10px] text-editorial-meta font-bold uppercase tracking-[0.25em]">{word.context}</span>
+              <span className="text-[8px] md:text-[9px] text-editorial-meta font-bold uppercase tracking-[0.25em]">{word.context}</span>
             </div>
           </div>
         </div>
@@ -623,6 +919,22 @@ const WordListEntry: React.FC<{
                     <div className="text-base md:text-lg italic text-editorial-muted font-serif leading-relaxed">“{word.nuance}”</div>
                   </div>
                 )}
+
+                <div className="mt-8 flex flex-col sm:flex-row flex-wrap gap-x-12 gap-y-6">
+                  {word.derivatives && word.derivatives.length > 0 && (
+                    <div>
+                      <p className="text-[9px] uppercase font-bold tracking-widest text-editorial-meta mb-3">Derivatives</p>
+                      <div className="flex flex-wrap gap-x-6 gap-y-2">
+                        {word.derivatives.map((d, i) => (
+                          <div key={i} className="flex items-center gap-2">
+                            <span className="text-[9px] font-bold text-editorial-meta uppercase">{d.form}:</span>
+                            <span className="text-sm font-serif italic text-editorial-text">{d.word}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 {/* Synonyms and Antonyms in List View */}
                 <div className="mt-8 flex flex-wrap gap-x-12 gap-y-6">

@@ -9,7 +9,9 @@ export async function speakWord(text: string) {
     if (!process.env.GEMINI_API_KEY) {
       // Fallback to browser TTS if no key
       const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'en-US';
       utterance.rate = 0.9;
+      window.speechSynthesis.cancel();
       window.speechSynthesis.speak(utterance);
       return;
     }
@@ -32,6 +34,10 @@ export async function speakWord(text: string) {
       if (!audioContext) {
         audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       }
+      
+      if (audioContext.state === 'suspended') {
+        await audioContext.resume();
+      }
 
       const binaryString = atob(base64Audio);
       const len = binaryString.length;
@@ -42,7 +48,9 @@ export async function speakWord(text: string) {
 
       // Gemini TTS (PCM) is 16-bit, 24kHz, mono
       const sampleRate = 24000;
-      const pcmData = new Int16Array(bytes.buffer);
+      // Ensure length is even for 16-bit PCM
+      const dataLen = Math.floor(bytes.length / 2);
+      const pcmData = new Int16Array(bytes.buffer, 0, dataLen);
       const audioBuffer = audioContext.createBuffer(1, pcmData.length, sampleRate);
       const channelData = audioBuffer.getChannelData(0);
 
@@ -57,8 +65,13 @@ export async function speakWord(text: string) {
     }
   } catch (error) {
     console.error("Pronunciation error:", error);
-    // Final fallback
+    // Final fallback: Use high-quality browser TTS if possible
     const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
+    utterance.rate = 0.9;
+    
+    // Some mobile browsers need a reset
+    window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utterance);
   }
 }
