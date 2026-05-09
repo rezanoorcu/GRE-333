@@ -298,6 +298,7 @@ export default function App() {
                 wordStatus={wordStatus}
                 onToggleStatus={toggleStatus}
                 onBulkUpdateStatus={bulkUpdateStatus}
+                isSidebarOpen={isSidebarOpen}
               />
             </motion.div>
           )}
@@ -454,12 +455,14 @@ function StudySession({
   block, 
   wordStatus, 
   onToggleStatus,
-  onBulkUpdateStatus
+  onBulkUpdateStatus,
+  isSidebarOpen
 }: { 
   block: WordBlock; 
   wordStatus: Record<string, WordStatus>;
   onToggleStatus: (word: string, status: WordStatus) => void;
   onBulkUpdateStatus: (words: string[], status: WordStatus) => void;
+  isSidebarOpen: boolean;
 }) {
   const [index, setIndex] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -748,46 +751,51 @@ function StudySession({
       </div>
 
       {/* Floating Sticky Navigation Bar - High Visibility for Quick Actions */}
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 pointer-events-none w-full max-w-sm px-6">
-        <motion.div 
-          initial={{ y: 50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="pointer-events-auto bg-white/80 backdrop-blur-md border border-editorial-text/20 shadow-[0_20px_50px_rgba(0,0,0,0.15)] rounded-full px-6 py-3 flex items-center justify-between gap-4"
-        >
-          <button 
-            onClick={handlePrev}
-            className="p-2 text-editorial-muted hover:text-editorial-text transition-colors"
-            title="Previous (←)"
-          >
-            <ChevronLeft size={24} />
-          </button>
-          
-          <div className="flex items-center gap-2 border-x border-editorial-border px-4 mx-2">
-            <button 
-              onClick={() => onToggleStatus(word.word, 'mastered')}
-              className={`p-2 rounded-full transition-all ${status === 'mastered' ? 'bg-emerald-600 text-white' : 'text-emerald-700 hover:bg-emerald-50'}`}
-              title="Mastered (M)"
+      <AnimatePresence>
+        {!isSidebarOpen && (
+          <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-30 pointer-events-none w-full max-w-sm px-6">
+            <motion.div 
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 50, opacity: 0 }}
+              className="pointer-events-auto bg-white/80 backdrop-blur-md border border-editorial-text/20 shadow-[0_20px_50px_rgba(0,0,0,0.15)] rounded-full px-6 py-3 flex items-center justify-between gap-4"
             >
-              <CheckCircle2 size={20} />
-            </button>
-            <button 
-              onClick={() => onToggleStatus(word.word, 'review')}
-              className={`p-2 rounded-full transition-all ${status === 'review' ? 'bg-amber-600 text-white' : 'text-amber-700 hover:bg-amber-50'}`}
-              title="Review (R)"
-            >
-              <AlertCircle size={20} />
-            </button>
-          </div>
+              <button 
+                onClick={handlePrev}
+                className="p-2 text-editorial-muted hover:text-editorial-text transition-colors"
+                title="Previous (←)"
+              >
+                <ChevronLeft size={24} />
+              </button>
+              
+              <div className="flex items-center gap-2 border-x border-editorial-border px-4 mx-2">
+                <button 
+                  onClick={() => onToggleStatus(word.word, 'mastered')}
+                  className={`p-2 rounded-full transition-all ${status === 'mastered' ? 'bg-emerald-600 text-white' : 'text-emerald-700 hover:bg-emerald-50'}`}
+                  title="Mastered (M)"
+                >
+                  <CheckCircle2 size={20} />
+                </button>
+                <button 
+                  onClick={() => onToggleStatus(word.word, 'review')}
+                  className={`p-2 rounded-full transition-all ${status === 'review' ? 'bg-amber-600 text-white' : 'text-amber-700 hover:bg-amber-50'}`}
+                  title="Review (R)"
+                >
+                  <AlertCircle size={20} />
+                </button>
+              </div>
 
-          <button 
-            onClick={handleNext}
-            className="p-2 text-editorial-muted hover:text-editorial-text transition-colors"
-            title="Next (→)"
-          >
-            <ChevronRight size={24} />
-          </button>
-        </motion.div>
-      </div>
+              <button 
+                onClick={handleNext}
+                className="p-2 text-editorial-muted hover:text-editorial-text transition-colors"
+                title="Next (→)"
+              >
+                <ChevronRight size={24} />
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Bulk Actions Confirmation Overlay */}
       <AnimatePresence>
