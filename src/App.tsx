@@ -592,11 +592,10 @@ function StudySession({
     setIsSpeaking(false);
   };
 
-  const handleSpeak = async () => {
+  const handleSpeak = () => {
     if (isSpeaking) return;
     setIsSpeaking(true);
-    await speakWord(word.word);
-    setTimeout(() => setIsSpeaking(false), 1000);
+    speakWord(word.word, () => setIsSpeaking(false));
   };
 
   const handleBulkAction = (status: 'mastered' | 'review') => {
@@ -966,12 +965,11 @@ const WordListEntry: React.FC<{
   const [expanded, setExpanded] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
 
-  const handleSpeak = async (e: React.MouseEvent) => {
+  const handleSpeak = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (isSpeaking) return;
     setIsSpeaking(true);
-    await speakWord(word.word);
-    setTimeout(() => setIsSpeaking(false), 1000);
+    speakWord(word.word, () => setIsSpeaking(false));
   };
 
   return (
