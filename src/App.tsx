@@ -22,9 +22,11 @@ import {
   BarChart3,
   Sparkles,
   ChevronDown,
-  Star
+  Star,
+  Type
 } from 'lucide-react';
 import { VOCABULARY_DATA } from './data';
+import { PHRASAL_VERBS_DATA } from './phrasalVerbsData';
 import { WordEntry, WordBlock, QuizScore } from './types';
 import { speakWord } from './services/aiService';
 import { Quiz } from './components/Quiz';
@@ -34,7 +36,7 @@ type WordStatus = 'new' | 'mastered' | 'review';
 
 export default function App() {
   const [currentBlockId, setCurrentBlockId] = useState<string | null>(VOCABULARY_DATA[0].id);
-  const [view, setView] = useState<'study' | 'list' | 'quiz' | 'analytics' | 'bookmarks' | 'review-stack' | 'practice'>('study');
+  const [view, setView] = useState<'study' | 'list' | 'quiz' | 'analytics' | 'bookmarks' | 'review-stack' | 'practice' | 'phrasal-verbs'>('study');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
@@ -373,6 +375,18 @@ export default function App() {
               </button>
               <button 
                 onClick={() => {
+                  setView('phrasal-verbs');
+                  setIsSidebarOpen(false);
+                }}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-sm text-sm font-medium transition-all ${view === 'phrasal-verbs' ? 'bg-editorial-accent text-editorial-text' : 'text-editorial-muted hover:text-editorial-text hover:bg-neutral-50'}`}
+              >
+                <div className="flex items-center gap-3">
+                  <Type size={16} />
+                  Group Verbs
+                </div>
+              </button>
+              <button 
+                onClick={() => {
                   setView('quiz');
                   setIsSidebarOpen(false);
                 }}
@@ -687,6 +701,18 @@ export default function App() {
                 bookmarks={bookmarks}
                 onToggleBookmark={toggleBookmark}
               />
+            </motion.div>
+          )}
+
+          {view === 'phrasal-verbs' && (
+            <motion.div
+              key="phrasal-verbs-view"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex-1 flex flex-col h-full"
+            >
+              <PhrasalVerbView />
             </motion.div>
           )}
 
@@ -1408,14 +1434,14 @@ function PracticeSession({
         return (
           <div className="space-y-4">
             <p className="text-[10px] uppercase tracking-widest font-bold text-editorial-meta">Identify the Lexeme</p>
-            <p className="text-2xl md:text-3xl font-serif italic text-editorial-text leading-relaxed">“{word.definition}”</p>
+            <p className="text-xl md:text-3xl font-serif italic text-editorial-text leading-relaxed">“{word.definition}”</p>
           </div>
         );
       case 'context':
         return (
           <div className="space-y-4">
             <p className="text-[10px] uppercase tracking-widest font-bold text-editorial-meta">Contextual Cloze</p>
-            <p className="text-2xl md:text-3xl font-serif italic text-editorial-text leading-relaxed">
+            <p className="text-xl md:text-3xl font-serif italic text-editorial-text leading-relaxed">
               “{word.example.replace(new RegExp(word.word, 'gi'), '__________')}”
             </p>
           </div>
@@ -1426,12 +1452,12 @@ function PracticeSession({
             <p className="text-[10px] uppercase tracking-widest font-bold text-editorial-meta">Match Synonym</p>
             <div className="flex flex-wrap justify-center gap-3">
               {word.synonyms?.map(s => (
-                <span key={s} className="px-4 py-2 bg-editorial-accent border border-editorial-border rounded-sm text-lg font-serif italic">
+                <span key={s} className="px-4 py-2 bg-editorial-accent border border-editorial-border rounded-sm text-base md:text-lg font-serif italic">
                   {s}
                 </span>
               ))}
             </div>
-            <p className="text-xs text-editorial-meta mt-4">Identify the source word for these synonyms.</p>
+            <p className="text-[10px] text-editorial-meta mt-4 font-bold uppercase tracking-widest">Identify the source word</p>
           </div>
         );
       case 'antonym':
@@ -1440,12 +1466,12 @@ function PracticeSession({
             <p className="text-[10px] uppercase tracking-widest font-bold text-editorial-meta">Match Antonym</p>
             <div className="flex flex-wrap justify-center gap-3">
               {word.antonyms?.map(a => (
-                <span key={a} className="px-4 py-2 bg-neutral-100 border border-editorial-border rounded-sm text-lg font-serif italic">
+                <span key={a} className="px-4 py-2 bg-neutral-100 border border-editorial-border rounded-sm text-base md:text-lg font-serif italic">
                   {a}
                 </span>
               ))}
             </div>
-            <p className="text-xs text-editorial-meta mt-4">Identify the source word for these antonyms.</p>
+            <p className="text-[10px] text-editorial-meta mt-4 font-bold uppercase tracking-widest">Identify the source word</p>
           </div>
         );
       case 'derivative':
@@ -1453,15 +1479,15 @@ function PracticeSession({
         return (
           <div className="space-y-4">
             <p className="text-[10px] uppercase tracking-widest font-bold text-editorial-meta">Morphological Challenge</p>
-            <p className="text-xl text-editorial-text mb-2">What is the <span className="font-bold underline uppercase">{d?.form}</span> form of:</p>
-            <h2 className="text-4xl md:text-6xl font-serif italic text-editorial-text">{word.word}</h2>
+            <p className="text-base text-editorial-text mb-2">What is the <span className="font-bold underline uppercase">{d?.form}</span> form of:</p>
+            <h2 className="text-3xl md:text-6xl font-serif italic text-editorial-text">{word.word}</h2>
           </div>
         );
       default:
         return (
           <div className="space-y-4">
             <p className="text-[10px] uppercase tracking-widest font-bold text-editorial-meta">Define Lexeme</p>
-            <h2 className="text-4xl md:text-6xl font-serif italic text-editorial-text">{word.word}</h2>
+            <h2 className="text-3xl md:text-6xl font-serif italic text-editorial-text">{word.word}</h2>
           </div>
         );
     }
@@ -1469,10 +1495,10 @@ function PracticeSession({
 
   const renderReveal = () => {
     return (
-      <div className="space-y-8">
-        <div className="text-center pb-8 border-b border-editorial-border">
+      <div className="space-y-6 md:space-y-8">
+        <div className="text-center pb-4 md:pb-8 border-b border-editorial-border">
           <p className="text-[10px] uppercase tracking-widest text-editorial-meta mb-2">Primary Lexeme</p>
-          <h3 className="text-5xl font-serif italic text-editorial-text mb-4">{word.word}</h3>
+          <h3 className="text-3xl md:text-5xl font-serif italic text-editorial-text mb-4">{word.word}</h3>
           <div className="flex justify-center gap-4">
             <button onClick={handleSpeak} className={`p-2 rounded-full border border-editorial-border hover:bg-editorial-accent transition-all ${isSpeaking ? 'animate-pulse text-editorial-text' : 'text-editorial-meta'}`}>
               <Volume2 size={18} />
@@ -1483,25 +1509,25 @@ function PracticeSession({
           </div>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-4 md:space-y-6">
           <div>
-            <p className="text-[9px] uppercase font-bold tracking-widest text-editorial-meta mb-2">Definition</p>
-            <p className="text-xl font-serif text-editorial-text leading-relaxed">“{word.definition}”</p>
+            <p className="text-[9px] uppercase font-bold tracking-widest text-editorial-meta mb-1 md:mb-2">Definition</p>
+            <p className="text-base md:text-xl font-serif text-editorial-text leading-relaxed">“{word.definition}”</p>
           </div>
           
           <div>
-            <p className="text-[9px] uppercase font-bold tracking-widest text-editorial-meta mb-2">Example</p>
-            <p className="text-base text-editorial-muted leading-relaxed italic">“{word.example}”</p>
+            <p className="text-[9px] uppercase font-bold tracking-widest text-editorial-meta mb-1 md:mb-2">Example</p>
+            <p className="text-sm md:text-base text-editorial-muted leading-relaxed italic">“{word.example}”</p>
           </div>
 
           {word.derivatives && word.derivatives.length > 0 && (
             <div className="pt-4 border-t border-editorial-border">
               <p className="text-[9px] uppercase font-bold tracking-widest text-editorial-meta mb-2">Derivatives</p>
-              <div className="flex flex-wrap gap-4">
+              <div className="flex flex-wrap gap-2 md:gap-4">
                 {word.derivatives.map((d, i) => (
                   <div key={i} className="flex flex-col">
                     <span className="text-[8px] font-black text-editorial-meta uppercase">{d.form}</span>
-                    <span className="text-sm font-serif italic text-editorial-text">{d.word}</span>
+                    <span className="text-xs md:text-sm font-serif italic text-editorial-text">{d.word}</span>
                   </div>
                 ))}
               </div>
@@ -1513,10 +1539,10 @@ function PracticeSession({
   };
 
   return (
-    <div className="flex-1 overflow-y-auto bg-editorial-bg">
-      <div className="min-h-full flex flex-col items-center p-6 md:p-12">
-        <div className="max-w-3xl w-full my-auto">
-          <div className="text-center mb-12">
+    <div className="flex-1 overflow-y-auto bg-editorial-bg flex flex-col">
+      <div className="flex-1 flex flex-col items-center p-4 md:p-12">
+        <div className="max-w-3xl w-full my-auto py-8">
+          <div className="text-center mb-8 md:mb-12">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-editorial-accent rounded-full mb-4">
               <Brain size={12} className="text-editorial-text" />
               <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-editorial-text">Active Practice Engine</p>
@@ -1532,46 +1558,46 @@ function PracticeSession({
                 exit={{ opacity: 0, y: -20 }}
                 className="flex flex-col items-center"
               >
-                <div className="w-full bg-white border-2 border-editorial-border p-12 md:p-20 shadow-xl rounded-sm text-center mb-12 min-h-[300px] flex flex-col justify-center">
+                <div className="w-full bg-white border-2 border-editorial-border p-8 md:p-20 shadow-xl rounded-sm text-center mb-8 md:mb-12 min-h-[300px] flex flex-col justify-center">
                   {renderPrompt()}
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
                   <button 
                     onClick={() => setShowDefinition(true)}
-                    className="group relative px-12 py-5 bg-editorial-text text-white text-xs uppercase font-bold tracking-[0.3em] overflow-hidden rounded-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
+                    className="group relative px-10 py-4 md:px-12 md:py-5 bg-editorial-text text-white text-[10px] md:text-xs uppercase font-bold tracking-[0.3em] overflow-hidden rounded-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
                   >
                     <span className="relative z-10 transition-colors group-hover:text-amber-400">Reveal Solution</span>
                     <div className="absolute inset-0 bg-neutral-800 transform translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
                   </button>
                   <button 
                     onClick={handleSkip}
-                    className="px-12 py-5 border-2 border-editorial-border text-editorial-meta text-xs uppercase font-bold tracking-[0.3em] rounded-sm hover:border-editorial-text hover:text-editorial-text transition-all bg-white"
+                    className="px-10 py-4 md:px-12 md:py-5 border-2 border-editorial-border text-editorial-meta text-[10px] md:text-xs uppercase font-bold tracking-[0.3em] rounded-sm hover:border-editorial-text hover:text-editorial-text transition-all bg-white"
                   >
                     Skip Entry
                   </button>
                 </div>
-                <p className="mt-12 text-[10px] text-editorial-meta uppercase tracking-widest font-medium opacity-60 text-center">Attempt to resolve the lexical challenge before revealing</p>
+                <p className="mt-8 md:mt-12 text-[10px] text-editorial-meta uppercase tracking-widest font-medium opacity-60 text-center">Attempt to resolve the lexical challenge before revealing</p>
               </motion.div>
             ) : (
               <motion.div
                 key="reveal"
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-white border-4 border-editorial-text p-8 md:p-12 shadow-2xl rounded-sm w-full"
+                className="bg-white border-2 md:border-4 border-editorial-text p-6 md:p-12 shadow-2xl rounded-sm w-full"
               >
                 {renderReveal()}
 
-                <div className="mt-12 pt-12 border-t-2 border-dashed border-editorial-border grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="mt-8 md:mt-12 pt-8 md:pt-12 border-t-2 border-dashed border-editorial-border grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <button 
                     onClick={() => { onToggleStatus(word.word, 'mastered'); handleNext(); }}
-                    className="py-5 bg-emerald-600 text-white text-[10px] uppercase font-bold tracking-widest rounded-sm hover:bg-emerald-700 transition-colors flex items-center justify-center gap-3 shadow-lg shadow-emerald-900/10"
+                    className="py-4 md:py-5 bg-emerald-600 text-white text-[9px] md:text-[10px] uppercase font-bold tracking-widest rounded-sm hover:bg-emerald-700 transition-colors flex items-center justify-center gap-3 shadow-lg shadow-emerald-900/10"
                   >
                     <CheckCircle2 size={16} /> Mark as Mastered
                   </button>
                   <button 
                     onClick={() => { onToggleStatus(word.word, 'review'); handleNext(); }}
-                    className="py-5 bg-amber-600 text-white text-[10px] uppercase font-bold tracking-widest rounded-sm hover:bg-amber-700 transition-colors flex items-center justify-center gap-3 shadow-lg shadow-amber-900/10"
+                    className="py-4 md:py-5 bg-amber-600 text-white text-[9px] md:text-[10px] uppercase font-bold tracking-widest rounded-sm hover:bg-amber-700 transition-colors flex items-center justify-center gap-3 shadow-lg shadow-amber-900/10"
                   >
                     <AlertCircle size={16} /> Mark for Review
                   </button>
@@ -1579,7 +1605,7 @@ function PracticeSession({
                 <div className="mt-4">
                   <button 
                     onClick={handleNext}
-                    className="w-full py-4 text-editorial-meta text-[9px] uppercase font-bold tracking-[0.3em] hover:text-editorial-text transition-colors border border-transparent hover:border-editorial-border rounded-sm"
+                    className="w-full py-3 md:py-4 text-editorial-meta text-[8px] md:text-[9px] uppercase font-bold tracking-[0.3em] hover:text-editorial-text transition-colors border border-transparent hover:border-editorial-border rounded-sm"
                   >
                     Decline Assessment & Move to Next
                   </button>
@@ -1588,22 +1614,120 @@ function PracticeSession({
             )}
           </AnimatePresence>
 
-          <div className="mt-16 flex items-center justify-between text-editorial-meta border-t border-editorial-border pt-8">
-            <div className="text-[10px] uppercase font-bold tracking-[0.4em] flex items-center gap-4">
+          <div className="mt-12 md:mt-16 flex items-center justify-between text-editorial-meta border-t border-editorial-border pt-6 md:pt-8">
+            <div className="text-[8px] md:text-[10px] uppercase font-bold tracking-[0.4em] flex items-center gap-4">
               <span className="text-editorial-text">{index + 1}</span>
-              <div className="w-12 h-[1px] bg-editorial-border"></div>
+              <div className="w-8 md:w-12 h-[1px] bg-editorial-border"></div>
               <span>{sessionWords.length} Words</span>
             </div>
-            <div className="flex gap-2">
-              <button onClick={() => setIndex(prev => (prev - 1 + sessionWords.length) % sessionWords.length)} className="p-3 hover:text-editorial-text hover:bg-editorial-accent rounded-full transition-all">
+            <div className="flex gap-1 md:gap-2">
+              <button onClick={() => setIndex(prev => (prev - 1 + sessionWords.length) % sessionWords.length)} className="p-2 md:p-3 hover:text-editorial-text hover:bg-editorial-accent rounded-full transition-all">
                 <ChevronLeft size={20} />
               </button>
-              <button onClick={handleNext} className="p-3 hover:text-editorial-text hover:bg-editorial-accent rounded-full transition-all">
+              <button onClick={() => setIndex(prev => (prev + 1) % sessionWords.length)} className="p-2 md:p-3 hover:text-editorial-text hover:bg-editorial-accent rounded-full transition-all">
                 <ChevronRight size={20} />
               </button>
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function PhrasalVerbView() {
+  const [search, setSearch] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  const categories = useMemo(() => {
+    const cats = new Set(PHRASAL_VERBS_DATA.map(pv => pv.category));
+    return Array.from(cats).sort();
+  }, []);
+
+  const filteredVerbs = useMemo(() => {
+    return PHRASAL_VERBS_DATA.filter(pv => {
+      const matchesSearch = pv.verb.toLowerCase().includes(search.toLowerCase()) || 
+                           pv.meaning.toLowerCase().includes(search.toLowerCase());
+      const matchesCategory = !selectedCategory || pv.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    });
+  }, [search, selectedCategory]);
+
+  return (
+    <div className="p-6 md:p-12 max-w-6xl mx-auto w-full">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 md:mb-16 border-b border-editorial-border pb-8">
+        <div>
+          <h2 className="text-2xl md:text-5xl font-serif tracking-tight text-editorial-text mb-2 md:mb-4">Group Verbs</h2>
+          <p className="text-editorial-muted uppercase text-[8px] md:text-[10px] tracking-[0.2em] font-bold">Phrasal Lexical Structure Archive</p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+          <div className="relative">
+            <Search className="absolute left-0 top-1/2 -translate-y-1/2 text-editorial-meta" size={16} />
+            <input
+              type="text"
+              placeholder="Filter phrasals..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-6 pr-4 py-2 bg-transparent border-b border-editorial-border focus:outline-none focus:border-editorial-text transition-all text-sm font-medium w-full sm:w-48"
+            />
+          </div>
+          <select 
+            value={selectedCategory || ''} 
+            onChange={(e) => setSelectedCategory(e.target.value || null)}
+            className="bg-transparent border-b border-editorial-border py-2 text-sm font-bold uppercase tracking-widest text-editorial-muted focus:outline-none focus:border-editorial-text cursor-pointer"
+          >
+            <option value="">All Categories</option>
+            {categories.map(cat => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+        {filteredVerbs.map((pv, idx) => (
+          <motion.div 
+            key={pv.verb + idx}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: idx * 0.02 }}
+            className="group bg-white border border-editorial-border p-6 rounded-sm shadow-sm hover:shadow-xl hover:translate-y-[-4px] transition-all relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+              <Type size={48} />
+            </div>
+            <div className="flex flex-col h-full relative z-10">
+              <div className="flex items-center gap-3 mb-4">
+                <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 bg-editorial-accent border border-editorial-border rounded-sm">{pv.category}</span>
+              </div>
+              <h3 className="text-2xl md:text-3xl font-serif italic text-editorial-text mb-3 group-hover:text-editorial-muted transition-colors">{pv.verb}</h3>
+              <p className="text-sm font-medium text-editorial-text mb-6 flex-1 border-l-2 border-editorial-accent pl-4 py-1">
+                {pv.meaning}
+              </p>
+              <div className="bg-neutral-50 border border-editorial-border p-4 rounded-sm">
+                <p className="text-[8px] uppercase font-serif font-black tracking-widest text-editorial-meta mb-2">Usage Instance</p>
+                <p className="text-xs leading-relaxed italic text-editorial-muted">
+                  “{pv.example}”
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        ))}
+        {filteredVerbs.length === 0 && (
+          <div className="col-span-full py-24 text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-neutral-100 rounded-full mb-6 text-editorial-meta">
+              <X size={32} />
+            </div>
+            <h3 className="text-2xl font-serif italic text-editorial-text mb-4">No phrasal verbs matched your query</h3>
+            <p className="text-sm text-editorial-muted max-w-sm mx-auto mb-8">Try adjusting your filters or expanding your search parameters.</p>
+            <button 
+              onClick={() => { setSearch(''); setSelectedCategory(null); }}
+              className="px-8 py-3 bg-editorial-text text-white text-[10px] uppercase font-bold tracking-widest rounded-sm hover:translate-y-[-2px] transition-transform shadow-lg"
+            >
+              Reset Archive Filters
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
