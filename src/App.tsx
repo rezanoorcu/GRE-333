@@ -28,13 +28,8 @@ import {
   RefreshCw,
   Bookmark,
   Trash2,
-  BookMarked,
-  Database,
-  CloudDownload,
-  Wifi,
-  WifiOff
+  BookMarked
 } from 'lucide-react';
-import { get, set as idbSet } from 'idb-keyval';
 import { VOCABULARY_DATA } from './data';
 import { PHRASAL_VERBS_DATA } from './phrasalVerbsData';
 import { WordEntry, WordBlock, QuizScore } from './types';
@@ -52,187 +47,33 @@ export default function App() {
   const [showHelp, setShowHelp] = useState(false);
   const [lastAction, setLastAction] = useState<{word: string, status: WordStatus} | null>(null);
   
-  // App initialization state
-  const [isInitializing, setIsInitializing] = useState(true);
-
   // Persistent Bookmarks
-  const [bookmarks, setBookmarks] = useState<Set<string>>(new Set());
+  const [bookmarks, setBookmarks] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem('lexicon_bookmarks');
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch (e) {
+      return new Set();
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('lexicon_bookmarks', JSON.stringify(Array.from(bookmarks)));
+  }, [bookmarks]);
 
   // Persistent Word Status
-  const [wordStatus, setWordStatus] = useState<Record<string, WordStatus>>({});
-
-  // Persistent Analysis Data (Notes for each editorial)
-  const [analysisData, setAnalysisData] = useState<Record<string, {
-    vocabulary: string;
-    thesis: string;
-    arguments: string;
-    summary: string;
-    response: string;
-  }>>({});
-
-  // Persistent Saved Editorials (Offline content)
-  const [savedEditorials, setSavedEditorials] = useState<Record<string, any>>({});
-
-  // Persistent Data Sync
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [syncProgress, setSyncProgress] = useState(0);
-  const [isOfflineReady, setIsOfflineReady] = useState(false);
-
-  // Load all data from IndexedDB on mount
-  useEffect(() => {
-    const initApp = async () => {
-      console.log("Lexicon: Initializing tactical storage...");
-      const safetyTimeout = setTimeout(() => {
-        if (isInitializing) {
-          console.warn("Lexicon: Initialization taking too long, forcing start...");
-          setIsInitializing(false);
-        }
-      }, 5000);
-
-      try {
-        const [
-          savedBookmarks,
-          savedProgress,
-          savedAnalysis,
-          savedEdits,
-          savedSync
-        ] = await Promise.all([
-          get('lexicon_bookmarks'),
-          get('lexicon_progress'),
-          get('lexicon_editorial_analysis'),
-          get('lexicon_saved_editorials'),
-          get('lexicon_sync_complete')
-        ]);
-
-        console.log("Lexicon: Data retrieved from IDB");
-        
-        // Migration from localStorage if IDB is empty
-        let finalBookmarks = savedBookmarks;
-        let finalProgress = savedProgress;
-        let finalAnalysis = savedAnalysis;
-        let finalEdits = savedEdits;
-
-        if (!savedBookmarks && !savedProgress) {
-          console.log("Lexicon: Checking for legacy data in localStorage...");
-          const legacyBookmarks = localStorage.getItem('lexicon_bookmarks');
-          const legacyProgress = localStorage.getItem('lexicon_progress');
-          const legacyAnalysis = localStorage.getItem('lexicon_editorial_analysis');
-          const legacyEdits = localStorage.getItem('lexicon_saved_editorials');
-
-          if (legacyBookmarks) finalBookmarks = JSON.parse(legacyBookmarks);
-          if (legacyProgress) finalProgress = JSON.parse(legacyProgress);
-          if (legacyAnalysis) finalAnalysis = JSON.parse(legacyAnalysis);
-          if (legacyEdits) finalEdits = JSON.parse(legacyEdits);
-          
-          if (finalBookmarks || finalProgress) {
-             console.log("Lexicon: Legacy data found, migrating...");
-          }
-        }
-
-        if (finalBookmarks) setBookmarks(new Set(finalBookmarks));
-        if (finalProgress) setWordStatus(finalProgress);
-        if (finalAnalysis) setAnalysisData(finalAnalysis);
-        if (finalEdits) setSavedEditorials(finalEdits);
-        if (savedSync === 'true') setIsOfflineReady(true);
-      } catch (err) {
-        console.error("Lexicon: Initialization from IDB failed", err);
-      } finally {
-        clearTimeout(safetyTimeout);
-        setTimeout(() => {
-          setIsInitializing(false);
-          console.log("Lexicon: App ready");
-        }, 800);
-      }
-    };
-    initApp();
-  }, []);
-
-  // Save changes to IndexedDB
-  useEffect(() => {
-    if (!isInitializing) idbSet('lexicon_bookmarks', Array.from(bookmarks));
-  }, [bookmarks, isInitializing]);
-
-  useEffect(() => {
-    if (!isInitializing) idbSet('lexicon_progress', wordStatus);
-  }, [wordStatus, isInitializing]);
-
-  useEffect(() => {
-    if (!isInitializing) idbSet('lexicon_editorial_analysis', analysisData);
-  }, [analysisData, isInitializing]);
-
-  useEffect(() => {
-    if (!isInitializing) idbSet('lexicon_saved_editorials', savedEditorials);
-  }, [savedEditorials, isInitializing]);
-
-  const performFullSync = async () => {
-    if (!navigator.onLine) {
-      alert("Internet connection required for initial synchronization.");
-      return;
-    }
-
-    setIsSyncing(true);
-    setSyncProgress(5);
-    
+  const [wordStatus, setWordStatus] = useState<Record<string, WordStatus>>(() => {
     try {
-      console.log("Lexicon: Starting Full Tactical Synchronization...");
-      
-      // 1. Snapshot Core Assets
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setSyncProgress(20);
-
-      // 2. Persist Knowledge Base
-      console.log("Lexicon: Persisting Knowledge Base...");
-      await Promise.all([
-        idbSet('lexicon_cache_vocab', VOCABULARY_DATA),
-        idbSet('lexicon_cache_phrasal', PHRASAL_VERBS_DATA)
-      ]);
-      setSyncProgress(40);
-      
-      // 3. Deep Cache Intelligence Feed
-      console.log("Lexicon: Fetching Intelligence Feed...");
-      const response = await fetch('/api/editorials/latest');
-      const data = await response.json();
-      
-      if (Array.isArray(data)) {
-        await idbSet('lexicon_cached_feed', data);
-        setSyncProgress(50);
-        
-        // Cache detailed content for first 10 editorials (instead of 3)
-        const cacheLimit = Math.min(data.length, 10);
-        for (let i = 0; i < cacheLimit; i++) {
-          console.log(`Lexicon: Caching editorial ${i+1}/${cacheLimit}`);
-          try {
-            const contentRes = await fetch(`/api/editorial/content?url=${encodeURIComponent(data[i].link)}`);
-            const content = await contentRes.json();
-            if (content) {
-              setSavedEditorials(prev => {
-                const next = { ...prev, [data[i].link]: content };
-                idbSet('lexicon_saved_editorials', next);
-                return next;
-              });
-            }
-          } catch (e) {
-            console.warn(`Failed to cache editorial ${i}`, e);
-          }
-          setSyncProgress(50 + Math.floor(((i + 1) / cacheLimit) * 50));
-        }
-      }
-
-      setSyncProgress(100);
-      await idbSet('lexicon_sync_complete', 'true');
-      setIsOfflineReady(true);
-      console.log("Lexicon: Synchronization Complete. App is 100% Offline Capable.");
-      
-      setTimeout(() => {
-        setIsSyncing(false);
-        setSyncProgress(0);
-      }, 1000);
-    } catch (error) {
-      console.error("Lexicon: Sync failed", error);
-      setIsSyncing(false);
-      alert("Synchronization failed. Check network stability.");
+      const saved = localStorage.getItem('lexicon_progress');
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      return {};
     }
-  };
+  });
+
+  useEffect(() => {
+    localStorage.setItem('lexicon_progress', JSON.stringify(wordStatus));
+  }, [wordStatus]);
 
   const toggleBookmark = (word: string) => {
     setBookmarks(prev => {
@@ -342,59 +183,6 @@ export default function App() {
 
   return (
     <div className="flex h-screen w-full bg-editorial-bg text-editorial-text font-sans overflow-hidden relative">
-      <AnimatePresence>
-        {isInitializing && (
-          <motion.div 
-            initial={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] bg-editorial-bg flex flex-col items-center justify-center p-8"
-          >
-            <div className="max-w-md w-full space-y-12 text-center">
-              <div className="relative">
-                <motion.div 
-                  animate={{ scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                  className="w-32 h-32 bg-editorial-text text-white mx-auto flex items-center justify-center rounded-sm shadow-2xl relative z-10"
-                >
-                  <Brain size={64} className="text-amber-400" />
-                </motion.div>
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 border-2 border-dashed border-editorial-border rounded-full animate-spin-slow"></div>
-              </div>
-              
-              <div className="space-y-4">
-                <h1 className="text-4xl font-serif italic tracking-tight">Lexicon Tactical</h1>
-                <div className="flex flex-col items-center gap-1">
-                  <div className="flex items-center gap-2 overflow-hidden">
-                    <motion.div 
-                      initial={{ x: '-100%' }}
-                      animate={{ x: '100%' }}
-                      transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-                      className="h-[1px] w-32 bg-editorial-text"
-                    />
-                  </div>
-                  <p className="text-[10px] uppercase tracking-[0.4em] font-black opacity-40">Initializing Local Tactical Storage</p>
-                </div>
-              </div>
-
-              <div className="pt-12 grid grid-cols-3 gap-8">
-                <div className="flex flex-col items-center gap-2">
-                  <Database size={16} className="text-editorial-meta" />
-                  <span className="text-[8px] uppercase font-bold tracking-widest text-editorial-meta">IndexedDB</span>
-                </div>
-                <div className="flex flex-col items-center gap-2">
-                  <Wifi size={16} className="text-editorial-meta" />
-                  <span className="text-[8px] uppercase font-bold tracking-widest text-editorial-meta">PWA Ready</span>
-                </div>
-                <div className="flex flex-col items-center gap-2">
-                  <RefreshCw size={16} className="text-editorial-meta animate-spin" />
-                  <span className="text-[8px] uppercase font-bold tracking-widest text-editorial-meta">Syncing</span>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* HUD Notification for Status Changes */}
       <AnimatePresence>
         {lastAction && (
@@ -953,12 +741,7 @@ export default function App() {
               exit={{ opacity: 0 }}
               className="flex-1 flex flex-col h-full"
             >
-              <EditorialView 
-                analysisData={analysisData} 
-                setAnalysisData={setAnalysisData}
-                savedEditorials={savedEditorials}
-                setSavedEditorials={setSavedEditorials}
-              />
+              <EditorialView />
             </motion.div>
           )}
 
@@ -981,10 +764,6 @@ export default function App() {
               <Dashboard 
                 blocks={VOCABULARY_DATA} 
                 wordStatus={wordStatus} 
-                isSyncing={isSyncing}
-                syncProgress={syncProgress}
-                isOfflineReady={isOfflineReady}
-                onPerformSync={performFullSync}
               />
             </motion.div>
           )}
@@ -1885,23 +1664,48 @@ function PracticeSession({
   );
 }
 
-function EditorialView({ 
-  analysisData, 
-  setAnalysisData, 
-  savedEditorials, 
-  setSavedEditorials 
-}: { 
-  analysisData: Record<string, any>, 
-  setAnalysisData: React.Dispatch<React.SetStateAction<Record<string, any>>>,
-  savedEditorials: Record<string, any>,
-  setSavedEditorials: React.Dispatch<React.SetStateAction<Record<string, any>>>
-}) {
+function EditorialView() {
   const [selectedEditorialId, setSelectedEditorialId] = useState<string | null>(null);
   const [isLoadingLive, setIsLoadingLive] = useState(false);
   const [liveEditorials, setLiveEditorials] = useState<any[]>([]);
   const [liveContent, setLiveContent] = useState<any | null>(null);
   const [isLoadingContent, setIsLoadingContent] = useState(false);
   const [editorialTab, setEditorialTab] = useState<'live' | 'saved'>('live');
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
+  // Persistent Analysis Data (Notes for each editorial)
+  const [analysisData, setAnalysisData] = useState<Record<string, {
+    vocabulary: string;
+    thesis: string;
+    arguments: string;
+    summary: string;
+    response: string;
+  }>>(() => {
+    try {
+      const saved = localStorage.getItem('lexicon_editorial_analysis');
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      return {};
+    }
+  });
+
+  // Persistent Saved Editorials (Offline content)
+  const [savedEditorials, setSavedEditorials] = useState<Record<string, any>>(() => {
+    try {
+      const saved = localStorage.getItem('lexicon_saved_editorials');
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('lexicon_editorial_analysis', JSON.stringify(analysisData));
+  }, [analysisData]);
+
+  useEffect(() => {
+    localStorage.setItem('lexicon_saved_editorials', JSON.stringify(savedEditorials));
+  }, [savedEditorials]);
 
   useEffect(() => {
     if (editorialTab === 'live') {
@@ -1911,34 +1715,24 @@ function EditorialView({
 
   const fetchLiveEditorials = async (refresh = false) => {
     setIsLoadingLive(true);
+    setFetchError(null);
     try {
-      // 1. If not refreshing and offline, try cache first
-      if (!refresh && !navigator.onLine) {
-        const cached = await get('lexicon_cached_feed');
-        if (cached) {
-          setLiveEditorials(cached);
-          setIsLoadingLive(false);
-          return;
-        }
-      }
-
       const response = await fetch(`/api/editorials/latest${refresh ? '?refresh=true' : ''}`);
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+      }
       const data = await response.json();
       if (Array.isArray(data)) {
         setLiveEditorials(data);
-        // Update cache for next offline use
-        await idbSet('lexicon_cached_feed', data);
+        if (data.length === 0) setFetchError("Intelligence system received empty data pulse. Remote source may be unreachable.");
       } else {
         setLiveEditorials([]);
+        setFetchError("Invalid data signature received from tactical hub.");
       }
     } catch (error) {
-      console.error("Failed to fetch live editorials, trying cache", error);
-      const cached = await get('lexicon_cached_feed');
-      if (cached) {
-        setLiveEditorials(cached);
-      } else {
-        setLiveEditorials([]);
-      }
+      console.error("Failed to fetch live editorials", error);
+      setLiveEditorials([]);
+      setFetchError(error instanceof Error ? error.message : "Unspecified synchronization failure.");
     } finally {
       setIsLoadingLive(false);
     }
@@ -2038,6 +1832,7 @@ function EditorialView({
 
   if (selectedEditorialId && (liveContent || isLoadingContent)) {
     const isSaved = !!savedEditorials[selectedEditorialId];
+    const currentAnalysis = analysisData[selectedEditorialId] || { vocabulary: '', thesis: '', arguments: '', summary: '', response: '' };
     
     return (
       <div className="flex-1 overflow-y-auto bg-editorial-bg flex flex-col pb-24">
@@ -2279,7 +2074,14 @@ function EditorialView({
           ))
         ) : (
           <div className="col-span-full text-center py-24 border-2 border-dashed border-editorial-border rounded-lg">
-            <p className="text-editorial-meta font-serif italic mb-4">No editorials found in the current transmission cycle.</p>
+            <p className="text-editorial-meta font-serif italic mb-4">
+              {fetchError || "No editorials found in the current transmission cycle."}
+            </p>
+            {fetchError && (
+              <p className="text-[10px] text-red-500 uppercase font-black tracking-widest mb-6">
+                Terminal Error Code: {fetchError.includes('404') ? 'RSC-404' : fetchError.includes('500') ? 'RSC-500' : 'RSC-UNK'}
+              </p>
+            )}
             <button onClick={() => fetchLiveEditorials(true)} className="px-8 py-3 bg-editorial-text text-white text-[10px] uppercase tracking-widest font-bold rounded-sm">Force Resync</button>
           </div>
         )}
