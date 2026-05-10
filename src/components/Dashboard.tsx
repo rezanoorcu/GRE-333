@@ -143,17 +143,31 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </div>
               </div>
             ) : (
-              <button 
-                onClick={onPerformSync}
-                className="group relative px-6 py-4 bg-editorial-text text-white text-[10px] uppercase font-bold tracking-[0.3em] overflow-hidden rounded-sm transition-all hover:scale-[1.02] flex items-center justify-center gap-3"
-              >
-                <CloudDownload size={16} />
-                {isOfflineReady ? 'Refresh Local Intelligence' : 'Download Complete Database'}
-              </button>
+              <div className="flex flex-col gap-2">
+                <button 
+                  onClick={onPerformSync}
+                  className="group relative px-6 py-4 bg-editorial-text text-white text-[10px] uppercase font-bold tracking-[0.3em] overflow-hidden rounded-sm transition-all hover:scale-[1.02] flex items-center justify-center gap-3"
+                >
+                  <CloudDownload size={16} />
+                  {isOfflineReady ? 'Sync Latest Intelligence' : 'Download Complete Database'}
+                </button>
+                <button 
+                  onClick={() => {
+                    if(confirm("DANGER: This will clear ALL bookmarks and progress. Use only if app is malfunctioning. Proceed?")) {
+                      localStorage.clear();
+                      indexedDB.deleteDatabase('keyval-store');
+                      window.location.reload();
+                    }
+                  }}
+                  className="text-[8px] uppercase tracking-widest font-bold text-red-400 hover:text-red-600 transition-colors py-1 flex items-center justify-center gap-2"
+                >
+                  <RefreshCw size={10} /> Emergency Storage Flush
+                </button>
+              </div>
             )}
             {!isSyncing && isOfflineReady && (
               <p className="text-[9px] text-center uppercase tracking-widest font-bold text-emerald-600 flex items-center justify-center gap-2">
-                <CheckCircle2 size={10} /> Database Fully Synchronized
+                <CheckCircle2 size={10} /> Intelligence Fully Synchronized
               </p>
             )}
           </div>

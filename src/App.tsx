@@ -81,6 +81,14 @@ export default function App() {
   // Load all data from IndexedDB on mount
   useEffect(() => {
     const initApp = async () => {
+      console.log("Lexicon: Initializing tactical storage...");
+      const safetyTimeout = setTimeout(() => {
+        if (isInitializing) {
+          console.warn("Lexicon: Initialization taking too long, forcing start...");
+          setIsInitializing(false);
+        }
+      }, 5000);
+
       try {
         const [
           savedBookmarks,
@@ -96,15 +104,44 @@ export default function App() {
           get('lexicon_sync_complete')
         ]);
 
-        if (savedBookmarks) setBookmarks(new Set(savedBookmarks));
-        if (savedProgress) setWordStatus(savedProgress);
-        if (savedAnalysis) setAnalysisData(savedAnalysis);
-        if (savedEdits) setSavedEditorials(savedEdits);
+        console.log("Lexicon: Data retrieved from IDB");
+        
+        // Migration from localStorage if IDB is empty
+        let finalBookmarks = savedBookmarks;
+        let finalProgress = savedProgress;
+        let finalAnalysis = savedAnalysis;
+        let finalEdits = savedEdits;
+
+        if (!savedBookmarks && !savedProgress) {
+          console.log("Lexicon: Checking for legacy data in localStorage...");
+          const legacyBookmarks = localStorage.getItem('lexicon_bookmarks');
+          const legacyProgress = localStorage.getItem('lexicon_progress');
+          const legacyAnalysis = localStorage.getItem('lexicon_editorial_analysis');
+          const legacyEdits = localStorage.getItem('lexicon_saved_editorials');
+
+          if (legacyBookmarks) finalBookmarks = JSON.parse(legacyBookmarks);
+          if (legacyProgress) finalProgress = JSON.parse(legacyProgress);
+          if (legacyAnalysis) finalAnalysis = JSON.parse(legacyAnalysis);
+          if (legacyEdits) finalEdits = JSON.parse(legacyEdits);
+          
+          if (finalBookmarks || finalProgress) {
+             console.log("Lexicon: Legacy data found, migrating...");
+          }
+        }
+
+        if (finalBookmarks) setBookmarks(new Set(finalBookmarks));
+        if (finalProgress) setWordStatus(finalProgress);
+        if (finalAnalysis) setAnalysisData(finalAnalysis);
+        if (finalEdits) setSavedEditorials(finalEdits);
         if (savedSync === 'true') setIsOfflineReady(true);
       } catch (err) {
-        console.error("Initialization from IDB failed", err);
+        console.error("Lexicon: Initialization from IDB failed", err);
       } finally {
-        setTimeout(() => setIsInitializing(false), 800);
+        clearTimeout(safetyTimeout);
+        setTimeout(() => {
+          setIsInitializing(false);
+          console.log("Lexicon: App ready");
+        }, 800);
       }
     };
     initApp();
@@ -128,57 +165,72 @@ export default function App() {
   }, [savedEditorials, isInitializing]);
 
   const performFullSync = async () => {
+    if (!navigator.onLine) {
+      alert("Internet connection required for initial synchronization.");
+      return;
+    }
+
     setIsSyncing(true);
-    setSyncProgress(10);
+    setSyncProgress(5);
     
     try {
-      // 1. Fetch external meta-data
-      await new Promise(resolve => setTimeout(resolve, 800));
-      setSyncProgress(30);
+      console.log("Lexicon: Starting Full Tactical Synchronization...");
+      
+      // 1. Snapshot Core Assets
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setSyncProgress(20);
 
-      // 2. Cache all static lesson data (though they are already in the bundle, this ensures they are in IDB)
+      // 2. Persist Knowledge Base
+      console.log("Lexicon: Persisting Knowledge Base...");
       await Promise.all([
         idbSet('lexicon_cache_vocab', VOCABULARY_DATA),
         idbSet('lexicon_cache_phrasal', PHRASAL_VERBS_DATA)
       ]);
-      setSyncProgress(60);
+      setSyncProgress(40);
       
-      // 3. Pre-fetch live editorials if online
-      if (navigator.onLine) {
-        try {
-          const response = await fetch('/api/editorials/latest');
-          const data = await response.json();
-          if (Array.isArray(data)) {
-            await idbSet('lexicon_cached_feed', data);
-            
-            for (let i = 0; i < Math.min(data.length, 3); i++) {
-              const contentRes = await fetch(`/api/editorial/content?url=${encodeURIComponent(data[i].link)}`);
-              const content = await contentRes.json();
-              if (content) {
-                setSavedEditorials(prev => ({
-                  ...prev,
-                  [data[i].link]: content
-                }));
-              }
-              setSyncProgress(60 + (i + 1) * 10);
+      // 3. Deep Cache Intelligence Feed
+      console.log("Lexicon: Fetching Intelligence Feed...");
+      const response = await fetch('/api/editorials/latest');
+      const data = await response.json();
+      
+      if (Array.isArray(data)) {
+        await idbSet('lexicon_cached_feed', data);
+        setSyncProgress(50);
+        
+        // Cache detailed content for first 10 editorials (instead of 3)
+        const cacheLimit = Math.min(data.length, 10);
+        for (let i = 0; i < cacheLimit; i++) {
+          console.log(`Lexicon: Caching editorial ${i+1}/${cacheLimit}`);
+          try {
+            const contentRes = await fetch(`/api/editorial/content?url=${encodeURIComponent(data[i].link)}`);
+            const content = await contentRes.json();
+            if (content) {
+              setSavedEditorials(prev => {
+                const next = { ...prev, [data[i].link]: content };
+                idbSet('lexicon_saved_editorials', next);
+                return next;
+              });
             }
+          } catch (e) {
+            console.warn(`Failed to cache editorial ${i}`, e);
           }
-        } catch (e) {
-          console.warn("Could not pre-cache live feed", e);
+          setSyncProgress(50 + Math.floor(((i + 1) / cacheLimit) * 50));
         }
       }
 
       setSyncProgress(100);
       await idbSet('lexicon_sync_complete', 'true');
       setIsOfflineReady(true);
+      console.log("Lexicon: Synchronization Complete. App is 100% Offline Capable.");
       
       setTimeout(() => {
         setIsSyncing(false);
         setSyncProgress(0);
       }, 1000);
     } catch (error) {
-      console.error("Sync failed", error);
+      console.error("Lexicon: Sync failed", error);
       setIsSyncing(false);
+      alert("Synchronization failed. Check network stability.");
     }
   };
 
