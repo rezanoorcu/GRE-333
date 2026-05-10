@@ -1719,20 +1719,20 @@ function EditorialView() {
     try {
       const response = await fetch(`/api/editorials/latest${refresh ? '?refresh=true' : ''}`);
       if (!response.ok) {
-        throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+        // Fallback for network errors that aren't caught by server-side handles
+        setFetchError(`Network Response Failure (${response.status})`);
+        setIsLoadingLive(false);
+        return;
       }
       const data = await response.json();
       if (Array.isArray(data)) {
         setLiveEditorials(data);
-        if (data.length === 0) setFetchError("Intelligence system received empty data pulse. Remote source may be unreachable.");
       } else {
         setLiveEditorials([]);
-        setFetchError("Invalid data signature received from tactical hub.");
       }
     } catch (error) {
-      console.error("Failed to fetch live editorials", error);
-      setLiveEditorials([]);
-      setFetchError(error instanceof Error ? error.message : "Unspecified synchronization failure.");
+      console.error("Tactical Fetch failed", error);
+      setFetchError("Synchronization with the tactical source has been severed.");
     } finally {
       setIsLoadingLive(false);
     }
@@ -2075,14 +2075,19 @@ function EditorialView() {
         ) : (
           <div className="col-span-full text-center py-24 border-2 border-dashed border-editorial-border rounded-lg">
             <p className="text-editorial-meta font-serif italic mb-4">
-              {fetchError || "No editorials found in the current transmission cycle."}
+              {fetchError || "Establishing connection with live intelligence source..."}
             </p>
             {fetchError && (
               <p className="text-[10px] text-red-500 uppercase font-black tracking-widest mb-6">
-                Terminal Error Code: {fetchError.includes('404') ? 'RSC-404' : fetchError.includes('500') ? 'RSC-500' : 'RSC-UNK'}
+                Status: Tactical Signal Interrupted
               </p>
             )}
-            <button onClick={() => fetchLiveEditorials(true)} className="px-8 py-3 bg-editorial-text text-white text-[10px] uppercase tracking-widest font-bold rounded-sm">Force Resync</button>
+            <button 
+              onClick={() => fetchLiveEditorials(true)} 
+              className="px-8 py-3 bg-editorial-text text-white text-[10px] uppercase tracking-widest font-bold rounded-sm transition-all hover:scale-105 active:scale-95"
+            >
+              Re-Attempt Tactical Uplink
+            </button>
           </div>
         )}
       </div>
