@@ -19,14 +19,37 @@ import {
 } from 'recharts';
 import { motion } from 'motion/react';
 import { WordBlock } from '../types';
-import { TrendingUp, Target, Award, BookOpen } from 'lucide-react';
+import { TrendingUp, Target, Award, BookOpen, Database, CloudDownload, RefreshCw, CheckCircle2, Wifi, WifiOff } from 'lucide-react';
 
 interface DashboardProps {
   blocks: WordBlock[];
   wordStatus: Record<string, 'new' | 'mastered' | 'review'>;
+  isSyncing?: boolean;
+  syncProgress?: number;
+  isOfflineReady?: boolean;
+  onPerformSync?: () => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ blocks, wordStatus }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ 
+  blocks, 
+  wordStatus,
+  isSyncing = false,
+  syncProgress = 0,
+  isOfflineReady = false,
+  onPerformSync
+}) => {
+  const [isOnline, setIsOnline] = React.useState(navigator.onLine);
+
+  React.useEffect(() => {
+    const handleStatusChange = () => setIsOnline(navigator.onLine);
+    window.addEventListener('online', handleStatusChange);
+    window.addEventListener('offline', handleStatusChange);
+    return () => {
+      window.removeEventListener('online', handleStatusChange);
+      window.removeEventListener('offline', handleStatusChange);
+    };
+  }, []);
+
   const allWords = useMemo(() => blocks.flatMap(b => b.words), [blocks]);
   
   const stats = useMemo(() => {
@@ -65,10 +88,77 @@ export const Dashboard: React.FC<DashboardProps> = ({ blocks, wordStatus }) => {
 
   return (
     <div className="p-6 md:p-12 max-w-7xl mx-auto w-full pb-20">
-      <div className="mb-12 border-b border-editorial-border pb-8">
-        <h2 className="text-3xl md:text-5xl font-serif tracking-tight text-editorial-text mb-2 md:mb-4">Mastery Analytics</h2>
-        <p className="text-editorial-muted uppercase text-[8px] md:text-[10px] tracking-[0.2em] font-bold">Progress Visualization Dashboard</p>
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 border-b border-editorial-border pb-8">
+        <div>
+          <h2 className="text-3xl md:text-5xl font-serif tracking-tight text-editorial-text mb-2 md:mb-4">Mastery Analytics</h2>
+          <p className="text-editorial-muted uppercase text-[8px] md:text-[10px] tracking-[0.2em] font-bold">Progress Visualization Dashboard</p>
+        </div>
+        <div className={`flex items-center gap-3 px-3 py-1.5 rounded-full border ${isOnline ? 'border-emerald-100 bg-emerald-50 text-emerald-700' : 'border-amber-100 bg-amber-50 text-amber-700'}`}>
+          {isOnline ? <Wifi size={14} /> : <WifiOff size={14} />}
+          <span className="text-[10px] uppercase font-black tracking-widest">{isOnline ? 'Network Active' : 'Offline Mode'}</span>
+        </div>
       </div>
+
+      {/* Sync Control Module */}
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-12 bg-white border-2 border-editorial-text p-6 md:p-10 rounded-sm shadow-xl relative overflow-hidden"
+      >
+        <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
+          <Database size={120} />
+        </div>
+        
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+          <div className="max-w-xl">
+            <h3 className="text-2xl font-serif italic mb-2">Tactical Readiness Command</h3>
+            <p className="text-sm text-editorial-muted font-serif italic mb-4 leading-relaxed">
+              Synchronize the entire Lexicon database to your device for 100% offline access. This caches all vocabulary, group verbs, and the latest intelligence feed into your local tactical storage.
+            </p>
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 size={14} className={isOfflineReady ? 'text-emerald-500' : 'text-neutral-300'} />
+                <span className="text-[10px] uppercase font-bold tracking-widest text-editorial-meta">Deep Cache Ready</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Database size={14} className="text-editorial-text" />
+                <span className="text-[10px] uppercase font-bold tracking-widest text-editorial-meta">~2.4MB Local Storage</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3 min-w-[240px]">
+            {isSyncing ? (
+              <div className="space-y-3">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-[10px] uppercase font-black tracking-widest">Synchronizing...</span>
+                  <span className="text-[10px] font-mono">{syncProgress}%</span>
+                </div>
+                <div className="h-2 w-full bg-neutral-100 rounded-full overflow-hidden border border-editorial-border">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${syncProgress}%` }}
+                    className="h-full bg-editorial-text"
+                  />
+                </div>
+              </div>
+            ) : (
+              <button 
+                onClick={onPerformSync}
+                className="group relative px-6 py-4 bg-editorial-text text-white text-[10px] uppercase font-bold tracking-[0.3em] overflow-hidden rounded-sm transition-all hover:scale-[1.02] flex items-center justify-center gap-3"
+              >
+                <CloudDownload size={16} />
+                {isOfflineReady ? 'Refresh Local Intelligence' : 'Download Complete Database'}
+              </button>
+            )}
+            {!isSyncing && isOfflineReady && (
+              <p className="text-[9px] text-center uppercase tracking-widest font-bold text-emerald-600 flex items-center justify-center gap-2">
+                <CheckCircle2 size={10} /> Database Fully Synchronized
+              </p>
+            )}
+          </div>
+        </div>
+      </motion.div>
 
       {/* Hero Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">

@@ -1,6 +1,6 @@
 {
   "name": "Lexicon Master",
-  "description": "An interactive GRE-style vocabulary builder with context-rich flashcards and systematic study blocks.",
+  "description": "An interactive GRE-style vocabulary builder and editorial analysis tool featuring curated lessons and live feed integration from The Daily Star.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }

@@ -23,7 +23,16 @@ import {
   Sparkles,
   ChevronDown,
   Star,
-  Type
+  Type,
+  FileText,
+  RefreshCw,
+  Bookmark,
+  Trash2,
+  BookMarked,
+  Database,
+  CloudDownload,
+  Wifi,
+  WifiOff
 } from 'lucide-react';
 import { VOCABULARY_DATA } from './data';
 import { PHRASAL_VERBS_DATA } from './phrasalVerbsData';
@@ -36,7 +45,7 @@ type WordStatus = 'new' | 'mastered' | 'review';
 
 export default function App() {
   const [currentBlockId, setCurrentBlockId] = useState<string | null>(VOCABULARY_DATA[0].id);
-  const [view, setView] = useState<'study' | 'list' | 'quiz' | 'analytics' | 'bookmarks' | 'review-stack' | 'practice' | 'phrasal-verbs'>('study');
+  const [view, setView] = useState<'study' | 'list' | 'quiz' | 'analytics' | 'bookmarks' | 'review-stack' | 'practice' | 'phrasal-verbs' | 'editorial'>('study');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
@@ -81,6 +90,100 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('lexicon_progress', JSON.stringify(wordStatus));
   }, [wordStatus]);
+
+  // Persistent Analysis Data (Notes for each editorial)
+  const [analysisData, setAnalysisData] = useState<Record<string, {
+    vocabulary: string;
+    thesis: string;
+    arguments: string;
+    summary: string;
+    response: string;
+  }>>(() => {
+    try {
+      const saved = localStorage.getItem('lexicon_editorial_analysis');
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      return {};
+    }
+  });
+
+  // Persistent Saved Editorials (Offline content)
+  const [savedEditorials, setSavedEditorials] = useState<Record<string, any>>(() => {
+    try {
+      const saved = localStorage.getItem('lexicon_saved_editorials');
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      return {};
+    }
+  });
+
+  // Persistent Data Sync
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncProgress, setSyncProgress] = useState(0);
+  const [isOfflineReady, setIsOfflineReady] = useState(() => {
+    return localStorage.getItem('lexicon_sync_complete') === 'true';
+  });
+
+  const performFullSync = async () => {
+    setIsSyncing(true);
+    setSyncProgress(10);
+    
+    try {
+      // 1. Simulate fetching all external meta-data
+      await new Promise(resolve => setTimeout(resolve, 800));
+      setSyncProgress(30);
+
+      // 2. Cache all static lesson data
+      localStorage.setItem('lexicon_cache_vocab', JSON.stringify(VOCABULARY_DATA));
+      localStorage.setItem('lexicon_cache_phrasal', JSON.stringify(PHRASAL_VERBS_DATA));
+      setSyncProgress(60);
+      
+      // 3. Pre-fetch live editorials if online
+      if (navigator.onLine) {
+        try {
+          const response = await fetch('/api/editorials/latest');
+          const data = await response.json();
+          if (Array.isArray(data)) {
+            localStorage.setItem('lexicon_cached_feed', JSON.stringify(data));
+            
+            for (let i = 0; i < Math.min(data.length, 3); i++) {
+              const contentRes = await fetch(`/api/editorial/content?url=${encodeURIComponent(data[i].link)}`);
+              const content = await contentRes.json();
+              if (content) {
+                setSavedEditorials(prev => ({
+                  ...prev,
+                  [data[i].link]: content
+                }));
+              }
+              setSyncProgress(60 + (i + 1) * 10);
+            }
+          }
+        } catch (e) {
+          console.warn("Could not pre-cache live feed", e);
+        }
+      }
+
+      setSyncProgress(100);
+      localStorage.setItem('lexicon_sync_complete', 'true');
+      setIsOfflineReady(true);
+      
+      setTimeout(() => {
+        setIsSyncing(false);
+        setSyncProgress(0);
+      }, 1000);
+    } catch (error) {
+      console.error("Sync failed", error);
+      setIsSyncing(false);
+    }
+  };
+
+  useEffect(() => {
+    localStorage.setItem('lexicon_editorial_analysis', JSON.stringify(analysisData));
+  }, [analysisData]);
+
+  useEffect(() => {
+    localStorage.setItem('lexicon_saved_editorials', JSON.stringify(savedEditorials));
+  }, [savedEditorials]);
 
   const toggleStatus = (word: string, status: WordStatus) => {
     const isNewStatus = wordStatus[word] !== status;
@@ -383,6 +486,18 @@ export default function App() {
                 <div className="flex items-center gap-3">
                   <Type size={16} />
                   Group Verbs
+                </div>
+              </button>
+              <button 
+                onClick={() => {
+                  setView('editorial');
+                  setIsSidebarOpen(false);
+                }}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-sm text-sm font-medium transition-all ${view === 'editorial' ? 'bg-editorial-accent text-editorial-text' : 'text-editorial-muted hover:text-editorial-text hover:bg-neutral-50'}`}
+              >
+                <div className="flex items-center gap-3">
+                  <FileText size={16} />
+                  Editorial Analysis
                 </div>
               </button>
               <button 
@@ -716,6 +831,23 @@ export default function App() {
             </motion.div>
           )}
 
+          {view === 'editorial' && (
+            <motion.div
+              key="editorial-view"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex-1 flex flex-col h-full"
+            >
+              <EditorialView 
+                analysisData={analysisData} 
+                setAnalysisData={setAnalysisData}
+                savedEditorials={savedEditorials}
+                setSavedEditorials={setSavedEditorials}
+              />
+            </motion.div>
+          )}
+
           {view === 'quiz' && (
             <Quiz 
               blocks={VOCABULARY_DATA} 
@@ -735,6 +867,10 @@ export default function App() {
               <Dashboard 
                 blocks={VOCABULARY_DATA} 
                 wordStatus={wordStatus} 
+                isSyncing={isSyncing}
+                syncProgress={syncProgress}
+                isOfflineReady={isOfflineReady}
+                onPerformSync={performFullSync}
               />
             </motion.div>
           )}
@@ -1634,6 +1770,410 @@ function PracticeSession({
     </div>
   );
 }
+
+function EditorialView({ 
+  analysisData, 
+  setAnalysisData, 
+  savedEditorials, 
+  setSavedEditorials 
+}: { 
+  analysisData: Record<string, any>, 
+  setAnalysisData: React.Dispatch<React.SetStateAction<Record<string, any>>>,
+  savedEditorials: Record<string, any>,
+  setSavedEditorials: React.Dispatch<React.SetStateAction<Record<string, any>>>
+}) {
+  const [selectedEditorialId, setSelectedEditorialId] = useState<string | null>(null);
+  const [isLoadingLive, setIsLoadingLive] = useState(false);
+  const [liveEditorials, setLiveEditorials] = useState<any[]>([]);
+  const [liveContent, setLiveContent] = useState<any | null>(null);
+  const [isLoadingContent, setIsLoadingContent] = useState(false);
+  const [editorialTab, setEditorialTab] = useState<'live' | 'saved'>('live');
+
+  useEffect(() => {
+    if (editorialTab === 'live') {
+      fetchLiveEditorials();
+    }
+  }, [editorialTab]);
+
+  const fetchLiveEditorials = async (refresh = false) => {
+    setIsLoadingLive(true);
+    try {
+      // 1. If not refreshing and offline, try cache first
+      if (!refresh && !navigator.onLine) {
+        const cached = localStorage.getItem('lexicon_cached_feed');
+        if (cached) {
+          setLiveEditorials(JSON.parse(cached));
+          setIsLoadingLive(false);
+          return;
+        }
+      }
+
+      const response = await fetch(`/api/editorials/latest${refresh ? '?refresh=true' : ''}`);
+      const data = await response.json();
+      if (Array.isArray(data)) {
+        setLiveEditorials(data);
+        // Update cache for next offline use
+        localStorage.setItem('lexicon_cached_feed', JSON.stringify(data));
+      } else {
+        setLiveEditorials([]);
+      }
+    } catch (error) {
+      console.error("Failed to fetch live editorials, trying cache", error);
+      const cached = localStorage.getItem('lexicon_cached_feed');
+      if (cached) {
+        setLiveEditorials(JSON.parse(cached));
+      } else {
+        setLiveEditorials([]);
+      }
+    } finally {
+      setIsLoadingLive(false);
+    }
+  };
+
+  const fetchArticleContent = async (url: string) => {
+    // If we have it saved, load it from there
+    if (savedEditorials[url]) {
+      setLiveContent(savedEditorials[url]);
+      return;
+    }
+
+    setIsLoadingContent(true);
+    try {
+      const response = await fetch(`/api/editorial/content?url=${encodeURIComponent(url)}`);
+      const data = await response.json();
+      setLiveContent(data);
+    } catch (error) {
+      console.error("Failed to fetch article content", error);
+    } finally {
+      setIsLoadingContent(false);
+    }
+  };
+
+  const handleUpdateField = (field: string, value: string) => {
+    if (!selectedEditorialId) return;
+    setAnalysisData(prev => ({
+      ...prev,
+      [selectedEditorialId]: {
+        ...(prev[selectedEditorialId] || { vocabulary: '', thesis: '', arguments: '', summary: '', response: '' }),
+        [field]: value
+      }
+    }));
+  };
+
+  const handleWordClick = (word: string) => {
+    if (!selectedEditorialId) return;
+    // Clean word (remove punctuation)
+    const cleanWord = word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").trim();
+    if (!cleanWord) return;
+
+    setAnalysisData(prev => {
+      const current = prev[selectedEditorialId] || { vocabulary: '', thesis: '', arguments: '', summary: '', response: '' };
+      const vocabList = current.vocabulary.split(',').map(v => v.trim()).filter(v => v);
+      
+      if (!vocabList.includes(cleanWord)) {
+        vocabList.push(cleanWord);
+      }
+      
+      return {
+        ...prev,
+        [selectedEditorialId]: {
+          ...current,
+          vocabulary: vocabList.join(', ')
+        }
+      };
+    });
+  };
+
+  const handleToggleSave = () => {
+    if (!selectedEditorialId || !liveContent) return;
+    
+    setSavedEditorials(prev => {
+      const next = { ...prev };
+      if (next[selectedEditorialId]) {
+        delete next[selectedEditorialId];
+      } else {
+        next[selectedEditorialId] = liveContent;
+      }
+      return next;
+    });
+  };
+
+  const currentAnalysis = selectedEditorialId ? (analysisData[selectedEditorialId] || { vocabulary: '', thesis: '', arguments: '', summary: '', response: '' }) : null;
+
+  const handleSelectArticle = (url: string) => {
+    setSelectedEditorialId(url);
+    setLiveContent(null);
+    fetchArticleContent(url);
+  };
+
+  const renderContentWithClickableWords = (content: string) => {
+    return content.split('\n').map((paragraph, pIdx) => (
+      <p key={pIdx} className="mb-8 leading-[1.8]">
+        {paragraph.split(' ').map((word, wIdx) => (
+          <span 
+            key={wIdx} 
+            onClick={() => handleWordClick(word)}
+            className="hover:bg-editorial-accent cursor-pointer transition-colors px-0.5 rounded-sm active:bg-editorial-text active:text-white"
+          >
+            {word}{' '}
+          </span>
+        ))}
+      </p>
+    ));
+  };
+
+  if (selectedEditorialId && (liveContent || isLoadingContent)) {
+    const isSaved = !!savedEditorials[selectedEditorialId];
+    
+    return (
+      <div className="flex-1 overflow-y-auto bg-editorial-bg flex flex-col pb-24">
+        <div className="max-w-5xl w-full mx-auto p-6 md:p-12">
+          <div className="flex items-center justify-between mb-8">
+            <button 
+              onClick={() => { setSelectedEditorialId(null); setLiveContent(null); }}
+              className="flex items-center gap-2 text-editorial-meta hover:text-editorial-text transition-colors group"
+            >
+              <ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+              <span className="text-[10px] uppercase font-bold tracking-widest">Back to Feed</span>
+            </button>
+            
+            {liveContent && (
+              <button 
+                onClick={handleToggleSave}
+                className={`flex items-center gap-2 text-[10px] uppercase font-bold tracking-widest px-4 py-2 rounded-sm border-2 transition-all ${isSaved ? 'bg-editorial-text text-white border-editorial-text' : 'border-editorial-border hover:border-editorial-text text-editorial-meta hover:text-editorial-text'}`}
+              >
+                {isSaved ? <BookMarked size={14} /> : <Bookmark size={14} />}
+                {isSaved ? 'Saved for offline' : 'Save Editorial'}
+              </button>
+            )}
+          </div>
+
+          {isLoadingContent ? (
+            <div className="flex flex-col items-center justify-center py-24 gap-4">
+              <Loader2 className="w-8 h-8 text-editorial-text animate-spin" />
+              <p className="text-[10px] uppercase tracking-widest font-bold text-editorial-meta">Deep Extraction in Progress...</p>
+            </div>
+          ) : liveContent && (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+              {/* Left Column: Article Reading */}
+              <div className="lg:col-span-7">
+                <header className="mb-12 border-b border-editorial-border pb-8">
+                  <p className="text-[10px] uppercase tracking-[0.3em] font-bold text-editorial-meta mb-4">{liveContent.source || 'Intelligence Feed'} • {liveContent.date || 'Latest'}</p>
+                  <h1 className="text-3xl md:text-5xl font-serif italic text-editorial-text leading-tight mb-6">
+                    {liveContent.title}
+                  </h1>
+                  <p className="text-[9px] uppercase tracking-widest text-editorial-meta italic">Tip: Click any word to add it to your Lexical Discovery list.</p>
+                </header>
+ 
+                <article className="prose prose-neutral max-w-none">
+                  <div className="text-lg md:text-xl font-serif text-editorial-text">
+                    {renderContentWithClickableWords(liveContent.content)}
+                  </div>
+                </article>
+              </div>
+
+              {/* Right Column: Interactive Analysis Toolkit */}
+              <div className="lg:col-span-5 space-y-12">
+                <div className="sticky top-8">
+                  <div className="bg-white border-2 border-editorial-text shadow-xl p-8 rounded-sm">
+                    <div className="flex items-center justify-between mb-8 border-b border-editorial-border pb-4">
+                      <h3 className="text-xl font-serif italic">Analysis Studio</h3>
+                    </div>
+
+                    <div className="space-y-8">
+                      {/* Section: Lexical Discovery */}
+                      <section>
+                        <label className="text-[9px] uppercase font-black tracking-widest text-editorial-meta block mb-3">Lexical Discovery</label>
+                        <textarea
+                          placeholder="Vocabulary items clicked in the text will appear here..."
+                          value={currentAnalysis?.vocabulary || ''}
+                          onChange={(e) => handleUpdateField('vocabulary', e.target.value)}
+                          className="w-full h-24 p-4 text-sm font-serif italic border border-editorial-border rounded-sm focus:outline-none focus:border-editorial-text resize-none bg-neutral-50 shadow-inner"
+                        />
+                      </section>
+
+                      {/* Section: Comprehension Scaffold */}
+                      <section className="space-y-4">
+                        <label className="text-[9px] uppercase font-black tracking-widest text-editorial-meta block mb-1">Comprehension Scaffold</label>
+                        <div className="space-y-4">
+                          <input 
+                            placeholder="Core Thesis Statement" 
+                            className="w-full p-3 text-xs border border-editorial-border rounded-sm focus:outline-none focus:border-editorial-text bg-neutral-50"
+                            value={currentAnalysis?.thesis || ''}
+                            onChange={(e) => handleUpdateField('thesis', e.target.value)}
+                          />
+                          <textarea 
+                            placeholder="Key Supporting Arguments (Bullet points)" 
+                            className="w-full h-32 p-3 text-xs border border-editorial-border rounded-sm focus:outline-none focus:border-editorial-text bg-neutral-50"
+                            value={currentAnalysis?.arguments || ''}
+                            onChange={(e) => handleUpdateField('arguments', e.target.value)}
+                          />
+                        </div>
+                      </section>
+
+                      {/* Section: Writing Practice */}
+                      <section className="space-y-4">
+                        <label className="text-[9px] uppercase font-black tracking-widest text-editorial-meta block mb-1">Focus Writing Skill</label>
+                        <div className="space-y-4">
+                          <div className="p-4 bg-editorial-accent/20 border border-editorial-border text-[10px] italic leading-relaxed">
+                            <strong>Challenge:</strong> Summarize the piece in exactly 3 sentences using at least 2 words from your "Lexical Discovery" list.
+                          </div>
+                          <textarea 
+                            placeholder="Compose your structured summary..." 
+                            className="w-full h-40 p-4 text-sm font-serif border-2 border-editorial-border rounded-sm focus:outline-none focus:border-editorial-text"
+                            value={currentAnalysis?.summary || ''}
+                            onChange={(e) => handleUpdateField('summary', e.target.value)}
+                          />
+                        </div>
+                      </section>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 md:p-12 max-w-6xl mx-auto w-full">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 md:mb-16 border-b border-editorial-border pb-8">
+        <div>
+          <h2 className="text-2xl md:text-5xl font-serif tracking-tight text-editorial-text mb-2 md:mb-4">Editorial Command</h2>
+          <div className="flex items-center gap-6">
+            <button 
+              onClick={() => setEditorialTab('live')}
+              className={`text-[10px] uppercase tracking-[0.3em] font-black transition-all border-b-2 pb-1 ${editorialTab === 'live' ? 'text-editorial-text border-editorial-text' : 'text-editorial-meta border-transparent hover:text-editorial-text'}`}
+            >
+              Live Intelligence Feed
+            </button>
+            <button 
+              onClick={() => setEditorialTab('saved')}
+              className={`text-[10px] uppercase tracking-[0.3em] font-black transition-all border-b-2 pb-1 ${editorialTab === 'saved' ? 'text-editorial-text border-editorial-text' : 'text-editorial-meta border-transparent hover:text-editorial-text'}`}
+            >
+              Saved Editorials
+            </button>
+          </div>
+        </div>
+        {editorialTab === 'live' && (
+          <button 
+            onClick={() => fetchLiveEditorials(true)}
+            className="text-[9px] uppercase font-bold tracking-widest text-editorial-meta hover:text-editorial-text flex items-center gap-2"
+            disabled={isLoadingLive}
+          >
+            <RefreshCw size={12} className={isLoadingLive ? 'animate-spin' : ''} />
+            Synchronize Feed
+          </button>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
+        {editorialTab === 'saved' ? (
+          Object.values(savedEditorials).length > 0 ? (
+            Object.values(savedEditorials).map((ed: any, idx) => (
+              <motion.div
+                key={ed.link + idx}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.1 }}
+                onClick={() => {
+                  setSelectedEditorialId(ed.link);
+                  setLiveContent(ed);
+                }}
+                className="group cursor-pointer bg-white border border-editorial-border p-8 rounded-sm shadow-sm hover:shadow-xl transition-all"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-editorial-meta">{ed.source} • {ed.date}</span>
+                  <div className="flex gap-2">
+                    {analysisData[ed.link] && <CheckCircle2 size={14} className="text-emerald-500" />}
+                    <BookMarked size={14} className="text-editorial-text" />
+                  </div>
+                </div>
+                <h3 className="text-xl md:text-2xl font-serif italic text-editorial-text mb-4 leading-snug group-hover:underline decoration-1 decoration-editorial-accent">
+                  {ed.title}
+                </h3>
+                <p className="text-sm text-editorial-muted line-clamp-2 mb-6 font-serif italic opacity-70">
+                  {ed.content?.substring(0, 150)}...
+                </p>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSavedEditorials(prev => {
+                      const next = { ...prev };
+                      delete next[ed.link];
+                      return next;
+                    });
+                  }}
+                  className="text-[8px] uppercase font-bold tracking-widest text-editorial-meta hover:text-red-500 flex items-center gap-1"
+                >
+                  <Trash2 size={10} /> Delete Saved Copy
+                </button>
+              </motion.div>
+            ))
+          ) : (
+            <div className="col-span-full py-24 text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-neutral-100 rounded-full mb-6 text-editorial-meta">
+                <Bookmark size={32} />
+              </div>
+              <h3 className="text-2xl font-serif italic text-editorial-text mb-4">No saved editorials</h3>
+              <p className="text-sm text-editorial-muted max-w-sm mx-auto mb-8">Save live editorials to keep them available for offline study even after they leave the news feed.</p>
+              <button 
+                onClick={() => setEditorialTab('live')}
+                className="px-8 py-3 bg-editorial-text text-white text-[10px] uppercase font-bold tracking-widest rounded-sm hover:translate-y-[-2px] transition-transform shadow-lg"
+              >
+                Browse Live Feed
+              </button>
+            </div>
+          )
+        ) : isLoadingLive ? (
+          [1, 2, 3, 4].map(i => (
+            <div key={i} className="bg-neutral-100 animate-pulse h-64 rounded-sm border border-editorial-border"></div>
+          ))
+        ) : liveEditorials.length > 0 ? (
+          liveEditorials.map((ed, idx) => (
+            <motion.div
+              key={ed.id}
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: idx * 0.05 }}
+              onClick={() => handleSelectArticle(ed.link)}
+              className="group cursor-pointer bg-white border border-editorial-border p-8 rounded-sm shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all border-l-4 border-l-editorial-text"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-[9px] font-black uppercase tracking-widest text-editorial-meta">{ed.date}</span>
+                <div className="flex gap-2">
+                  {savedEditorials[ed.link] && <BookMarked size={14} className="text-editorial-text" />}
+                  {analysisData[ed.link] && <CheckCircle2 size={14} className="text-emerald-500" />}
+                  <FileText size={14} className="text-editorial-border group-hover:text-editorial-text transition-colors" />
+                </div>
+              </div>
+              <h3 className="text-xl md:text-2xl font-serif italic text-editorial-text mb-4 leading-snug group-hover:underline decoration-1 decoration-editorial-accent">
+                {ed.title}
+              </h3>
+              <p className="text-sm text-editorial-muted line-clamp-2 mb-6 font-serif leading-relaxed italic">
+                {ed.intro}
+              </p>
+              <div className="flex items-center justify-between">
+                <span className="text-[8px] uppercase font-bold tracking-[0.2em] text-editorial-meta border border-editorial-border px-2 py-1 rounded-sm">Analysis Eligible</span>
+                <span className="text-[10px] uppercase font-bold tracking-widest text-editorial-text group-hover:translate-x-1 transition-transform flex items-center gap-2">
+                  Select for Deep Study <ChevronRight size={12} />
+                </span>
+              </div>
+            </motion.div>
+          ))
+        ) : (
+          <div className="col-span-full text-center py-24 border-2 border-dashed border-editorial-border rounded-lg">
+            <p className="text-editorial-meta font-serif italic mb-4">No editorials found in the current transmission cycle.</p>
+            <button onClick={() => fetchLiveEditorials(true)} className="px-8 py-3 bg-editorial-text text-white text-[10px] uppercase tracking-widest font-bold rounded-sm">Force Resync</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 
 function PhrasalVerbView() {
   const [search, setSearch] = useState('');
