@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { 
   BarChart, 
   Bar, 
@@ -19,7 +19,7 @@ import {
 } from 'recharts';
 import { motion } from 'motion/react';
 import { WordBlock } from '../types';
-import { TrendingUp, Target, Award, BookOpen } from 'lucide-react';
+import { TrendingUp, Target, Award, BookOpen, Database, Brain, Wifi } from 'lucide-react';
 
 interface DashboardProps {
   blocks: WordBlock[];
@@ -66,6 +66,25 @@ export const Dashboard: React.FC<DashboardProps> = ({
     { name: 'New', value: stats.newWords, color: '#e5e7eb' },
   ];
 
+  const [apiHealth, setApiHealth] = useState<{status: string, env: string} | null>(null);
+
+  useEffect(() => {
+    const checkHealth = async () => {
+      try {
+        const res = await fetch('/api/health');
+        if (res.ok) {
+          const data = await res.json();
+          setApiHealth({ status: data.status, env: data.environment });
+        } else {
+          setApiHealth({ status: `error-${res.status}`, env: 'server' });
+        }
+      } catch (err) {
+        setApiHealth({ status: 'unreachable', env: 'network' });
+      }
+    };
+    checkHealth();
+  }, []);
+
   return (
     <div className="p-6 md:p-12 max-w-7xl mx-auto w-full pb-20">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 border-b border-editorial-border pb-8">
@@ -73,6 +92,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <h2 className="text-3xl md:text-5xl font-serif tracking-tight text-editorial-text mb-2 md:mb-4">Mastery Analytics</h2>
           <p className="text-editorial-muted uppercase text-[8px] md:text-[10px] tracking-[0.2em] font-bold">Progress Visualization Dashboard</p>
         </div>
+        {apiHealth && (
+          <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-[9px] uppercase font-bold tracking-widest ${apiHealth.status === 'ok' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-red-50 text-red-600 border border-red-100'}`}>
+            <div className={`w-1.5 h-1.5 rounded-full ${apiHealth.status === 'ok' ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
+            Tactical API: {apiHealth.status} ({apiHealth.env})
+          </div>
+        )}
       </div>
 
       {/* Hero Stats */}
