@@ -76,10 +76,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
           const data = await res.json();
           setApiHealth({ status: data.status, env: data.environment });
         } else {
-          setApiHealth({ status: `error-${res.status}`, env: 'server' });
+          setApiHealth({ status: `signal-error-${res.status}`, env: 'remote' });
         }
       } catch (err) {
-        setApiHealth({ status: 'unreachable', env: 'network' });
+        setApiHealth({ status: 'offline', env: 'local' });
       }
     };
     checkHealth();
