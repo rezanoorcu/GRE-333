@@ -77,6 +77,30 @@ export const EditorialAnalysis: React.FC<EditorialAnalysisProps> = ({
     }
   };
 
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [dictionaryLoading, setDictionaryLoading] = useState<string | null>(null);
+
+  const lookupDefinition = async (word: string) => {
+    setDictionaryLoading(word);
+    try {
+      const response = await axios.get(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+      const data = response.data[0];
+      const primaryDef = data.meanings[0]?.definitions[0]?.definition;
+      
+      if (primaryDef) {
+        onSaveVocab(prev => prev.map(v => 
+          v.word.toLowerCase() === word.toLowerCase() 
+            ? { ...v, definition: primaryDef } 
+            : v
+        ));
+      }
+    } catch (err) {
+      console.error('Dictionary lookup failed', err);
+    } finally {
+      setDictionaryLoading(null);
+    }
+  };
+
   const loadArticle = async (article: Article) => {
     setSelectedArticle(article);
     setIsScraping(true);
@@ -278,14 +302,24 @@ export const EditorialAnalysis: React.FC<EditorialAnalysisProps> = ({
                   {savedVocab.length > 0 ? savedVocab.map((v, i) => (
                     <div key={i} className="group relative bg-white/5 p-4 rounded-sm hover:bg-white/10 transition-colors">
                       <div className="flex justify-between items-start mb-1">
-                        <span className="text-editorial-accent font-serif italic">{v.word}</span>
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); removeSavedWord(v.word); }}
-                          className="opacity-0 group-hover:opacity-100 text-[8px] uppercase tracking-tighter hover:text-red-400 transition-opacity"
-                        >
-                          Remove
-                        </button>
+                        <span className="text-editorial-accent font-serif italic uppercase">{v.word}</span>
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); lookupDefinition(v.word); }}
+                            className="text-[9px] uppercase tracking-tighter text-blue-400 hover:text-blue-300 disabled:opacity-50"
+                            disabled={dictionaryLoading === v.word}
+                          >
+                            {dictionaryLoading === v.word ? '...' : <Search size={10} />}
+                          </button>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); removeSavedWord(v.word); }}
+                            className="opacity-0 group-hover:opacity-100 text-[8px] uppercase tracking-tighter hover:text-red-400 transition-opacity"
+                          >
+                            Remove
+                          </button>
+                        </div>
                       </div>
+                      <p className="text-[11px] text-white/90 leading-snug mb-1 font-serif">{v.definition}</p>
                       <p className="text-[9px] italic opacity-60 line-clamp-2 leading-relaxed">“{v.context}”</p>
                     </div>
                   )) : (
@@ -320,6 +354,13 @@ export const EditorialAnalysis: React.FC<EditorialAnalysisProps> = ({
               >
                 <ChevronLeft size={16} />
                 Back to Feed
+              </button>
+              <button 
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                className="hidden md:flex items-center gap-2 px-4 py-2 bg-white border border-editorial-border text-[9px] uppercase font-black tracking-widest hover:bg-neutral-50 transition-colors"
+                title={isSidebarOpen ? "Hide Inventory" : "Show Inventory"}
+              >
+                {isSidebarOpen ? "Maximize Reader" : "Show Inventory"}
               </button>
               <div className="flex items-center gap-4">
                 <div className="hidden md:flex flex-col items-end mr-4">
@@ -370,8 +411,8 @@ export const EditorialAnalysis: React.FC<EditorialAnalysisProps> = ({
                 </div>
               </div>
 
-              <aside className="w-full md:w-96 border-l border-editorial-border bg-editorial-accent/10 overflow-y-auto shrink-0 transition-all">
-                <div className="p-8">
+              <aside className={`${isSidebarOpen ? 'w-full md:w-96' : 'w-0 overflow-hidden'} border-l border-editorial-border bg-editorial-accent/10 overflow-y-auto shrink-0 transition-all duration-500`}>
+                <div className="p-8 min-w-[24rem]">
                   <div className="flex items-center gap-3 mb-8 border-b border-editorial-border pb-4">
                     <BookOpen size={18} className="text-editorial-text" />
                     <div>
