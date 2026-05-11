@@ -22,18 +22,20 @@ import {
   Sparkles,
   ChevronDown,
   Star,
-  Type
+  Type,
+  Newspaper
 } from 'lucide-react';
 import { VOCABULARY_DATA } from './data';
 import { PHRASAL_VERBS_DATA } from './phrasalVerbsData';
 import { WordEntry, WordBlock } from './types';
 import { speakWord } from './services/aiService';
+import { EditorialAnalysis } from './components/EditorialAnalysis';
 
 type WordStatus = 'new' | 'mastered' | 'review';
 
 export default function App() {
   const [currentBlockId, setCurrentBlockId] = useState<string | null>(VOCABULARY_DATA[0].id);
-  const [view, setView] = useState<'study' | 'list' | 'bookmarks' | 'review-stack' | 'practice' | 'phrasal-verbs'>('study');
+  const [view, setView] = useState<'study' | 'list' | 'bookmarks' | 'review-stack' | 'practice' | 'phrasal-verbs' | 'editorial'>('study');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
@@ -382,6 +384,18 @@ export default function App() {
                   Group Verbs
                 </div>
               </button>
+              <button 
+                onClick={() => {
+                  setView('editorial');
+                  setIsSidebarOpen(false);
+                }}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-sm text-sm font-medium transition-all ${view === 'editorial' ? 'bg-editorial-accent text-editorial-text' : 'text-editorial-muted hover:text-editorial-text hover:bg-neutral-50'}`}
+              >
+                <div className="flex items-center gap-3">
+                  <Newspaper size={16} />
+                  Editorial Analysis
+                </div>
+              </button>
             </div>
           </div>
 
@@ -434,6 +448,14 @@ export default function App() {
                initial={{ width: 0 }}
                animate={{ width: `${(allWords.filter(w => wordStatus[w.word] === 'mastered').length / allWords.length) * 100}%` }}
             />
+          </div>
+          
+          <div className="mt-6 pt-6 border-t border-editorial-text/10 flex items-center gap-3">
+            <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            <div className="flex flex-col">
+              <span className="text-[9px] font-black uppercase tracking-widest text-editorial-text">Database Ready</span>
+              <span className="text-[8px] text-editorial-meta uppercase tracking-tighter">Available for Offline Use</span>
+            </div>
           </div>
         </div>
       </aside>
@@ -686,6 +708,18 @@ export default function App() {
               className="flex-1 flex flex-col h-full"
             >
               <PhrasalVerbView />
+            </motion.div>
+          )}
+
+          {view === 'editorial' && (
+            <motion.div
+              key="editorial-view"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex-1 flex flex-col h-full"
+            >
+              <EditorialAnalysis />
             </motion.div>
           )}
         </AnimatePresence>
