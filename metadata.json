@@ -1,6 +1,24 @@
 {
-  "name": "Lexicon Master",
-  "description": "An interactive GRE-style vocabulary builder featuring curated lessons, intensive flashcards, and a systematic phrasal verb archive.",
-  "requestFramePermissions": [],
-  "majorCapabilities": []
+  "name": "GRE 333 High Frequency Words",
+  "short_name": "GRE333",
+  "description": "GRE 333 high frequency words with meanings and pronunciation",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1e293b",
+  "orientation": "portrait",
+  "scope": "/",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
 }
