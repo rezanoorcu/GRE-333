@@ -14,19 +14,3 @@ export interface WordBlock {
   title: string;
   words: WordEntry[];
 }
-
-export interface QuizQuestion {
-  id: string;
-  word: WordEntry;
-  type: 'definition' | 'synonym' | 'antonym' | 'context' | 'lexeme-definition' | 'matching' | 'nuance' | 'derivative';
-  options: string[];
-  correctAnswer: string;
-  matchingPairs?: { word: string; definition: string }[];
-}
-
-export interface QuizScore {
-  score: number;
-  total: number;
-  missedWords: string[];
-  duration: number;
-}
