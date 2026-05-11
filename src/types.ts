@@ -14,3 +14,15 @@ export interface WordBlock {
   title: string;
   words: WordEntry[];
 }
+
+export interface SavedVocab extends WordEntry {
+  source: string;
+  date: string;
+}
+
+export interface PracticeStats {
+  attempts: number;
+  correct: number;
+  lastAttempt: number;
+  weight: number;
+}

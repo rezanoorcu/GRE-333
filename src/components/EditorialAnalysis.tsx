@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { VOCABULARY_DATA } from '../data';
-import { WordEntry } from '../types';
+import { WordEntry, SavedVocab } from '../types';
 
 interface Article {
   title: string;
@@ -27,34 +27,23 @@ interface Article {
   source: string;
 }
 
-interface SavedVocab {
-  word: string;
-  context: string;
-  source: string;
-  date: string;
-  definition?: string;
+interface EditorialAnalysisProps {
+  savedVocab: SavedVocab[];
+  onSaveVocab: React.Dispatch<React.SetStateAction<SavedVocab[]>>;
 }
 
-export const EditorialAnalysis: React.FC = () => {
+export const EditorialAnalysis: React.FC<EditorialAnalysisProps> = ({ 
+  savedVocab, 
+  onSaveVocab 
+}) => {
   const [articles, setArticles] = useState<Article[]>([]);
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [articleContent, setArticleContent] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [isScraping, setIsScraping] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [savedVocab, setSavedVocab] = useState<SavedVocab[]>([]);
 
-  // Load saved vocab from LocalStorage on mount
-  useEffect(() => {
-    const stored = localStorage.getItem('editorial_vocab');
-    if (stored) {
-      try {
-        setSavedVocab(JSON.parse(stored));
-      } catch (e) {
-        console.error('Failed to parse stored vocab', e);
-      }
-    }
-  }, []);
+  // Removed local savedVocab state as it's now a prop
 
   const allWords = useMemo(() => VOCABULARY_DATA.flatMap(b => b.words), []);
 
@@ -107,26 +96,21 @@ export const EditorialAnalysis: React.FC = () => {
     const cleanWord = word.trim().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").toLowerCase();
     if (cleanWord.length < 2) return;
 
-    setSavedVocab(prev => {
+    onSaveVocab(prev => {
       if (prev.some(v => v.word.toLowerCase() === cleanWord)) return prev;
-      const newList = [{
+      return [{
         word: cleanWord,
-        context,
+        context: context.trim(),
+        example: context.trim(), // Map context to example for compatibility with WordEntry/Practice
         source: selectedArticle?.source || 'The Daily Star',
         date: new Date().toISOString(),
-        definition
+        definition: definition || 'Definition pending analysis'
       }, ...prev];
-      localStorage.setItem('editorial_vocab', JSON.stringify(newList));
-      return newList;
     });
-  }, [selectedArticle]);
+  }, [selectedArticle, onSaveVocab]);
 
   const removeSavedWord = (word: string) => {
-    setSavedVocab(prev => {
-      const newList = prev.filter(v => v.word.toLowerCase() !== word.toLowerCase());
-      localStorage.setItem('editorial_vocab', JSON.stringify(newList));
-      return newList;
-    });
+    onSaveVocab(prev => prev.filter(v => v.word.toLowerCase() !== word.toLowerCase()));
   };
 
   const highlightedContent = useMemo(() => {

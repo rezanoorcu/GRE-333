@@ -27,8 +27,9 @@ import {
 } from 'lucide-react';
 import { VOCABULARY_DATA } from './data';
 import { PHRASAL_VERBS_DATA } from './phrasalVerbsData';
-import { WordEntry, WordBlock } from './types';
+import { WordEntry, WordBlock, SavedVocab } from './types';
 import { speakWord } from './services/aiService';
+import { PracticeMode } from './components/PracticeMode';
 import { EditorialAnalysis } from './components/EditorialAnalysis';
 
 type WordStatus = 'new' | 'mastered' | 'review';
@@ -40,6 +41,20 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [lastAction, setLastAction] = useState<{word: string, status: WordStatus} | null>(null);
+
+  // Persistent Saved Vocab from Editorials
+  const [savedVocab, setSavedVocab] = useState<SavedVocab[]>(() => {
+    try {
+      const saved = localStorage.getItem('editorial_vocab');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('editorial_vocab', JSON.stringify(savedVocab));
+  }, [savedVocab]);
   
   // Persistent Bookmarks
   const [bookmarks, setBookmarks] = useState<Set<string>>(() => {
@@ -109,8 +124,11 @@ export default function App() {
     VOCABULARY_DATA.find(b => b.id === currentBlockId) || VOCABULARY_DATA[0], 
   [currentBlockId]);
 
-  // Flattened words for search
-  const allWords = useMemo(() => VOCABULARY_DATA.flatMap(b => b.words), []);
+  // Flattened words for search and practice
+  const allWords = useMemo(() => {
+    const baseWords = VOCABULARY_DATA.flatMap(b => b.words);
+    return [...baseWords, ...savedVocab];
+  }, [savedVocab]);
 
   // Fuse configuration
   const fuse = useMemo(() => new Fuse(allWords, {
@@ -689,7 +707,7 @@ export default function App() {
               exit={{ opacity: 0 }}
               className="flex-1 flex flex-col h-full"
             >
-              <PracticeSession 
+              <PracticeMode 
                 allWords={allWords} 
                 wordStatus={wordStatus}
                 onToggleStatus={toggleStatus}
@@ -719,7 +737,10 @@ export default function App() {
               exit={{ opacity: 0 }}
               className="flex-1 flex flex-col h-full"
             >
-              <EditorialAnalysis />
+              <EditorialAnalysis 
+                savedVocab={savedVocab}
+                onSaveVocab={setSavedVocab}
+              />
             </motion.div>
           )}
         </AnimatePresence>
@@ -1342,282 +1363,6 @@ const WordListEntry: React.FC<{
     </div>
   );
 };
-
-function PracticeSession({ 
-  allWords, 
-  wordStatus, 
-  onToggleStatus,
-  bookmarks,
-  onToggleBookmark
-}: { 
-  allWords: WordEntry[]; 
-  wordStatus: Record<string, WordStatus>;
-  onToggleStatus: (word: string, status: WordStatus) => void;
-  bookmarks: Set<string>;
-  onToggleBookmark: (word: string) => void;
-}) {
-  const [index, setIndex] = useState(0);
-  const [showDefinition, setShowDefinition] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [sessionWords, setSessionWords] = useState<WordEntry[]>([]);
-
-  // Initialize session words with a shuffle
-  useEffect(() => {
-    setSessionWords([...allWords].sort(() => Math.random() - 0.5));
-  }, [allWords]);
-
-  const word = sessionWords[index];
-  
-  // Decide question type for the current word
-  // We use a stable type based on the word and session so it doesn't change when clicking reveal
-  const questionType = useMemo(() => {
-    if (!word) return 'definition';
-    const types: ('definition' | 'recall' | 'context' | 'synonym' | 'antonym' | 'derivative')[] = ['definition', 'recall', 'context'];
-    if (word.synonyms && word.synonyms.length > 0) types.push('synonym');
-    if (word.antonyms && word.antonyms.length > 0) types.push('antonym');
-    if (word.derivatives && word.derivatives.length > 0) types.push('derivative');
-    
-    // Deterministic but "random" for this session word
-    const seed = word.word.length + index;
-    return types[seed % types.length];
-  }, [word, index]);
-
-  if (!word) return <div className="flex-1 flex items-center justify-center font-serif italic text-editorial-meta">Preparing lexical set...</div>;
-
-  const isBookmarked = bookmarks.has(word.word);
-
-  const handleNext = () => {
-    setIndex((prev) => (prev + 1) % sessionWords.length);
-    setShowDefinition(false);
-    setIsSpeaking(false);
-  };
-
-  const handleSkip = () => {
-    // Move current word to the end of the list
-    const currentWord = sessionWords[index];
-    const newWords = [...sessionWords];
-    newWords.splice(index, 1);
-    newWords.push(currentWord);
-    setSessionWords(newWords);
-    // index stays the same (effectively pointing to the next word now)
-    // unless we were at the very last one, then we reset to start
-    if (index >= newWords.length) setIndex(0);
-    setShowDefinition(false);
-    setIsSpeaking(false);
-  };
-
-  const handleSpeak = () => {
-    if (isSpeaking) return;
-    setIsSpeaking(true);
-    speakWord(word.word, () => setIsSpeaking(false));
-  };
-
-  const renderPrompt = () => {
-    switch (questionType) {
-      case 'recall':
-        return (
-          <div className="space-y-4">
-            <p className="text-[10px] uppercase tracking-widest font-bold text-editorial-meta">Identify the Lexeme</p>
-            <p className="text-xl md:text-3xl font-serif italic text-editorial-text leading-relaxed">“{word.definition}”</p>
-          </div>
-        );
-      case 'context':
-        return (
-          <div className="space-y-4">
-            <p className="text-[10px] uppercase tracking-widest font-bold text-editorial-meta">Contextual Cloze</p>
-            <p className="text-xl md:text-3xl font-serif italic text-editorial-text leading-relaxed">
-              “{word.example.replace(new RegExp(word.word, 'gi'), '__________')}”
-            </p>
-          </div>
-        );
-      case 'synonym':
-        return (
-          <div className="space-y-4">
-            <p className="text-[10px] uppercase tracking-widest font-bold text-editorial-meta">Match Synonym</p>
-            <div className="flex flex-wrap justify-center gap-3">
-              {word.synonyms?.map(s => (
-                <span key={s} className="px-4 py-2 bg-editorial-accent border border-editorial-border rounded-sm text-base md:text-lg font-serif italic">
-                  {s}
-                </span>
-              ))}
-            </div>
-            <p className="text-[10px] text-editorial-meta mt-4 font-bold uppercase tracking-widest">Identify the source word</p>
-          </div>
-        );
-      case 'antonym':
-        return (
-          <div className="space-y-4">
-            <p className="text-[10px] uppercase tracking-widest font-bold text-editorial-meta">Match Antonym</p>
-            <div className="flex flex-wrap justify-center gap-3">
-              {word.antonyms?.map(a => (
-                <span key={a} className="px-4 py-2 bg-neutral-100 border border-editorial-border rounded-sm text-base md:text-lg font-serif italic">
-                  {a}
-                </span>
-              ))}
-            </div>
-            <p className="text-[10px] text-editorial-meta mt-4 font-bold uppercase tracking-widest">Identify the source word</p>
-          </div>
-        );
-      case 'derivative':
-        const d = word.derivatives?.[0];
-        return (
-          <div className="space-y-4">
-            <p className="text-[10px] uppercase tracking-widest font-bold text-editorial-meta">Morphological Challenge</p>
-            <p className="text-base text-editorial-text mb-2">What is the <span className="font-bold underline uppercase">{d?.form}</span> form of:</p>
-            <h2 className="text-3xl md:text-6xl font-serif italic text-editorial-text">{word.word}</h2>
-          </div>
-        );
-      default:
-        return (
-          <div className="space-y-4">
-            <p className="text-[10px] uppercase tracking-widest font-bold text-editorial-meta">Define Lexeme</p>
-            <h2 className="text-3xl md:text-6xl font-serif italic text-editorial-text">{word.word}</h2>
-          </div>
-        );
-    }
-  };
-
-  const renderReveal = () => {
-    return (
-      <div className="space-y-6 md:space-y-8">
-        <div className="text-center pb-4 md:pb-8 border-b border-editorial-border">
-          <p className="text-[10px] uppercase tracking-widest text-editorial-meta mb-2">Primary Lexeme</p>
-          <h3 className="text-3xl md:text-5xl font-serif italic text-editorial-text mb-4">{word.word}</h3>
-          <div className="flex justify-center gap-4">
-            <button onClick={handleSpeak} className={`p-2 rounded-full border border-editorial-border hover:bg-editorial-accent transition-all ${isSpeaking ? 'animate-pulse text-editorial-text' : 'text-editorial-meta'}`}>
-              <Volume2 size={18} />
-            </button>
-            <button onClick={() => onToggleBookmark(word.word)} className={`p-2 rounded-full border border-editorial-border hover:bg-editorial-accent transition-all ${isBookmarked ? 'text-editorial-text bg-editorial-accent' : 'text-editorial-meta'}`}>
-              <Star size={18} fill={isBookmarked ? "currentColor" : "none"} />
-            </button>
-          </div>
-        </div>
-
-        <div className="space-y-4 md:space-y-6">
-          <div>
-            <p className="text-[9px] uppercase font-bold tracking-widest text-editorial-meta mb-1 md:mb-2">Definition</p>
-            <p className="text-base md:text-xl font-serif text-editorial-text leading-relaxed">“{word.definition}”</p>
-          </div>
-          
-          <div>
-            <p className="text-[9px] uppercase font-bold tracking-widest text-editorial-meta mb-1 md:mb-2">Example</p>
-            <p className="text-sm md:text-base text-editorial-muted leading-relaxed italic">“{word.example}”</p>
-          </div>
-
-          {word.derivatives && word.derivatives.length > 0 && (
-            <div className="pt-4 border-t border-editorial-border">
-              <p className="text-[9px] uppercase font-bold tracking-widest text-editorial-meta mb-2">Derivatives</p>
-              <div className="flex flex-wrap gap-2 md:gap-4">
-                {word.derivatives.map((d, i) => (
-                  <div key={i} className="flex flex-col">
-                    <span className="text-[8px] font-black text-editorial-meta uppercase">{d.form}</span>
-                    <span className="text-xs md:text-sm font-serif italic text-editorial-text">{d.word}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  return (
-    <div className="flex-1 overflow-y-auto bg-editorial-bg flex flex-col">
-      <div className="flex-1 flex flex-col items-center p-4 md:p-12">
-        <div className="max-w-3xl w-full my-auto py-8">
-          <div className="text-center mb-8 md:mb-12">
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-editorial-accent rounded-full mb-4">
-              <Brain size={12} className="text-editorial-text" />
-              <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-editorial-text">Active Practice Engine</p>
-            </div>
-          </div>
-
-          <AnimatePresence mode="wait">
-            {!showDefinition ? (
-              <motion.div
-                key="prompt"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="flex flex-col items-center"
-              >
-                <div className="w-full bg-white border-2 border-editorial-border p-8 md:p-20 shadow-xl rounded-sm text-center mb-8 md:mb-12 min-h-[300px] flex flex-col justify-center">
-                  {renderPrompt()}
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
-                  <button 
-                    onClick={() => setShowDefinition(true)}
-                    className="group relative px-10 py-4 md:px-12 md:py-5 bg-editorial-text text-white text-[10px] md:text-xs uppercase font-bold tracking-[0.3em] overflow-hidden rounded-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
-                  >
-                    <span className="relative z-10 transition-colors group-hover:text-amber-400">Reveal Solution</span>
-                    <div className="absolute inset-0 bg-neutral-800 transform translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
-                  </button>
-                  <button 
-                    onClick={handleSkip}
-                    className="px-10 py-4 md:px-12 md:py-5 border-2 border-editorial-border text-editorial-meta text-[10px] md:text-xs uppercase font-bold tracking-[0.3em] rounded-sm hover:border-editorial-text hover:text-editorial-text transition-all bg-white"
-                  >
-                    Skip Entry
-                  </button>
-                </div>
-                <p className="mt-8 md:mt-12 text-[10px] text-editorial-meta uppercase tracking-widest font-medium opacity-60 text-center">Attempt to resolve the lexical challenge before revealing</p>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="reveal"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="bg-white border-2 md:border-4 border-editorial-text p-6 md:p-12 shadow-2xl rounded-sm w-full"
-              >
-                {renderReveal()}
-
-                <div className="mt-8 md:mt-12 pt-8 md:pt-12 border-t-2 border-dashed border-editorial-border grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <button 
-                    onClick={() => { onToggleStatus(word.word, 'mastered'); handleNext(); }}
-                    className="py-4 md:py-5 bg-emerald-600 text-white text-[9px] md:text-[10px] uppercase font-bold tracking-widest rounded-sm hover:bg-emerald-700 transition-colors flex items-center justify-center gap-3 shadow-lg shadow-emerald-900/10"
-                  >
-                    <CheckCircle2 size={16} /> Mark as Mastered
-                  </button>
-                  <button 
-                    onClick={() => { onToggleStatus(word.word, 'review'); handleNext(); }}
-                    className="py-4 md:py-5 bg-amber-600 text-white text-[9px] md:text-[10px] uppercase font-bold tracking-widest rounded-sm hover:bg-amber-700 transition-colors flex items-center justify-center gap-3 shadow-lg shadow-amber-900/10"
-                  >
-                    <AlertCircle size={16} /> Mark for Review
-                  </button>
-                </div>
-                <div className="mt-4">
-                  <button 
-                    onClick={handleNext}
-                    className="w-full py-3 md:py-4 text-editorial-meta text-[8px] md:text-[9px] uppercase font-bold tracking-[0.3em] hover:text-editorial-text transition-colors border border-transparent hover:border-editorial-border rounded-sm"
-                  >
-                    Decline Assessment & Move to Next
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <div className="mt-12 md:mt-16 flex items-center justify-between text-editorial-meta border-t border-editorial-border pt-6 md:pt-8">
-            <div className="text-[8px] md:text-[10px] uppercase font-bold tracking-[0.4em] flex items-center gap-4">
-              <span className="text-editorial-text">{index + 1}</span>
-              <div className="w-8 md:w-12 h-[1px] bg-editorial-border"></div>
-              <span>{sessionWords.length} Words</span>
-            </div>
-            <div className="flex gap-1 md:gap-2">
-              <button onClick={() => setIndex(prev => (prev - 1 + sessionWords.length) % sessionWords.length)} className="p-2 md:p-3 hover:text-editorial-text hover:bg-editorial-accent rounded-full transition-all">
-                <ChevronLeft size={20} />
-              </button>
-              <button onClick={() => setIndex(prev => (prev + 1) % sessionWords.length)} className="p-2 md:p-3 hover:text-editorial-text hover:bg-editorial-accent rounded-full transition-all">
-                <ChevronRight size={20} />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function PhrasalVerbView() {
   const [search, setSearch] = useState('');
