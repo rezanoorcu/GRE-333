@@ -2,7 +2,7 @@
   "name": "GRE 333 High Frequency Words",
   "short_name": "GRE333",
   "description": "GRE 333 high frequency words with meanings and pronunciation",
-  "start_url": "/",
+  "start_url": "https://github.com/rezanoorcu/GRE-333",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#1e293b",
