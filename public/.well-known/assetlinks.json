@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.onrender.gre_333.twa",
+        "sha256_cert_fingerprints": ["C3:53:7A:E1:29:49:C2:96:B9:3B:87:87:3D:8F:06:AC:8C:7C:F1:C8:ED:66:E7:72:F0:68:B1:3C:B3:40:6C:D0"]
+      }
+    }]
