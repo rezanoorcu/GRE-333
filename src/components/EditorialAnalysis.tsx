@@ -341,53 +341,46 @@ export const EditorialAnalysis: React.FC<EditorialAnalysisProps> = ({
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
-            className="flex-1 flex flex-col h-full overflow-hidden"
+            className="flex-1 flex flex-col h-full overflow-hidden relative"
           >
-            <div className="shrink-0 border-b border-editorial-border bg-white px-6 md:px-12 py-3 flex items-center justify-between sticky top-0 z-30 shadow-sm transition-colors">
-              <button 
-                onClick={() => setSelectedArticle(null)}
-                className="flex items-center gap-2 text-[10px] uppercase font-black tracking-widest text-editorial-text hover:opacity-60 transition-all font-sans"
-              >
-                <ChevronLeft size={16} />
-                Library
-              </button>
-              
-              <div className="flex items-center gap-6">
+            <header className="fixed top-4 left-1/2 -translate-x-1/2 z-40 bg-white/90 backdrop-blur-md border border-editorial-border px-4 py-2 flex items-center justify-between gap-6 transition-all rounded-full shadow-lg w-fit min-w-[320px] max-w-[95vw]">
+              <div className="flex items-center gap-3">
                 <button 
-                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-editorial-text text-white text-[9px] uppercase font-black tracking-widest rounded-sm hover:bg-neutral-800 transition-colors shadow-lg active:scale-95"
-                  title={isSidebarOpen ? "Maximize Reader" : "Show Inventory"}
+                  onClick={() => setSelectedArticle(null)}
+                  className="p-1 text-editorial-text hover:bg-editorial-accent rounded-full transition-colors"
                 >
-                  <BookOpen size={14} />
-                  {isSidebarOpen ? "Close Inventory" : "Open Inventory"}
-                  {identifiedWords.length > 0 && (
-                    <span className="ml-1 bg-editorial-accent text-editorial-text px-1.5 py-0.5 rounded-full text-[8px]">
-                      {identifiedWords.length}
-                    </span>
-                  )}
+                  <ChevronLeft size={16} />
                 </button>
-
-                <div className="hidden lg:flex items-center gap-4 border-l border-editorial-border pl-6">
-                  <div className="flex flex-col items-end">
-                    <span className="text-[8px] uppercase font-black text-emerald-600 tracking-tighter">Analytical Mode Active</span>
-                    <span className="text-[10px] font-serif italic text-editorial-text truncate max-w-[240px]">{selectedArticle.title}</span>
-                  </div>
-                  <a 
-                    href={selectedArticle.link} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="p-2 text-editorial-meta hover:text-editorial-text transition-colors bg-neutral-50 border border-editorial-border rounded-full"
-                    title="Original Source"
-                  >
-                    <ExternalLink size={14} />
-                  </a>
+                <div className="whitespace-nowrap hidden sm:block border-l border-editorial-border pl-3">
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-editorial-text">Editorial Reader</h4>
                 </div>
               </div>
-            </div>
+              
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[9px] uppercase font-black tracking-widest transition-all shadow-md active:scale-95 ${isSidebarOpen ? 'bg-editorial-text text-white' : 'bg-editorial-accent text-editorial-text border border-editorial-border'}`}
+                >
+                  <BookOpen size={12} />
+                  {isSidebarOpen ? "Reader Mode" : "Inventory"}
+                  {identifiedWords.length > 0 && <span className="ml-0.5 opacity-60">({identifiedWords.length})</span>}
+                </button>
+
+                <a 
+                  href={selectedArticle.link} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="p-2 text-editorial-meta hover:text-editorial-text transition-colors bg-neutral-100 hover:bg-neutral-200 rounded-full"
+                  title="Source"
+                >
+                  <ExternalLink size={12} />
+                </a>
+              </div>
+            </header>
 
             <div className="flex-1 flex relative overflow-hidden bg-editorial-bg transition-colors">
               {/* Main Reading Area */}
-              <div className="flex-1 overflow-y-auto custom-scrollbar scroll-smooth">
+              <div className="flex-1 overflow-y-auto custom-scrollbar scroll-smooth pt-16">
                 <main className="max-w-3xl mx-auto px-6 py-12 md:py-24">
                   <header className="mb-16 border-b-2 border-editorial-text pb-12">
                     <div className="flex items-center gap-3 mb-8">

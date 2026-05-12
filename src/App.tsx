@@ -469,42 +469,35 @@ export default function App() {
       </aside>
 
       {/* Main Container */}
-      <div className="flex-1 flex flex-col min-w-0 bg-editorial-bg">
-        <header className="h-16 border-b border-editorial-border bg-white flex items-center justify-between px-6 shrink-0 z-40 sticky top-0">
+      <div className="flex-1 flex flex-col min-w-0 bg-editorial-bg relative">
+        <header className="fixed top-4 left-4 right-4 h-14 border border-editorial-border bg-white/80 backdrop-blur-md flex items-center justify-between px-4 shrink-0 z-50 rounded-full shadow-lg lg:left-auto lg:right-8 lg:w-[calc(100%-18rem-2rem)] transition-all">
           <div className="flex items-center gap-4">
             <button 
               onClick={() => setIsSidebarOpen(true)}
-              className="lg:hidden p-2 -ml-2 text-editorial-muted hover:text-editorial-text"
+              className="lg:hidden p-2 text-editorial-muted hover:text-editorial-text"
             >
               <Menu size={20} />
             </button>
-            <div className="hidden sm:flex items-center gap-3 text-[10px] uppercase font-black tracking-widest text-editorial-meta">
-              <span>HUB</span>
-              <ChevronRight size={10} />
+            <div className="hidden sm:flex items-center gap-2 text-[9px] font-black tracking-[0.2em] text-editorial-meta">
+              <span className="bg-editorial-text text-white px-1.5 py-0.5 rounded-sm scale-90">HUB</span>
+              <ChevronRight size={10} className="opacity-40" />
               <span className="text-editorial-text whitespace-nowrap">{view.toUpperCase().replace('-', ' ')}</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-6">
-            <button 
-              onClick={() => setShowSettings(true)}
-              className="p-2 text-editorial-muted hover:text-editorial-text transition-colors"
-              title="Settings"
-            >
-              <Settings size={18} />
-            </button>
-            <div className="hidden md:flex items-center gap-1 p-1 bg-editorial-accent rounded-sm border border-editorial-border">
+          <div className="flex items-center gap-4">
+            <div className="hidden md:flex items-center gap-1 p-0.5 bg-neutral-100 rounded-full border border-editorial-border">
                <ViewToggle active={view === 'dashboard'} onClick={() => setView('dashboard')} label="Summary" />
-               <ViewToggle active={view === 'study'} onClick={() => setView('study')} label="Cards" />
-               <ViewToggle active={view === 'list'} onClick={() => setView('list')} label="Dictionary" />
+               <ViewToggle active={view === 'study'} onClick={() => setView('study')} label="Units" />
+               <ViewToggle active={view === 'practice'} onClick={() => setView('practice')} label="Lab" />
                <ViewToggle active={view === 'editorial'} onClick={() => setView('editorial')} label="Reader" />
             </div>
 
-            <div className="relative" ref={searchRef}>
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-editorial-meta" size={14} />
+            <div className="relative group" ref={searchRef}>
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-editorial-meta group-focus-within:text-editorial-text transition-colors" size={12} />
               <input 
                 type="text" 
-                placeholder="Find anything ( / )..."
+                placeholder="Find... ( / )"
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
@@ -512,7 +505,7 @@ export default function App() {
                   if (view !== 'list') setView('list');
                 }}
                 onFocus={() => setShowSuggestions(true)}
-                className="pl-9 pr-4 py-1.5 bg-neutral-50 border border-editorial-border rounded-full text-xs focus:outline-none focus:ring-1 focus:ring-editorial-text/20 focus:border-editorial-text w-32 sm:w-48 transition-all"
+                className="pl-8 pr-4 py-1.5 bg-white border border-editorial-border rounded-full text-[10px] focus:outline-none focus:ring-1 focus:ring-editorial-text/20 focus:border-editorial-text w-28 sm:w-40 transition-all shadow-sm"
               />
               <AnimatePresence>
                 {showSuggestions && suggestions.length > 0 && (
@@ -520,7 +513,7 @@ export default function App() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
-                    className="absolute top-full right-0 mt-2 bg-white border border-editorial-border shadow-2xl z-50 rounded-sm overflow-hidden min-w-[240px]"
+                    className="absolute top-full right-0 mt-3 bg-white border border-editorial-border shadow-2xl z-50 rounded-xl overflow-hidden min-w-[240px]"
                   >
                     {suggestions.map((suggestion, index) => (
                       <div
@@ -530,10 +523,10 @@ export default function App() {
                           setShowSuggestions(false);
                           setView('list');
                         }}
-                        className="px-4 py-3 text-sm font-medium hover:bg-editorial-accent cursor-pointer border-b border-editorial-border last:border-0 flex items-center justify-between group"
+                        className="px-4 py-3 text-xs font-medium hover:bg-editorial-accent cursor-pointer border-b border-editorial-border last:border-0 flex items-center justify-between group"
                       >
-                        <span className="text-editorial-text font-serif italic">{suggestion}</span>
-                        <ChevronRight size={12} className="text-editorial-meta opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <span className="text-editorial-text font-serif italic text-sm">{suggestion}</span>
+                        <ChevronRight size={10} className="text-editorial-meta opacity-0 group-hover:opacity-100 transition-opacity" />
                       </div>
                     ))}
                   </motion.div>
@@ -543,7 +536,7 @@ export default function App() {
           </div>
         </header>
 
-        <main className="flex-1 relative overflow-hidden bg-editorial-bg flex flex-col">
+        <main className="flex-1 relative overflow-hidden bg-editorial-bg flex flex-col pt-20">
           <AnimatePresence mode="wait">
             {view === 'dashboard' && (
               <motion.div key="dashboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 flex flex-col overflow-hidden">

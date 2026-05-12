@@ -23,25 +23,35 @@ export const PhrasalVerbView: React.FC = () => {
   }, [search, selectedCategory]);
 
   return (
-    <div className="p-6 md:p-12 max-w-6xl mx-auto w-full bg-editorial-bg overflow-y-auto h-full">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 md:mb-16 border-b border-editorial-border pb-8">
-        <div>
-          <h2 className="text-2xl md:text-5xl font-serif tracking-tight text-editorial-text mb-2 md:mb-4">Group Verbs</h2>
-          <p className="text-editorial-muted uppercase text-[8px] md:text-[10px] tracking-[0.2em] font-bold">Phrasal Lexical Structure Archive</p>
+    <div className="flex flex-col h-full bg-editorial-bg relative overflow-hidden">
+      {/* Floating Header Hub */}
+      <header className="fixed top-4 left-1/2 -translate-x-1/2 z-40 bg-white/90 backdrop-blur-md border border-editorial-border px-6 py-2 flex items-center justify-between gap-6 transition-all rounded-full shadow-lg w-fit min-w-[320px] max-w-[95vw]">
+        <div className="flex items-center gap-3">
+          <div className="p-1.5 bg-editorial-text rounded-full text-white shrink-0">
+            <Type size={12} />
+          </div>
+          <div className="whitespace-nowrap hidden sm:block">
+            <h2 className="text-xs font-serif italic text-editorial-text leading-none">
+              Group Verbs
+            </h2>
+          </div>
         </div>
-        <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+
+        <div className="flex items-center gap-4">
           <div className="relative">
-            <Search className="absolute left-0 top-1/2 -translate-y-1/2 text-editorial-meta" size={16} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-editorial-meta" size={10} />
             <input
               type="text"
-              placeholder="Filter phrasals..."
+              placeholder="Filter..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-6 pr-4 py-2 bg-transparent border-b border-editorial-border focus:outline-none focus:border-editorial-text transition-all text-sm font-medium w-full sm:w-48"
+              className="pl-8 pr-4 py-1 bg-neutral-100/50 border border-editorial-border/50 text-[10px] focus:outline-none focus:border-editorial-text transition-all rounded-full italic text-editorial-text w-32 md:w-48"
             />
           </div>
           <select 
-            className="bg-transparent border-b border-editorial-border py-2 text-sm font-bold uppercase tracking-widest text-editorial-muted focus:outline-none focus:border-editorial-text cursor-pointer"
+            value={selectedCategory || ''}
+            onChange={(e) => setSelectedCategory(e.target.value || null)}
+            className="bg-transparent text-[8px] uppercase font-bold tracking-widest text-editorial-meta border-none focus:ring-0 cursor-pointer hover:text-editorial-text transition-colors outline-none"
           >
             <option value="">All Categories</option>
             {categories.map(cat => (
@@ -49,9 +59,9 @@ export const PhrasalVerbView: React.FC = () => {
             ))}
           </select>
         </div>
-      </div>
+      </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 transition-colors">
+      <div className="flex-1 overflow-y-auto pt-24 pb-20 px-6 md:px-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
         {filteredVerbs.map((pv, idx) => (
           <motion.div 
             key={pv.verb + idx}
@@ -96,6 +106,12 @@ export const PhrasalVerbView: React.FC = () => {
           </div>
         )}
       </div>
+      {/* Floating Footer Info */}
+      <footer className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-white/80 backdrop-blur-md border border-editorial-border px-6 py-2 transition-all rounded-full shadow-lg text-[8px] uppercase font-bold tracking-widest text-editorial-meta flex items-center gap-6 whitespace-nowrap">
+        <span>Curated Phrasals: {PHRASAL_VERBS_DATA.length} Entries</span>
+        <div className="w-[1px] h-3 bg-editorial-border" />
+        <span>Academic Lexicon Archive</span>
+      </footer>
     </div>
   );
 };

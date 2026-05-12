@@ -73,31 +73,33 @@ export const Dashboard: React.FC<DashboardProps> = ({
   return (
     <div className="flex-1 overflow-y-auto p-6 md:p-12 bg-editorial-bg transition-colors duration-300">
       <div className="max-w-6xl mx-auto space-y-12">
-        {/* Hero Section */}
-        <header className="flex flex-col md:flex-row md:items-end justify-between gap-8 py-8 border-b border-editorial-border transition-colors">
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 py-10">
           <motion.div 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
           >
-            <div className="flex items-center gap-3 mb-4">
-              <LayoutDashboard className="text-editorial-text" size={24} />
-              <h1 className="text-4xl md:text-5xl font-serif tracking-tight text-editorial-text italic">
+            <div className="flex items-center gap-4 mb-3">
+              <div className="p-3 bg-white border border-editorial-border rounded-full shadow-sm text-editorial-text">
+                <LayoutDashboard size={20} />
+              </div>
+              <h1 className="text-3xl md:text-5xl font-serif tracking-tight text-editorial-text italic">
                 Scholar's Dashboard
               </h1>
             </div>
-            <p className="text-[10px] uppercase tracking-[0.3em] font-black text-editorial-muted">
-              Cognitive Progress • Linguistic Mastery • Daily Archive
+            <p className="text-[9px] uppercase tracking-[0.4em] font-black text-editorial-muted ml-16">
+              Cognitive Progress • Linguistic Mastery
             </p>
           </motion.div>
           
-          <div className="flex items-center gap-12">
+          <div className="flex items-center gap-10 bg-white border border-editorial-border px-8 py-5 rounded-full shadow-sm">
             <div className="text-center">
-              <p className="text-[10px] uppercase font-black text-editorial-meta mb-1 tracking-tighter">Overall Mastery</p>
-              <p className="text-4xl font-serif italic text-editorial-text">{stats.progress}%</p>
+              <p className="text-[8px] uppercase font-black text-editorial-meta mb-1 tracking-tighter">Mastery</p>
+              <p className="text-3xl font-serif italic text-editorial-text">{stats.progress}%</p>
             </div>
-            <div className="text-center border-l border-editorial-border pl-12">
-              <p className="text-[10px] uppercase font-black text-editorial-meta mb-1 tracking-tighter">Bookmarked</p>
-              <p className="text-4xl font-serif italic text-editorial-text">{stats.bookmarkCount}</p>
+            <div className="h-8 w-px bg-editorial-border" />
+            <div className="text-center">
+              <p className="text-[8px] uppercase font-black text-editorial-meta mb-1 tracking-tighter">Curated</p>
+              <p className="text-3xl font-serif italic text-editorial-text">{stats.bookmarkCount}</p>
             </div>
           </div>
         </header>

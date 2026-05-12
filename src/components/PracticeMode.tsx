@@ -394,33 +394,33 @@ export const PracticeMode: React.FC<PracticeModeProps> = ({
         </div>
       </div>
 
-      <div className="h-20 bg-white border-t border-editorial-border px-8 flex items-center justify-between shrink-0 transition-colors">
-        <div className="flex gap-8">
-          <div className="flex items-center gap-3">
-             <div className="h-2 w-2 rounded-full bg-emerald-500" />
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-white/90 backdrop-blur-md border border-editorial-border px-6 py-2.5 transition-all rounded-full shadow-lg flex items-center justify-between gap-8 shrink-0 w-fit min-w-[320px]">
+        <div className="flex gap-4 border-r border-editorial-border pr-6">
+          <div className="flex items-center gap-2">
+             <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
              <div className="flex flex-col">
-                <span className="text-[9px] font-black uppercase tracking-tighter text-editorial-text">Correct</span>
-                <span className="text-xs font-mono font-bold">{score.correct}</span>
+                <span className="text-[8px] font-black uppercase tracking-tighter text-editorial-text">Correct</span>
+                <span className="text-[10px] font-mono font-bold leading-none">{score.correct}</span>
              </div>
           </div>
-          <div className="flex items-center gap-3">
-             <div className="h-2 w-2 rounded-full bg-red-500" />
+          <div className="flex items-center gap-2">
+             <div className="h-1.5 w-1.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
              <div className="flex flex-col">
-                <span className="text-[9px] font-black uppercase tracking-tighter text-editorial-text">Required Review</span>
-                <span className="text-xs font-mono font-bold">{score.total - score.correct}</span>
+                <span className="text-[8px] font-black uppercase tracking-tighter text-editorial-text">Review</span>
+                <span className="text-[10px] font-mono font-bold leading-none">{score.total - score.correct}</span>
              </div>
           </div>
         </div>
         
         <button 
           onClick={() => {
-            if (confirm('Abandon current practice session? Current progress will be saved but results will not be finalized.')) {
+            if (confirm('Abandon current practice session?')) {
               window.location.reload();
             }
           }}
-          className="flex items-center gap-2 text-[10px] uppercase font-bold tracking-widest text-editorial-muted hover:text-editorial-text transition-colors"
+          className="flex items-center gap-2 text-[8px] uppercase font-bold tracking-widest text-editorial-muted hover:text-editorial-text transition-colors"
         >
-          <RotateCcw size={14} /> Abort Session
+          <RotateCcw size={12} /> <span className="hidden sm:inline">Abort Session</span>
         </button>
       </div>
     </div>
