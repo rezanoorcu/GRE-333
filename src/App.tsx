@@ -75,19 +75,24 @@ export default function App() {
         pronunciationSpeed: 0.9,
         autoPlayAudio: true,
         fontSize: 'md',
-        sessionLength: 10
+        sessionLength: 10,
+        theme: 'paper',
+        showBarronInSidebar: true
       };
     } catch (e) {
       return {
         pronunciationSpeed: 0.9,
         autoPlayAudio: true,
         fontSize: 'md',
-        sessionLength: 10
+        sessionLength: 10,
+        theme: 'paper',
+        showBarronInSidebar: true
       };
     }
   });
 
   useEffect(() => {
+    document.documentElement.setAttribute('data-theme', preferences.theme || 'paper');
     localStorage.setItem('lexicon_preferences', JSON.stringify(preferences));
   }, [preferences]);
 
@@ -394,7 +399,12 @@ export default function App() {
             <div className="px-3">
               <p className="text-[9px] uppercase tracking-[0.2em] text-editorial-meta mb-6 font-black border-b border-editorial-border pb-2">Course Units</p>
               <div className="space-y-6">
-                {(view === 'barron-study' ? BARRON_800_DATA : VOCABULARY_DATA).map((block, idx) => {
+                {(view === 'barron-study' ? BARRON_800_DATA : VOCABULARY_DATA)
+                  .filter(b => {
+                    if (view === 'barron-study' && !preferences.showBarronInSidebar) return false;
+                    return true;
+                  })
+                  .map((block, idx) => {
                   const blockMastered = block.words.filter(w => wordStatus[w.word] === 'mastered').length;
                   const blockProgress = (blockMastered / block.words.length) * 100;
                   
@@ -476,6 +486,13 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-6">
+            <button 
+              onClick={() => setShowSettings(true)}
+              className="p-2 text-editorial-muted hover:text-editorial-text transition-colors"
+              title="Settings"
+            >
+              <Settings size={18} />
+            </button>
             <div className="hidden md:flex items-center gap-1 p-1 bg-editorial-accent rounded-sm border border-editorial-border">
                <ViewToggle active={view === 'dashboard'} onClick={() => setView('dashboard')} label="Summary" />
                <ViewToggle active={view === 'study'} onClick={() => setView('study')} label="Cards" />
@@ -673,85 +690,121 @@ function SettingsModal({ preferences, setPreferences, onClose }: any) {
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-editorial-bg border-2 border-editorial-text p-8 md:p-12 max-w-lg w-full rounded-sm shadow-2xl relative" 
+        className="bg-editorial-bg border border-editorial-border p-8 md:p-10 max-w-2xl w-full rounded-sm shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar" 
         onClick={e => e.stopPropagation()}
       >
         <button onClick={onClose} className="absolute top-6 right-6 p-2 text-editorial-meta hover:text-editorial-text transition-colors">
           <X size={24} />
         </button>
 
-        <div className="mb-10">
-          <h3 className="text-3xl font-serif italic mb-2 text-editorial-text">Preferences</h3>
-          <p className="text-[10px] uppercase tracking-[0.2em] font-black text-editorial-meta">Customize your learning environment</p>
+        <div className="mb-10 text-center border-b border-editorial-border pb-8">
+          <h3 className="text-4xl font-serif italic mb-2 text-editorial-text font-black">Studio Preferences</h3>
+          <p className="text-[10px] uppercase tracking-[0.3em] font-black text-editorial-meta">Calibrate your academic environment</p>
         </div>
 
-        <div className="space-y-8">
-          {/* Audio Preference */}
-          <div className="flex items-center justify-between">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+          <div className="space-y-8">
+            <h4 className="text-[10px] uppercase tracking-widest font-black text-editorial-muted border-l-4 border-editorial-text pl-4">System Mechanics</h4>
+            
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-black uppercase text-editorial-text mb-1">Aural Assistance</p>
+                <p className="text-[9px] text-editorial-muted italic">Autoplay pronunciations</p>
+              </div>
+              <button 
+                onClick={() => setPreferences({ ...preferences, autoPlayAudio: !preferences.autoPlayAudio })}
+                className={`w-10 h-5 rounded-full transition-colors relative ${preferences.autoPlayAudio ? 'bg-editorial-text' : 'bg-editorial-border'}`}
+              >
+                <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-transform ${preferences.autoPlayAudio ? 'left-6' : 'left-1'}`} />
+              </button>
+            </div>
+
             <div>
-              <p className="text-[11px] font-black uppercase text-editorial-text mb-1">Aural Assistance</p>
-              <p className="text-[10px] text-editorial-muted italic">Automatically articulate words during study</p>
+              <div className="flex justify-between mb-4">
+                <p className="text-[11px] font-black uppercase text-editorial-text">Articulation Speed</p>
+                <span className="text-[10px] font-mono font-bold text-editorial-meta">{preferences.pronunciationSpeed}x</span>
+              </div>
+              <input 
+                type="range" min="0.5" max="1.5" step="0.1" 
+                value={preferences.pronunciationSpeed}
+                onChange={(e) => setPreferences({ ...preferences, pronunciationSpeed: parseFloat(e.target.value) })}
+                className="w-full h-1 bg-editorial-border rounded-lg appearance-none cursor-pointer accent-editorial-text"
+              />
             </div>
-            <button 
-              onClick={() => setPreferences({ ...preferences, autoPlayAudio: !preferences.autoPlayAudio })}
-              className={`w-12 h-6 rounded-full transition-colors relative ${preferences.autoPlayAudio ? 'bg-editorial-text' : 'bg-editorial-border'}`}
-            >
-              <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${preferences.autoPlayAudio ? 'left-7' : 'left-1'}`} />
-            </button>
-          </div>
 
-          {/* Speed Control */}
-          <div>
-            <div className="flex justify-between mb-4">
-              <p className="text-[11px] font-black uppercase text-editorial-text">Articulation Speed</p>
-              <span className="text-[10px] font-mono font-bold text-editorial-meta">{preferences.pronunciationSpeed}x</span>
-            </div>
-            <input 
-              type="range" min="0.5" max="1.5" step="0.1" 
-              value={preferences.pronunciationSpeed}
-              onChange={(e) => setPreferences({ ...preferences, pronunciationSpeed: parseFloat(e.target.value) })}
-              className="w-full h-1.5 bg-editorial-border rounded-lg appearance-none cursor-pointer accent-editorial-text"
-            />
-          </div>
-
-          {/* Session Length */}
-          <div>
-            <p className="text-[11px] font-black uppercase text-editorial-text mb-4">Practice Session Volume</p>
-            <div className="grid grid-cols-4 gap-2">
-              {[5, 10, 20, 50].map(val => (
-                <button
-                  key={val}
-                  onClick={() => setPreferences({ ...preferences, sessionLength: val })}
-                  className={`py-2 text-[10px] font-black border rounded-sm transition-all ${preferences.sessionLength === val ? 'bg-editorial-text text-white border-editorial-text' : 'bg-white text-editorial-meta border-editorial-border hover:border-editorial-text'}`}
-                >
-                  {val}
-                </button>
-              ))}
+            <div>
+              <p className="text-[11px] font-black uppercase text-editorial-text mb-4">Practice Volume</p>
+              <div className="grid grid-cols-4 gap-2">
+                {[5, 10, 20, 50].map(val => (
+                  <button
+                    key={val}
+                    onClick={() => setPreferences({ ...preferences, sessionLength: val })}
+                    className={`py-1.5 text-[9px] font-black border rounded-sm transition-all ${preferences.sessionLength === val ? 'bg-editorial-text text-white border-editorial-text' : 'bg-white text-editorial-meta border-editorial-border hover:border-editorial-text'}`}
+                  >
+                    {val}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* Typography */}
-          <div>
-            <p className="text-[11px] font-black uppercase text-editorial-text mb-4">Lexical Scale (Font)</p>
-            <div className="flex gap-4">
-              {['sm', 'md', 'lg'].map(size => (
-                <button
-                  key={size}
-                  onClick={() => setPreferences({ ...preferences, fontSize: size })}
-                  className={`flex-1 py-3 text-[10px] font-black border rounded-sm transition-all uppercase ${preferences.fontSize === size ? 'bg-editorial-text text-white border-editorial-text' : 'bg-white text-editorial-meta border-editorial-border hover:border-editorial-text'}`}
-                >
-                  {size === 'sm' ? 'Normal' : size === 'md' ? 'Large' : 'Heroic'}
-                </button>
-              ))}
+          <div className="space-y-8">
+            <h4 className="text-[10px] uppercase tracking-widest font-black text-editorial-muted border-l-4 border-editorial-text pl-4">Aesthetics & Layout</h4>
+
+            <div>
+              <p className="text-[11px] font-black uppercase text-editorial-text mb-4">Visual Atmosphere</p>
+              <div className="flex gap-3">
+                {[
+                  { id: 'paper', label: 'Paper', bg: 'bg-[#FDFCFB]' },
+                  { id: 'midnight', label: 'Midnight', bg: 'bg-[#121212]' }
+                ].map(t => (
+                  <button
+                    key={t.id}
+                    onClick={() => setPreferences({ ...preferences, theme: t.id })}
+                    className={`flex-1 p-3 border rounded-sm transition-all flex flex-col items-center gap-2 group ${preferences.theme === t.id ? 'border-editorial-text bg-editorial-accent' : 'border-editorial-border bg-white hover:border-editorial-text'}`}
+                  >
+                    <div className={`w-full h-4 rounded-sm ${t.bg} border border-black/10`} />
+                    <span className="text-[8px] uppercase font-black tracking-widest">{t.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-[11px] font-black uppercase text-editorial-text mb-4">Typography Scale</p>
+              <div className="flex gap-2">
+                {['sm', 'md', 'lg'].map(size => (
+                  <button
+                    key={size}
+                    onClick={() => setPreferences({ ...preferences, fontSize: size })}
+                    className={`flex-1 py-2 text-[9px] font-black border rounded-sm transition-all uppercase ${preferences.fontSize === size ? 'bg-editorial-text text-white border-editorial-text' : 'bg-white text-editorial-meta border-editorial-border hover:border-editorial-text'}`}
+                  >
+                    {size === 'sm' ? 'Standard' : size === 'md' ? 'Large' : 'Hero'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-black uppercase text-editorial-text mb-1">Module Index</p>
+                <p className="text-[9px] text-editorial-muted italic">Show Barron 800 in sidebar</p>
+              </div>
+              <button 
+                onClick={() => setPreferences({ ...preferences, showBarronInSidebar: !preferences.showBarronInSidebar })}
+                className={`w-10 h-5 rounded-full transition-colors relative ${preferences.showBarronInSidebar ? 'bg-editorial-text' : 'bg-editorial-border'}`}
+              >
+                <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-transform ${preferences.showBarronInSidebar ? 'left-6' : 'left-1'}`} />
+              </button>
             </div>
           </div>
         </div>
 
         <button 
           onClick={onClose}
-          className="w-full mt-12 py-4 bg-editorial-text text-white text-[11px] uppercase font-black tracking-widest hover:opacity-90 transition-opacity shadow-xl"
+          className="w-full mt-12 py-5 bg-editorial-text text-white text-[10px] uppercase font-black tracking-[0.4em] hover:opacity-90 transition-opacity flex items-center justify-center gap-3"
         >
-          Preserve Settings
+          Commit Changes
         </button>
       </motion.div>
     </div>

@@ -23,6 +23,15 @@
     --editorial-meta: #A69F95;
   }
 
+  :root[data-theme="midnight"] {
+    --editorial-bg: #121212;
+    --editorial-text: #E5E5E5;
+    --editorial-border: #2D2D2D;
+    --editorial-accent: #1E1E1E;
+    --editorial-muted: #9CA3AF;
+    --editorial-meta: #6B7280;
+  }
+
   body {
     background-color: var(--editorial-bg);
     color: var(--editorial-text);

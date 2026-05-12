@@ -14,6 +14,7 @@ import {
   Type
 } from 'lucide-react';
 import { VOCABULARY_DATA } from '../data';
+import { BARRON_800_DATA } from '../constants/barronData';
 import { PHRASAL_VERBS_DATA } from '../phrasalVerbsData';
 import { IDIOMS_DATA } from '../idiomsData';
 
@@ -22,30 +23,36 @@ interface DashboardProps {
   bookmarks: Set<string>;
   onNavigate: (view: any) => void;
   currentBlockId: string | null;
+  currentBarronBlockId?: string | null;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ 
   wordStatus, 
   bookmarks, 
   onNavigate,
-  currentBlockId
+  currentBlockId,
+  currentBarronBlockId
 }) => {
-  const allWords = useMemo(() => VOCABULARY_DATA.flatMap(b => b.words), []);
+  const allWords = useMemo(() => [...VOCABULARY_DATA.flatMap(b => b.words), ...BARRON_800_DATA.flatMap(b => b.words)], []);
+  const greWords = useMemo(() => VOCABULARY_DATA.flatMap(b => b.words), []);
+  const barronWords = useMemo(() => BARRON_800_DATA.flatMap(b => b.words), []);
   
   const stats = useMemo(() => {
     const masteredWords = allWords.filter(w => wordStatus[w.word] === 'mastered').length;
-    const reviewWords = allWords.filter(w => wordStatus[w.word] === 'review').length;
+    const greMastered = greWords.filter(w => wordStatus[w.word] === 'mastered').length;
+    const barronMastered = barronWords.filter(w => wordStatus[w.word] === 'mastered').length;
     const progress = Math.round((masteredWords / allWords.length) * 100);
     
     return {
       masteredWords,
-      reviewWords,
+      greMastered,
+      barronMastered,
       progress,
       totalPhrasalVerbs: PHRASAL_VERBS_DATA.length,
       totalIdioms: IDIOMS_DATA.length,
       bookmarkCount: bookmarks.size
     };
-  }, [wordStatus, bookmarks, allWords]);
+  }, [wordStatus, bookmarks, allWords, greWords, barronWords]);
 
   const currentBlock = useMemo(() => {
     return VOCABULARY_DATA.find(b => b.id === currentBlockId) || VOCABULARY_DATA[0];
@@ -153,13 +160,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <TrendingUp size={16} className="text-editorial-meta" />
             <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-editorial-meta">Academic Modules</span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <ModuleCard 
               icon={<GraduationCap size={20} />}
-              title="333 High Frequency"
-              count={`${stats.masteredWords} / ${allWords.length}`}
-              description="Core vocabulary for academic excellence."
+              title="GRE 333 High Frequency"
+              count={`${stats.greMastered} / ${greWords.length}`}
+              description="Essential vocabulary for the GRE exam."
               onClick={() => onNavigate('study')}
+            />
+            <ModuleCard 
+              icon={<div className="w-[20px] h-[20px] rounded-sm bg-editorial-text text-white flex items-center justify-center text-xs font-black">B</div>}
+              title="Barron High Frequency"
+              count={`${stats.barronMastered} / ${barronWords.length}`}
+              description="A comprehensive archive of academic terms."
+              onClick={() => onNavigate('barron-study')}
+              delay={0.1}
             />
             <ModuleCard 
               icon={<Sparkles size={20} />}
@@ -167,7 +182,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               count={`${stats.totalIdioms} Entries`}
               description="Master idiomatic and phrasal expressions."
               onClick={() => onNavigate('idioms')}
-              delay={0.1}
+              delay={0.2}
             />
             <ModuleCard 
               icon={<Type size={20} />}
@@ -175,7 +190,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               count={`${stats.totalPhrasalVerbs} Units`}
               description="Common phrasal combinations and patterns."
               onClick={() => onNavigate('phrasal-verbs')}
-              delay={0.2}
+              delay={0.3}
             />
             <ModuleCard 
               icon={<Brain size={20} />}
@@ -183,7 +198,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
               count={`Active Review`}
               description="Testing and reinforcement through flashcards."
               onClick={() => onNavigate('practice')}
-              delay={0.3}
+              delay={0.4}
+            />
+             <ModuleCard 
+              icon={<Star size={20} />}
+              title="Personal Archive"
+              count={`${bookmarks.size} Bookmarks`}
+              description="Review your curated vocabulary list."
+              onClick={() => onNavigate('bookmarks')}
+              delay={0.5}
             />
           </div>
         </div>
