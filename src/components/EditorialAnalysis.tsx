@@ -13,7 +13,8 @@ import {
   RefreshCw,
   Bookmark,
   BookmarkCheck,
-  Search
+  Search,
+  X
 } from 'lucide-react';
 import axios from 'axios';
 import { VOCABULARY_DATA } from '../data';
@@ -347,144 +348,231 @@ export const EditorialAnalysis: React.FC<EditorialAnalysisProps> = ({
             exit={{ opacity: 0, x: 20 }}
             className="flex-1 flex flex-col h-full overflow-hidden"
           >
-            <div className="shrink-0 border-b border-editorial-border bg-white px-6 md:px-12 py-4 flex items-center justify-between sticky top-0 z-20">
+            <div className="shrink-0 border-b border-editorial-border bg-white px-6 md:px-12 py-3 flex items-center justify-between sticky top-0 z-30 shadow-sm">
               <button 
                 onClick={() => setSelectedArticle(null)}
-                className="flex items-center gap-2 text-[10px] uppercase font-bold tracking-widest text-editorial-muted hover:text-editorial-text transition-colors"
+                className="flex items-center gap-2 text-[10px] uppercase font-black tracking-widest text-editorial-text hover:opacity-60 transition-all"
               >
                 <ChevronLeft size={16} />
-                Back to Feed
+                Library
               </button>
-              <button 
-                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="hidden md:flex items-center gap-2 px-4 py-2 bg-white border border-editorial-border text-[9px] uppercase font-black tracking-widest hover:bg-neutral-50 transition-colors"
-                title={isSidebarOpen ? "Hide Inventory" : "Show Inventory"}
-              >
-                {isSidebarOpen ? "Maximize Reader" : "Show Inventory"}
-              </button>
-              <div className="flex items-center gap-4">
-                <div className="hidden md:flex flex-col items-end mr-4">
-                  <span className="text-[8px] uppercase font-bold text-emerald-500">Live Connection</span>
-                  <span className="text-[10px] font-serif italic text-editorial-text truncate max-w-[200px]">{selectedArticle.title}</span>
-                </div>
-                <a 
-                  href={selectedArticle.link} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-[10px] uppercase font-bold tracking-widest text-editorial-meta hover:text-editorial-text transition-colors"
+              
+              <div className="flex items-center gap-6">
+                <button 
+                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-editorial-text text-white text-[9px] uppercase font-black tracking-widest rounded-sm hover:bg-neutral-800 transition-colors shadow-lg active:scale-95"
+                  title={isSidebarOpen ? "Maximize Reader" : "Show Inventory"}
                 >
-                  Source <ExternalLink size={14} />
-                </a>
+                  <BookOpen size={14} />
+                  {isSidebarOpen ? "Close Inventory" : "Open Inventory"}
+                  {identifiedWords.length > 0 && (
+                    <span className="ml-1 bg-editorial-accent text-editorial-text px-1.5 py-0.5 rounded-full text-[8px]">
+                      {identifiedWords.length}
+                    </span>
+                  )}
+                </button>
+
+                <div className="hidden lg:flex items-center gap-4 border-l border-editorial-border pl-6">
+                  <div className="flex flex-col items-end">
+                    <span className="text-[8px] uppercase font-black text-emerald-600 tracking-tighter">Analytical Mode Active</span>
+                    <span className="text-[10px] font-serif italic text-editorial-text truncate max-w-[240px]">{selectedArticle.title}</span>
+                  </div>
+                  <a 
+                    href={selectedArticle.link} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="p-2 text-editorial-meta hover:text-editorial-text transition-colors bg-neutral-50 border border-editorial-border rounded-full"
+                    title="Original Source"
+                  >
+                    <ExternalLink size={14} />
+                  </a>
+                </div>
               </div>
             </div>
 
-            <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-              <div className="flex-1 overflow-y-auto p-6 md:p-20 bg-white">
-                <div className="max-w-3xl mx-auto">
-                  <header className="mb-12 border-b border-editorial-border pb-12">
-                    <div className="flex items-center gap-3 mb-6">
-                      <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1 bg-editorial-text text-white rounded-sm">
-                        Opinion • {selectedArticle.source}
+            <div className="flex-1 flex relative overflow-hidden bg-[#FAF9F6]">
+              {/* Main Reading Area */}
+              <div className="flex-1 overflow-y-auto custom-scrollbar scroll-smooth">
+                <main className="max-w-3xl mx-auto px-6 py-12 md:py-24">
+                  <header className="mb-16 border-b-2 border-editorial-text pb-12">
+                    <div className="flex items-center gap-3 mb-8">
+                      <span className="text-[10px] font-black uppercase tracking-[0.3em] px-3 py-1.5 bg-editorial-text text-white rounded-sm">
+                        {selectedArticle.source} • Opinion
                       </span>
-                      <span className="text-[10px] font-mono text-editorial-meta">
+                      <span className="text-[10px] font-mono text-editorial-meta bg-editorial-accent/30 px-2 py-1 rounded-sm border border-editorial-border">
                         {new Date(selectedArticle.pubDate).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}
                       </span>
                     </div>
-                    <h1 className="text-3xl md:text-6xl font-serif tracking-tight leading-tight text-editorial-text mb-8">
+                    <h1 className="text-4xl md:text-7xl font-serif tracking-tighter leading-[1.05] text-editorial-text mb-10 selection:bg-editorial-accent underline decoration-editorial-accent transition-all">
                       {selectedArticle.title}
                     </h1>
-                    <div className="h-1 w-24 bg-editorial-accent" />
+                    <div className="flex items-center gap-2 text-editorial-meta">
+                      <Clock size={12} />
+                      <span className="text-[10px] uppercase font-bold tracking-widest italic">{Math.ceil(articleContent.split(' ').length / 200)} Minute Read</span>
+                    </div>
                   </header>
 
-                  <div className="prose prose-neutral max-w-none">
+                  <article className="prose prose-neutral max-w-none">
                     {isScraping ? (
-                      <div className="py-20 text-center flex flex-col items-center">
-                        <Loader2 className="animate-spin text-editorial-meta mb-4" size={32} />
-                        <p className="text-sm font-serif italic text-editorial-muted">Analyzing syntactic flow...</p>
+                      <div className="py-32 text-center flex flex-col items-center">
+                        <Loader2 className="animate-spin text-editorial-text mb-6" size={48} />
+                        <p className="text-lg font-serif italic text-editorial-text opacity-60">Decrypting linguistic patterns...</p>
+                        <div className="mt-8 w-48 h-1 bg-editorial-border rounded-full overflow-hidden">
+                          <motion.div 
+                            initial={{ x: '-100%' }}
+                            animate={{ x: '100%' }}
+                            transition={{ repeat: Infinity, duration: 1.5, ease: 'linear' }}
+                            className="w-full h-full bg-editorial-text"
+                          />
+                        </div>
                       </div>
                     ) : (
-                      <div className="text-xl md:text-2xl leading-relaxed text-editorial-text whitespace-pre-wrap font-serif selection:bg-editorial-accent selection:text-editorial-text">
-                        {highlightedContent.length > 0 ? highlightedContent : "No content extracted for analysis."}
+                      <div className="text-xl md:text-2xl leading-[1.7] text-editorial-text/90 whitespace-pre-wrap font-serif selection:bg-editorial-accent selection:text-editorial-text first-letter:text-7xl first-letter:font-black first-letter:mr-3 first-letter:float-left first-letter:leading-none">
+                        {highlightedContent.length > 0 ? highlightedContent : (
+                          <div className="text-center py-20 bg-white border border-editorial-border p-12 rounded-sm shadow-sm">
+                            <p className="mb-6">Content extraction was restricted for this specific editorial.</p>
+                            <a 
+                              href={selectedArticle.link} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="px-8 py-3 bg-editorial-text text-white text-[10px] uppercase font-bold tracking-widest rounded-sm inline-flex items-center gap-2 hover:bg-neutral-800 transition-colors"
+                            >
+                              Open Full Source <ExternalLink size={12} />
+                            </a>
+                          </div>
+                        )}
                       </div>
                     )}
-                  </div>
-                </div>
+                  </article>
+
+                  <footer className="mt-24 pt-12 border-t border-editorial-border text-center">
+                    <p className="text-[10px] uppercase font-black tracking-[0.5em] text-editorial-meta mb-8">End of Analysis</p>
+                    <button 
+                      onClick={() => setSelectedArticle(null)}
+                      className="px-10 py-4 bg-white border-2 border-editorial-text text-editorial-text text-[11px] uppercase font-black tracking-widest hover:bg-editorial-text hover:text-white transition-all shadow-xl"
+                    >
+                      Return to Research Feed
+                    </button>
+                  </footer>
+                </main>
               </div>
 
-              <aside className={`${isSidebarOpen ? 'w-full md:w-96' : 'w-0 overflow-hidden'} border-l border-editorial-border bg-editorial-accent/10 overflow-y-auto shrink-0 transition-all duration-500`}>
-                <div className="p-8 min-w-[24rem]">
-                  <div className="flex items-center gap-3 mb-8 border-b border-editorial-border pb-4">
-                    <BookOpen size={18} className="text-editorial-text" />
-                    <div>
-                      <h4 className="text-xs font-bold uppercase tracking-widest text-editorial-text">Linguistic Inventory</h4>
-                      <p className="text-[10px] text-editorial-meta mt-0.5">Found in this Article</p>
-                    </div>
-                  </div>
-
-                  {isScraping ? (
-                    <div className="space-y-4">
-                      {[1, 2, 3].map(i => (
-                        <div key={i} className="animate-pulse flex flex-col gap-2">
-                          <div className="h-4 bg-editorial-border w-1/3 rounded" />
-                          <div className="h-12 bg-editorial-border w-full rounded" />
+              {/* Sliding Inventory Drawer - Prevents Reflow */}
+              <AnimatePresence>
+                {isSidebarOpen && (
+                  <>
+                    <motion.div 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      onClick={() => setIsSidebarOpen(false)}
+                      className="absolute inset-0 bg-editorial-text/10 backdrop-blur-[2px] z-40 md:hidden"
+                    />
+                    <motion.aside 
+                      initial={{ x: '100%' }}
+                      animate={{ x: 0 }}
+                      exit={{ x: '100%' }}
+                      transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                      className="absolute top-0 right-0 h-full w-full md:w-[450px] bg-white border-l-2 border-editorial-text z-50 shadow-[-20px_0_50px_rgba(0,0,0,0.1)] flex flex-col"
+                    >
+                    <div className="shrink-0 p-8 border-b border-editorial-border flex items-center justify-between bg-editorial-bg">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-editorial-text text-white rounded-sm">
+                          <BookOpen size={18} />
                         </div>
-                      ))}
+                        <div>
+                          <h4 className="text-xs font-black uppercase tracking-widest text-editorial-text">Linguistic Inventory</h4>
+                          <p className="text-[9px] font-bold text-editorial-meta mt-0.5 tracking-tighter uppercase italic">{identifiedWords.length} Words Extracted</p>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => setIsSidebarOpen(false)}
+                        className="p-2 hover:bg-neutral-200 rounded-full transition-colors text-editorial-text"
+                      >
+                        <X size={20} />
+                      </button>
                     </div>
-                  ) : identifiedWords.length > 0 ? (
-                    <div className="space-y-8">
-                      {identifiedWords.map((word, idx) => (
-                        <motion.div 
-                          key={word.word + idx}
-                          initial={{ opacity: 0, x: 20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: idx * 0.1 }}
-                        >
-                          <h5 className="text-lg font-serif italic text-editorial-text mb-2">{word.word}</h5>
-                          <div className="bg-white border border-editorial-border p-4 rounded-sm shadow-sm relative group">
-                            <p className="text-[9px] uppercase font-bold tracking-widest text-editorial-meta mb-2 border-b border-editorial-border pb-2">Definition</p>
-                            <p className="text-xs leading-relaxed text-editorial-text">{word.definition}</p>
-                            {word.nuance && (
-                              <p className="text-[9px] italic text-editorial-muted mt-3">“{word.nuance}”</p>
-                            )}
-                            <button 
-                              onClick={() => {
-                                const ctx = articleContent.substring(Math.max(0, articleContent.indexOf(word.word) - 40), Math.min(articleContent.length, articleContent.indexOf(word.word) + 40));
-                                saveWord(word.word, ctx, word.definition);
-                              }}
-                              className="absolute top-2 right-2 text-editorial-meta hover:text-editorial-text opacity-0 group-hover:opacity-100 transition-all p-1"
-                              title="Add to Save Vocab"
-                            >
-                              <Bookmark size={14} />
-                            </button>
-                          </div>
-                        </motion.div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="py-12 text-center">
-                      <Newspaper size={32} className="mx-auto text-editorial-meta/50 mb-4" />
-                      <p className="text-sm text-editorial-muted italic">Click on any words in the text to capture them for study.</p>
-                    </div>
-                  )}
 
-                  <div className="mt-12 pt-8 border-t border-editorial-border">
-                    <div className="bg-editorial-text text-white p-6 rounded-sm shadow-xl">
-                      <h4 className="text-[10px] font-bold uppercase tracking-widest mb-4 flex items-center gap-2">
-                        <BookmarkCheck size={14} className="text-editorial-accent" />
-                        Recently Saved
-                      </h4>
-                      <div className="space-y-3">
-                        {savedVocab.slice(0, 3).map((v, i) => (
-                          <div key={i} className="text-xs flex flex-col gap-0.5 border-b border-white/5 pb-2">
-                            <span className="font-serif italic text-editorial-accent">{v.word}</span>
-                            <span className="text-[8px] opacity-60 truncate">“{v.context}”</span>
+                    <div className="flex-1 overflow-y-auto p-8 custom-scrollbar space-y-10">
+                      {isScraping ? (
+                        <div className="space-y-6">
+                          {[1, 2, 3, 4].map(i => (
+                            <div key={i} className="animate-pulse flex flex-col gap-3">
+                              <div className="h-5 bg-editorial-border w-1/4 rounded" />
+                              <div className="h-20 bg-editorial-border w-full rounded" />
+                            </div>
+                          ))}
+                        </div>
+                      ) : identifiedWords.length > 0 ? (
+                        <div className="space-y-10 pb-20">
+                          {identifiedWords.map((word, idx) => {
+                            const isSaved = savedVocab.some(v => v.word.toLowerCase() === word.word.toLowerCase());
+                            return (
+                              <motion.div 
+                                key={word.word + idx}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: idx * 0.05 }}
+                                className="group"
+                              >
+                                <div className="flex justify-between items-baseline mb-2">
+                                  <h5 className="text-2xl font-serif italic text-editorial-text">{word.word}</h5>
+                                  <button 
+                                    onClick={() => {
+                                      const ctx = articleContent.substring(Math.max(0, articleContent.indexOf(word.word) - 40), Math.min(articleContent.length, articleContent.indexOf(word.word) + 40));
+                                      saveWord(word.word, ctx, word.definition);
+                                    }}
+                                    disabled={isSaved}
+                                    className={`p-2 rounded-full border transition-all ${isSaved ? 'bg-editorial-text text-white border-editorial-text' : 'bg-white text-editorial-meta border-editorial-border hover:border-editorial-text hover:text-editorial-text shadow-sm'}`}
+                                  >
+                                    {isSaved ? <BookmarkCheck size={16} /> : <Bookmark size={16} />}
+                                  </button>
+                                </div>
+                                <div className="bg-editorial-accent/30 border-l-4 border-editorial-text p-5 rounded-r-sm">
+                                  <p className="text-[10px] uppercase font-black tracking-widest text-editorial-meta mb-3 opacity-60">Academic Definition</p>
+                                  <p className="text-sm leading-relaxed text-editorial-text font-medium mb-4">{word.definition}</p>
+                                  {word.nuance && (
+                                    <p className="text-[10px] italic text-editorial-muted border-t border-editorial-text/10 pt-3 mt-3">
+                                      {word.nuance}
+                                    </p>
+                                  )}
+                                </div>
+                              </motion.div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="py-20 text-center px-6">
+                          <div className="w-16 h-16 bg-editorial-accent rounded-full flex items-center justify-center mx-auto mb-6 text-editorial-text shadow-inner">
+                            <Search size={32} />
+                          </div>
+                          <h5 className="text-xl font-serif italic text-editorial-text mb-4">No Automatic Matches</h5>
+                          <p className="text-xs text-editorial-muted leading-relaxed uppercase tracking-widest font-bold">
+                            Our primary lexical patterns didn't detect specific targets in this sample. 
+                            <br/><br/>
+                            <span className="text-editorial-text">Pro Tip:</span> Click on any word in the text to manually capture it for analysis.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="shrink-0 p-8 bg-editorial-text text-white border-t border-white/10">
+                      <h5 className="text-[10px] font-black uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
+                        <TrendingUp size={14} className="text-editorial-accent" />
+                        Capture Queue
+                      </h5>
+                      <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                        {savedVocab.slice(0, 5).map((v, i) => (
+                          <div key={i} className="shrink-0 px-3 py-1 bg-white/10 border border-white/20 rounded-full text-[10px] font-serif italic text-editorial-accent">
+                            {v.word}
                           </div>
                         ))}
+                        {savedVocab.length === 0 && <span className="text-[10px] opacity-40 italic">Queue Empty</span>}
                       </div>
                     </div>
-                  </div>
-                </div>
-              </aside>
+                  </motion.aside>
+                )}
+              </AnimatePresence>
             </div>
           </motion.div>
         )}
