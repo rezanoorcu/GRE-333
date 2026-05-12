@@ -69,6 +69,29 @@ export default function App() {
   const [view, setView] = useState<AppView>('dashboard');
   const [showSettings, setShowSettings] = useState(false);
   const [preferences, setPreferences] = useState(() => {
+    try {
+      const saved = localStorage.getItem('lexicon_preferences');
+      return saved ? JSON.parse(saved) : {
+        pronunciationSpeed: 0.9,
+        autoPlayAudio: true,
+        fontSize: 'md',
+        sessionLength: 10,
+        theme: 'paper',
+        showBarronInSidebar: true
+      };
+    } catch (e) {
+      return {
+        pronunciationSpeed: 0.9,
+        autoPlayAudio: true,
+        fontSize: 'md',
+        sessionLength: 10,
+        theme: 'paper',
+        showBarronInSidebar: true
+      };
+    }
+  });
+
+  useEffect(() => {
     document.documentElement.setAttribute('data-theme', preferences.theme || 'paper');
     localStorage.setItem('lexicon_preferences', JSON.stringify(preferences));
   }, [preferences]);
