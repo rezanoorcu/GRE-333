@@ -22,6 +22,7 @@ import {
   HelpCircle
 } from 'lucide-react';
 import { VOCABULARY_DATA } from './data';
+import { BARRON_800_DATA } from './constants/barronData';
 import { WordEntry, WordBlock, SavedVocab } from './types';
 import { PracticeMode } from './components/PracticeMode';
 import { EditorialAnalysis } from './components/EditorialAnalysis';
@@ -32,7 +33,7 @@ import { WordListEntry } from './components/WordListEntry';
 import { PhrasalVerbView } from './components/PhrasalVerbView';
 
 type WordStatus = 'new' | 'mastered' | 'review';
-type AppView = 'dashboard' | 'study' | 'list' | 'bookmarks' | 'review-stack' | 'practice' | 'phrasal-verbs' | 'editorial' | 'idioms';
+type AppView = 'dashboard' | 'study' | 'list' | 'bookmarks' | 'review-stack' | 'practice' | 'phrasal-verbs' | 'editorial' | 'idioms' | 'barron-study';
 
 export default function App() {
   const [currentBlockId, setCurrentBlockId] = useState<string | null>(() => {
@@ -44,11 +45,26 @@ export default function App() {
     }
   });
 
+  const [currentBarronBlockId, setCurrentBarronBlockId] = useState<string | null>(() => {
+    try {
+      const saved = localStorage.getItem('lexicon_barron_block');
+      return saved || BARRON_800_DATA[0].id;
+    } catch (e) {
+      return BARRON_800_DATA[0].id;
+    }
+  });
+
   useEffect(() => {
     if (currentBlockId) {
       localStorage.setItem('lexicon_current_block', currentBlockId);
     }
   }, [currentBlockId]);
+
+  useEffect(() => {
+    if (currentBarronBlockId) {
+      localStorage.setItem('lexicon_barron_block', currentBarronBlockId);
+    }
+  }, [currentBarronBlockId]);
 
   const [view, setView] = useState<AppView>('dashboard');
   const [showSettings, setShowSettings] = useState(false);
@@ -165,7 +181,7 @@ export default function App() {
 
   // Flattened words for search
   const allWords = useMemo(() => {
-    return VOCABULARY_DATA.flatMap(b => b.words);
+    return [...VOCABULARY_DATA.flatMap(b => b.words), ...BARRON_800_DATA.flatMap(b => b.words)];
   }, []);
 
   // Fuse configuration
@@ -203,6 +219,12 @@ export default function App() {
   const handleSelectBlock = (blockId: string) => {
     setCurrentBlockId(blockId);
     setView('study');
+    setIsSidebarOpen(false);
+  };
+
+  const handleSelectBarronBlock = (blockId: string) => {
+    setCurrentBarronBlockId(blockId);
+    setView('barron-study');
     setIsSidebarOpen(false);
   };
 
@@ -331,6 +353,12 @@ export default function App() {
                 onClick={() => { setView('study'); setIsSidebarOpen(false); }}
               />
               <NavItem 
+                active={view === 'barron-study'} 
+                icon={<div className="w-[18px] h-[18px] rounded-sm bg-editorial-text text-white flex items-center justify-center text-[10px] font-black">B</div>} 
+                label="Barron 800" 
+                onClick={() => { setView('barron-study'); setIsSidebarOpen(false); }} 
+              />
+              <NavItem 
                 active={view === 'phrasal-verbs'} 
                 icon={<Type size={18} />} 
                 label="Group Verbs" 
@@ -362,23 +390,27 @@ export default function App() {
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-8 no-scrollbar">
-          {(view === 'study' || view === 'dashboard') && (
+          {(view === 'study' || view === 'dashboard' || view === 'barron-study') && (
             <div className="px-3">
               <p className="text-[9px] uppercase tracking-[0.2em] text-editorial-meta mb-6 font-black border-b border-editorial-border pb-2">Course Units</p>
               <div className="space-y-6">
-                {VOCABULARY_DATA.map((block, idx) => {
+                {(view === 'barron-study' ? BARRON_800_DATA : VOCABULARY_DATA).map((block, idx) => {
                   const blockMastered = block.words.filter(w => wordStatus[w.word] === 'mastered').length;
                   const blockProgress = (blockMastered / block.words.length) * 100;
                   
+                  const isActive = view === 'barron-study' 
+                    ? currentBarronBlockId === block.id 
+                    : (currentBlockId === block.id && view === 'study');
+
                   return (
                     <div 
                       key={block.id}
-                      onClick={() => handleSelectBlock(block.id)}
-                      className={`group cursor-pointer transition-all ${currentBlockId === block.id && view === 'study' ? 'opacity-100 translate-x-1' : 'opacity-50 hover:opacity-100 hover:translate-x-1'}`}
+                      onClick={() => view === 'barron-study' ? handleSelectBarronBlock(block.id) : handleSelectBlock(block.id)}
+                      className={`group cursor-pointer transition-all ${isActive ? 'opacity-100 translate-x-1' : 'opacity-50 hover:opacity-100 hover:translate-x-1'}`}
                     >
                       <div className="flex justify-between items-baseline mb-1">
                         <p className="text-[8px] font-black tracking-tighter uppercase text-editorial-muted">
-                          UNIT {String(idx + 1).padStart(2, '0')}
+                          {view === 'barron-study' ? 'BARRON' : 'UNIT'} {String(idx + 1).padStart(2, '0')}
                         </p>
                         <span className="text-[8px] font-mono text-editorial-meta">{blockMastered}/{block.words.length}</span>
                       </div>
@@ -506,6 +538,18 @@ export default function App() {
               <motion.div key={`study-${currentBlock.id}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 flex flex-col overflow-hidden">
                 <StudySession 
                   block={currentBlock} wordStatus={wordStatus} onToggleStatus={toggleStatus}
+                  onBulkUpdateStatus={bulkUpdateStatus} isSidebarOpen={isSidebarOpen}
+                  bookmarks={bookmarks} onToggleBookmark={toggleBookmark}
+                  preferences={preferences}
+                />
+              </motion.div>
+            )}
+
+            {view === 'barron-study' && BARRON_800_DATA.find(b => b.id === currentBarronBlockId) && (
+              <motion.div key={`barron-${currentBarronBlockId}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 flex flex-col overflow-hidden">
+                <StudySession 
+                  block={BARRON_800_DATA.find(b => b.id === currentBarronBlockId)!} 
+                  wordStatus={wordStatus} onToggleStatus={toggleStatus}
                   onBulkUpdateStatus={bulkUpdateStatus} isSidebarOpen={isSidebarOpen}
                   bookmarks={bookmarks} onToggleBookmark={toggleBookmark}
                   preferences={preferences}
