@@ -69,50 +69,6 @@ export default function App() {
   const [view, setView] = useState<AppView>('dashboard');
   const [showSettings, setShowSettings] = useState(false);
   const [preferences, setPreferences] = useState(() => {
-    try {
-      const saved = localStorage.getItem('lexicon_preferences');
-      return saved ? JSON.parse(saved) : {
-        pronunciationSpeed: 0.9,
-        autoPlayAudio: true,
-        fontSize: 'md',
-        sessionLength: 10,
-        theme: 'paper',
-        showBarronInSidebar: true
-      };
-    } catch (e) {
-      return {
-        pronunciationSpeed: 0.9,
-        autoPlayAudio: true,
-        fontSize: 'md',
-        sessionLength: 10,
-        theme: 'paper',
-        showBarronInSidebar: true
-      };
-    }
-  });
-
-  const [headerVisible, setHeaderVisible] = useState(true);
-  const lastScrollY = useRef(0);
-
-  useEffect(() => {
-    const handleGlobalScroll = (e: any) => {
-      const target = e.target;
-      if (target && target.scrollTop !== undefined) {
-        const currentScrollY = target.scrollTop;
-        if (currentScrollY > lastScrollY.current && currentScrollY > 60) {
-          setHeaderVisible(false);
-        } else if (currentScrollY < lastScrollY.current) {
-          setHeaderVisible(true);
-        }
-        lastScrollY.current = currentScrollY;
-      }
-    };
-
-    window.addEventListener('scroll', handleGlobalScroll, { capture: true, passive: true });
-    return () => window.removeEventListener('scroll', handleGlobalScroll, { capture: true });
-  }, []);
-
-  useEffect(() => {
     document.documentElement.setAttribute('data-theme', preferences.theme || 'paper');
     localStorage.setItem('lexicon_preferences', JSON.stringify(preferences));
   }, [preferences]);
@@ -491,12 +447,7 @@ export default function App() {
 
       {/* Main Container */}
       <div className="flex-1 flex flex-col min-w-0 bg-editorial-bg relative">
-        <motion.header 
-          initial={{ y: 0 }}
-          animate={{ y: headerVisible ? 0 : -80 }}
-          transition={{ duration: 0.3, ease: 'easeInOut' }}
-          className="fixed top-0 left-0 right-0 h-16 border-b border-editorial-border bg-white/90 backdrop-blur-md flex items-center justify-between px-6 shrink-0 z-50 transition-all lg:left-72"
-        >
+        <header className="h-20 border-b border-editorial-border bg-white flex items-center justify-between px-8 shrink-0 z-50">
           <div className="flex items-center gap-4">
             <button 
               onClick={() => setIsSidebarOpen(true)}
@@ -504,15 +455,15 @@ export default function App() {
             >
               <Menu size={20} />
             </button>
-            <div className="hidden sm:flex items-center gap-2 text-[9px] font-black tracking-[0.2em] text-editorial-meta">
-              <span className="bg-editorial-text text-white px-1.5 py-0.5 rounded-sm scale-90">HUB</span>
-              <ChevronRight size={10} className="opacity-40" />
+            <div className="hidden sm:flex items-center gap-2 text-[10px] font-black tracking-[0.2em] text-editorial-meta">
+              <span className="bg-editorial-text text-white px-2 py-0.5 rounded-sm">HUB</span>
+              <ChevronRight size={12} className="opacity-40" />
               <span className="text-editorial-text whitespace-nowrap">{view.toUpperCase().replace('-', ' ')}</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center gap-1 p-0.5 bg-neutral-100 rounded-full border border-editorial-border">
+          <div className="flex items-center gap-6">
+            <div className="hidden md:flex items-center gap-2 p-1 bg-neutral-100 rounded-sm border border-editorial-border">
                <ViewToggle active={view === 'dashboard'} onClick={() => setView('dashboard')} label="Summary" />
                <ViewToggle active={view === 'study'} onClick={() => setView('study')} label="Units" />
                <ViewToggle active={view === 'practice'} onClick={() => setView('practice')} label="Lab" />
@@ -520,7 +471,7 @@ export default function App() {
             </div>
 
             <div className="relative group" ref={searchRef}>
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-editorial-meta group-focus-within:text-editorial-text transition-colors" size={12} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-editorial-meta group-focus-within:text-editorial-text transition-colors" size={14} />
               <input 
                 type="text" 
                 placeholder="Find... ( / )"
@@ -531,7 +482,7 @@ export default function App() {
                   if (view !== 'list') setView('list');
                 }}
                 onFocus={() => setShowSuggestions(true)}
-                className="pl-8 pr-4 py-1.5 bg-white border border-editorial-border rounded-full text-[10px] focus:outline-none focus:ring-1 focus:ring-editorial-text/20 focus:border-editorial-text w-28 sm:w-40 transition-all shadow-sm"
+                className="pl-10 pr-4 py-2 bg-white border border-editorial-border rounded-sm text-xs focus:outline-none focus:ring-1 focus:ring-editorial-text focus:border-editorial-text w-32 sm:w-64 transition-all"
               />
               <AnimatePresence>
                 {showSuggestions && suggestions.length > 0 && (
@@ -539,7 +490,7 @@ export default function App() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
-                    className="absolute top-full right-0 mt-3 bg-white border border-editorial-border shadow-2xl z-50 rounded-xl overflow-hidden min-w-[240px]"
+                    className="absolute top-full right-0 mt-2 bg-white border border-editorial-border shadow-2xl z-50 rounded-sm overflow-hidden min-w-[280px]"
                   >
                     {suggestions.map((suggestion, index) => (
                       <div
@@ -549,10 +500,10 @@ export default function App() {
                           setShowSuggestions(false);
                           setView('list');
                         }}
-                        className="px-4 py-3 text-xs font-medium hover:bg-editorial-accent cursor-pointer border-b border-editorial-border last:border-0 flex items-center justify-between group"
+                        className="px-4 py-3 text-sm font-medium hover:bg-editorial-accent cursor-pointer border-b border-editorial-border last:border-0 flex items-center justify-between group"
                       >
-                        <span className="text-editorial-text font-serif italic text-sm">{suggestion}</span>
-                        <ChevronRight size={10} className="text-editorial-meta opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <span className="text-editorial-text font-serif italic text-base">{suggestion}</span>
+                        <ChevronRight size={14} className="text-editorial-meta opacity-0 group-hover:opacity-100 transition-opacity" />
                       </div>
                     ))}
                   </motion.div>
@@ -560,9 +511,9 @@ export default function App() {
               </AnimatePresence>
             </div>
           </div>
-        </motion.header>
+        </header>
 
-        <main className="flex-1 relative overflow-hidden bg-editorial-bg flex flex-col pt-16">
+        <main className="flex-1 relative overflow-hidden bg-editorial-bg flex flex-col">
           <AnimatePresence mode="wait">
             {view === 'dashboard' && (
               <motion.div key="dashboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 flex flex-col overflow-hidden">

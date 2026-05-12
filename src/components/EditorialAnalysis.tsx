@@ -343,7 +343,7 @@ export const EditorialAnalysis: React.FC<EditorialAnalysisProps> = ({
             exit={{ opacity: 0, x: 20 }}
             className="flex-1 flex flex-col h-full overflow-hidden relative"
           >
-            <header className="fixed top-0 left-0 right-0 z-40 bg-white border-b border-editorial-border px-6 py-3 flex items-center justify-between gap-6 shadow-sm">
+            <header className="fixed top-4 left-1/2 -translate-x-1/2 z-40 bg-white/90 backdrop-blur-md border border-editorial-border px-4 py-2 flex items-center justify-between gap-6 transition-all rounded-full shadow-lg w-fit min-w-[320px] max-w-[95vw]">
               <div className="flex items-center gap-3">
                 <button 
                   onClick={() => setSelectedArticle(null)}

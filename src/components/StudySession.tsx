@@ -61,19 +61,6 @@ export const StudySession: React.FC<StudySessionProps> = ({
   const isBookmarked = bookmarks.has(word.word);
 
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card');
-  const [headerVisible, setHeaderVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
-
-  // Handle scroll to hide/show header
-  const handleScroll = (e: React.UIEvent<HTMLElement>) => {
-    const currentScrollY = e.currentTarget.scrollTop;
-    if (currentScrollY > lastScrollY && currentScrollY > 100) {
-      setHeaderVisible(false);
-    } else {
-      setHeaderVisible(true);
-    }
-    setLastScrollY(currentScrollY);
-  };
 
   useEffect(() => {
     // Reset to card view when block changes
@@ -133,84 +120,78 @@ export const StudySession: React.FC<StudySessionProps> = ({
         </p>
       </div>
 
-      <motion.header 
-        initial={{ y: 0 }}
-        animate={{ y: headerVisible ? 0 : -100 }}
-        transition={{ duration: 0.3, ease: 'easeInOut' }}
-        className="fixed top-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-md border-b border-editorial-border px-6 py-3 flex items-center justify-between gap-8 shadow-sm"
-      >
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-[8px] md:text-[9px] uppercase tracking-widest font-black text-editorial-text whitespace-nowrap">
-            <span>Block {blockIdx}</span>
-            <span className="w-3 h-[1px] bg-editorial-border"></span>
-            {status === 'mastered' ? (
-              <span className="text-emerald-600">MASTERED</span>
-            ) : status === 'review' ? (
-              <span className="text-amber-600">REVIEW</span>
-            ) : (
-              <span className="opacity-40 font-bold">NEW</span>
-            )}
+      <header className="py-8 px-8 md:px-12 border-b border-editorial-border flex flex-col md:flex-row items-center justify-between gap-8 bg-white/50 backdrop-blur-sm sticky top-0 z-40">
+        <div className="flex items-center gap-6">
+          <div className="bg-editorial-text text-white p-4 rounded-sm shadow-xl">
+            <h3 className="text-[10px] uppercase font-black tracking-[0.3em]">Block {blockIdx}</h3>
           </div>
-          
-          <div className="hidden md:flex items-center gap-3 border-l border-editorial-border pl-4">
-            <button 
-              onClick={() => setBulkConfirm('mastered')}
-              className="text-[8px] uppercase font-bold text-emerald-600/70 hover:text-emerald-600 transition-colors flex items-center gap-1.5"
-              title="Bulk Master"
-            >
-              <CheckCircle2 size={10} /> <span>Bulk Master</span>
-            </button>
-            <button 
-              onClick={() => setBulkConfirm('review')}
-              className="text-[8px] uppercase font-bold text-amber-600/70 hover:text-amber-600 transition-colors flex items-center gap-1.5"
-              title="Bulk Review"
-            >
-              <AlertCircle size={10} /> <span>Bulk Review</span>
-            </button>
+          <div>
+            <h2 className="text-2xl font-serif italic text-editorial-text leading-none mb-2">Unit Mastery</h2>
+            <div className="flex items-center gap-2 text-[9px] uppercase tracking-widest font-black text-editorial-meta">
+              {status === 'mastered' ? (
+                <span className="text-emerald-600 flex items-center gap-1"><CheckCircle2 size={10} /> MASTERED</span>
+              ) : status === 'review' ? (
+                <span className="text-amber-600 flex items-center gap-1"><AlertCircle size={10} /> REVIEW</span>
+              ) : (
+                <span className="opacity-40">STATUS: NEW</span>
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="text-[10px] font-mono text-editorial-meta bg-editorial-accent/50 px-2.5 py-1 rounded-full font-bold border border-editorial-border/30 whitespace-nowrap">
-            {index + 1} / {block.words.length}
+        <div className="flex items-center gap-8">
+          <div className="flex flex-col items-end">
+            <p className="text-[10px] font-mono text-editorial-meta mb-1 font-bold">Lexical Progress</p>
+            <div className="text-lg font-serif italic text-editorial-text">
+              Word {index + 1} <span className="text-xs opacity-40 mx-1">of</span> {block.words.length}
+            </div>
           </div>
-          <div className="flex items-center gap-1 p-0.5 bg-neutral-100 rounded-full border border-editorial-border/50">
+          
+          <div className="flex items-center gap-1 p-1 bg-neutral-100 rounded-sm border border-editorial-border">
             <button 
               onClick={() => setViewMode('card')}
-              className={`p-1.5 rounded-full transition-all ${viewMode === 'card' ? 'bg-editorial-text text-white shadow-sm' : 'text-editorial-meta hover:text-editorial-text'}`}
+              className={`p-2 rounded-sm transition-all ${viewMode === 'card' ? 'bg-editorial-text text-white shadow-md' : 'text-editorial-meta hover:text-editorial-text'}`}
               title="Card View"
             >
-              <LayoutGrid size={12} />
+              <LayoutGrid size={16} />
             </button>
             <button 
               onClick={() => setViewMode('list')}
-              className={`p-1.5 rounded-full transition-all ${viewMode === 'list' ? 'bg-editorial-text text-white shadow-sm' : 'text-editorial-meta hover:text-editorial-text'}`}
+              className={`p-2 rounded-sm transition-all ${viewMode === 'list' ? 'bg-editorial-text text-white shadow-md' : 'text-editorial-meta hover:text-editorial-text'}`}
               title="List View"
             >
-              <ListIcon size={12} />
+              <ListIcon size={16} />
+            </button>
+          </div>
+
+          <div className="hidden md:flex flex-col gap-2">
+            <button 
+              onClick={() => setBulkConfirm('mastered')}
+              className="text-[9px] uppercase font-bold text-emerald-600 border border-emerald-100 bg-emerald-50/50 px-3 py-1 rounded-full hover:bg-emerald-50 transition-colors"
+            >
+              Mark Block Mastered
+            </button>
+            <button 
+              onClick={() => setBulkConfirm('review')}
+              className="text-[9px] uppercase font-bold text-amber-600 border border-amber-100 bg-amber-50/50 px-3 py-1 rounded-full hover:bg-amber-50 transition-colors"
+            >
+              Mark Block Review
             </button>
           </div>
         </div>
-      </motion.header>
+      </header>
 
-      {/* Block Progress Bar - Docked below header */}
-      <motion.div 
-        initial={{ y: 0 }}
-        animate={{ y: headerVisible ? 0 : -80 }}
-        transition={{ duration: 0.3, ease: 'easeInOut' }}
-        className="fixed top-16 left-0 right-0 h-1 z-40 bg-editorial-border/30 overflow-hidden"
-      >
+      <div className="h-1.5 w-full bg-editorial-accent relative z-40 overflow-hidden">
         <motion.div 
           initial={{ width: 0 }}
           animate={{ width: `${((index + 1) / block.words.length) * 100}%` }}
           className="h-full bg-editorial-text"
           transition={{ type: 'spring', damping: 20, stiffness: 100 }}
         />
-      </motion.div>
+      </div>
 
       <section 
-        onScroll={handleScroll}
-        className="flex-1 overflow-y-auto px-4 md:px-12 pt-16 pb-28 relative z-10 custom-scrollbar"
+        className="flex-1 overflow-y-auto px-6 md:px-12 pt-12 pb-16 relative z-10 custom-scrollbar"
       >
         <div className="max-w-5xl w-full mx-auto min-h-full flex flex-col py-8">
           <AnimatePresence mode="wait">
@@ -352,51 +333,54 @@ export const StudySession: React.FC<StudySessionProps> = ({
 
       {/* Deleted bulky bottom control bar */}
 
-      {/* Sticky Navigation Bar - Docked to bottom */}
+      {/* Navigation Controls */}
       {viewMode === 'card' && (
-        <div className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-editorial-border px-8 py-4 flex items-center justify-center pointer-events-auto">
-          <div className="w-full max-w-sm flex items-center justify-between gap-4">
+        <section className="h-28 md:h-44 border-t border-editorial-border bg-white shrink-0 z-30 flex items-center px-6 md:px-12 relative">
+          <div className="max-w-7xl mx-auto w-full flex items-center justify-between gap-6 md:gap-12">
             <button 
               onClick={handlePrev}
-              className="p-2 text-editorial-muted hover:text-editorial-text transition-colors"
-              title="Previous (←)"
+              className="group flex items-center gap-4 text-editorial-muted hover:text-editorial-text transition-all"
             >
-              <ChevronLeft size={24} />
+              <div className="p-3 md:p-5 border-2 border-editorial-border rounded-full group-hover:border-editorial-text transition-colors">
+                <ChevronLeft size={24} />
+              </div>
+              <div className="hidden sm:block text-left">
+                <p className="text-[10px] uppercase font-black tracking-widest opacity-40">Previous</p>
+                <p className="text-xl font-serif italic">Entry Archive</p>
+              </div>
             </button>
-            
-            <div className="flex items-center gap-2 border-x border-editorial-border px-4 mx-2">
+
+            <div className="flex items-center gap-2 md:gap-4 flex-1 justify-center max-w-sm">
               <button 
                 onClick={() => onToggleStatus(word.word, 'mastered')}
-                className={`p-2 rounded-full transition-all ${status === 'mastered' ? 'bg-emerald-600 text-white' : 'text-emerald-500 hover:bg-emerald-50'}`}
-                title="Mastered (M)"
+                className={`flex-1 py-4 md:py-6 rounded-sm text-[10px] uppercase font-bold tracking-[0.2em] transition-all flex flex-col md:flex-row items-center justify-center gap-2 shadow-sm ${status === 'mastered' ? 'bg-emerald-600 text-white' : 'bg-white text-editorial-meta border border-editorial-border hover:border-emerald-600 hover:text-emerald-600'}`}
               >
-                <CheckCircle2 size={20} />
-              </button>
-              <button 
-                onClick={() => onToggleBookmark(word.word)}
-                className={`p-2 rounded-full transition-all ${isBookmarked ? 'bg-editorial-text text-white' : 'text-editorial-meta hover:bg-neutral-100'}`}
-                title="Bookmark (B)"
-              >
-                <Star size={20} fill={isBookmarked ? "currentColor" : "none"} />
+                <CheckCircle2 size={18} />
+                <span className="hidden md:inline">Mastered</span>
               </button>
               <button 
                 onClick={() => onToggleStatus(word.word, 'review')}
-                className={`p-2 rounded-full transition-all ${status === 'review' ? 'bg-amber-600 text-white' : 'text-amber-500 hover:bg-amber-50'}`}
-                title="Review (R)"
+                className={`flex-1 py-4 md:py-6 rounded-sm text-[10px] uppercase font-bold tracking-[0.2em] transition-all flex flex-col md:flex-row items-center justify-center gap-2 shadow-sm ${status === 'review' ? 'bg-amber-600 text-white' : 'bg-white text-editorial-meta border border-editorial-border hover:border-amber-600 hover:text-amber-600'}`}
               >
-                <AlertCircle size={20} />
+                <AlertCircle size={18} />
+                <span className="hidden md:inline">Review</span>
               </button>
             </div>
 
             <button 
               onClick={handleNext}
-              className="p-2 text-editorial-muted hover:text-editorial-text transition-colors"
-              title="Next (→)"
+              className="group flex items-center gap-4 text-editorial-muted hover:text-editorial-text transition-all"
             >
-              <ChevronRight size={24} />
+              <div className="hidden sm:block text-right">
+                <p className="text-[10px] uppercase font-black tracking-widest opacity-40">Proceed</p>
+                <p className="text-xl font-serif italic">Next Lexeme</p>
+              </div>
+              <div className="p-3 md:p-5 border-2 border-editorial-border rounded-full group-hover:border-editorial-text transition-colors">
+                <ChevronRight size={24} />
+              </div>
             </button>
           </div>
-        </div>
+        </section>
       )}
 
       {/* Bulk Actions Confirmation Overlay */}
