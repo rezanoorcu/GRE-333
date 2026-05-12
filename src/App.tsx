@@ -31,12 +31,14 @@ import { WordEntry, WordBlock, SavedVocab } from './types';
 import { speakWord } from './services/aiService';
 import { PracticeMode } from './components/PracticeMode';
 import { EditorialAnalysis } from './components/EditorialAnalysis';
+import { IDIOMS_DATA } from './idiomsData';
+import { IdiomsSection } from './components/IdiomsSection';
 
 type WordStatus = 'new' | 'mastered' | 'review';
 
 export default function App() {
   const [currentBlockId, setCurrentBlockId] = useState<string | null>(VOCABULARY_DATA[0].id);
-  const [view, setView] = useState<'study' | 'list' | 'bookmarks' | 'review-stack' | 'practice' | 'phrasal-verbs' | 'editorial'>('study');
+  const [view, setView] = useState<'study' | 'list' | 'bookmarks' | 'review-stack' | 'practice' | 'phrasal-verbs' | 'editorial' | 'idioms'>('study');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
@@ -124,11 +126,10 @@ export default function App() {
     VOCABULARY_DATA.find(b => b.id === currentBlockId) || VOCABULARY_DATA[0], 
   [currentBlockId]);
 
-  // Flattened words for search and practice
+  // Flattened words for search
   const allWords = useMemo(() => {
-    const baseWords = VOCABULARY_DATA.flatMap(b => b.words);
-    return [...baseWords, ...savedVocab];
-  }, [savedVocab]);
+    return VOCABULARY_DATA.flatMap(b => b.words);
+  }, []);
 
   // Fuse configuration
   const fuse = useMemo(() => new Fuse(allWords, {
@@ -412,6 +413,18 @@ export default function App() {
                 <div className="flex items-center gap-3">
                   <Newspaper size={16} />
                   Editorial Analysis
+                </div>
+              </button>
+              <button 
+                onClick={() => {
+                  setView('idioms');
+                  setIsSidebarOpen(false);
+                }}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-sm text-sm font-medium transition-all ${view === 'idioms' ? 'bg-editorial-accent text-editorial-text' : 'text-editorial-muted hover:text-editorial-text hover:bg-neutral-50'}`}
+              >
+                <div className="flex items-center gap-3">
+                  <Sparkles size={16} />
+                  Phrases & Idioms
                 </div>
               </button>
             </div>
@@ -741,6 +754,18 @@ export default function App() {
                 savedVocab={savedVocab}
                 onSaveVocab={setSavedVocab}
               />
+            </motion.div>
+          )}
+
+          {view === 'idioms' && (
+            <motion.div
+              key="idioms-view"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex-1 flex flex-col h-full"
+            >
+              <IdiomsSection />
             </motion.div>
           )}
         </AnimatePresence>
