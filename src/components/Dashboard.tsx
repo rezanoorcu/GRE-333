@@ -97,8 +97,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         {/* Core Sections Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {/* Quick Resume */}
-          <div className="lg:col-span-2 bg-white dark:bg-zinc-900 border border-editorial-border p-8 rounded-sm shadow-[4px_4px_0_0_rgba(0,0,0,0.05)] dark:shadow-none transition-all flex flex-col justify-between group relative overflow-hidden">
+          <div className="lg:col-span-2 bg-white border border-editorial-border p-8 rounded-sm shadow-[4px_4px_0_0_rgba(0,0,0,0.05)] transition-all flex flex-col justify-between group relative overflow-hidden">
             <div className="absolute top-0 left-0 w-1 h-full bg-editorial-text opacity-10 group-hover:opacity-100 transition-opacity" />
             
             <div className="relative z-10">
@@ -107,7 +106,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <span className="text-[10px] uppercase font-bold tracking-widest text-editorial-meta">Recent Activity</span>
               </div>
               <h2 className="text-2xl font-serif text-editorial-text mb-4">Continue with <span className="italic">{currentBlock.title.split(': ')[1]}</span></h2>
-              <div className="h-1.5 w-full bg-editorial-accent dark:bg-zinc-800 rounded-full overflow-hidden mb-8">
+              <div className="h-1.5 w-full bg-editorial-accent rounded-full overflow-hidden mb-8">
                 <motion.div 
                   initial={{ width: 0 }}
                   animate={{ width: `${(currentBlock.words.filter(w => wordStatus[w.word] === 'mastered').length / currentBlock.words.length) * 100}%` }}
@@ -124,7 +123,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           {/* Daily Insight */}
-          <div className="bg-editorial-text dark:bg-zinc-950 text-white p-8 rounded-sm shadow-xl flex flex-col justify-between relative overflow-hidden group">
+          <div className="bg-editorial-text text-white p-8 rounded-sm shadow-xl flex flex-col justify-between relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-4 opacity-10 rotate-12 scale-150 group-hover:rotate-45 transition-transform">
               <Sparkles size={120} />
             </div>
@@ -190,9 +189,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* Daily Idiom Highlight */}
-        <div className="bg-editorial-accent dark:bg-zinc-950 border border-editorial-border p-10 rounded-sm italic font-serif transition-all hover:shadow-inner">
+        <div className="bg-editorial-accent border border-editorial-border p-10 rounded-sm italic font-serif transition-all hover:shadow-inner">
           <div className="flex flex-col md:flex-row gap-8 items-center">
-            <div className="w-16 h-16 shrink-0 bg-white dark:bg-zinc-900 border border-editorial-border rounded-full flex items-center justify-center text-editorial-text shadow-sm ring-4 ring-white/50 dark:ring-black/20">
+            <div className="w-16 h-16 shrink-0 bg-white border border-editorial-border rounded-full flex items-center justify-center text-editorial-text shadow-sm ring-4 ring-white/50">
               <Sparkles size={32} />
             </div>
             <div className="flex-1 text-center md:text-left">
@@ -202,7 +201,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
             <button 
               onClick={() => onNavigate('idioms')}
-              className="px-8 py-3 bg-white dark:bg-zinc-900 border border-editorial-border text-[9px] uppercase font-black tracking-[0.2em] hover:bg-editorial-text hover:text-white dark:hover:bg-zinc-800 transition-all shrink-0 font-sans not-italic shadow-sm"
+              className="px-8 py-3 bg-white border border-editorial-border text-[9px] uppercase font-black tracking-[0.2em] hover:bg-editorial-text hover:text-white transition-all shrink-0 font-sans not-italic shadow-sm"
             >
               View Full Archive
             </button>

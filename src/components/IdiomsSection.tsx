@@ -49,12 +49,12 @@ export const IdiomsSection: React.FC = () => {
   return (
     <div className="flex flex-col h-full bg-editorial-bg overflow-hidden">
       {/* Header */}
-      <header className="px-8 py-10 border-b border-editorial-border bg-white dark:bg-zinc-950 shrink-0 transition-colors">
+      <header className="px-8 py-10 border-b border-editorial-border bg-white shrink-0 transition-colors">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
             <div className="flex items-center gap-3 mb-4">
               <Sparkles className="text-editorial-text" size={24} />
-              <h2 className="text-4xl font-serif tracking-tight text-editorial-text italic underline decoration-neutral-200 dark:decoration-zinc-800 underline-offset-8">
+              <h2 className="text-4xl font-serif tracking-tight text-editorial-text italic underline decoration-neutral-200 underline-offset-8">
                 Phrases & Idioms
               </h2>
             </div>
@@ -71,12 +71,12 @@ export const IdiomsSection: React.FC = () => {
                 placeholder="Locate expression..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-neutral-50 dark:bg-zinc-900 border border-editorial-border text-xs focus:outline-none focus:border-editorial-text transition-all rounded-sm italic text-editorial-text"
+                className="w-full pl-9 pr-4 py-2 bg-neutral-50 border border-editorial-border text-xs focus:outline-none focus:border-editorial-text transition-all rounded-sm italic text-editorial-text"
               />
             </div>
             <button 
               onClick={() => setShowRecallKeys(!showRecallKeys)}
-              className="px-4 py-2 bg-editorial-text text-white dark:text-zinc-950 dark:bg-editorial-accent text-[9px] uppercase font-bold tracking-widest rounded-sm flex items-center gap-2 hover:opacity-80 transition-all shrink-0"
+              className="px-4 py-2 bg-editorial-text text-white text-[9px] uppercase font-bold tracking-widest rounded-sm flex items-center gap-2 hover:opacity-80 transition-all shrink-0"
             >
               {showRecallKeys ? <EyeOff size={12} /> : <Eye size={12} />}
               {showRecallKeys ? "Hide Recall Keys" : "Focus Recall Mode"}
@@ -86,12 +86,12 @@ export const IdiomsSection: React.FC = () => {
       </header>
 
       {/* Categories Bar */}
-      <div className="px-8 py-3 bg-white dark:bg-zinc-950 border-b border-editorial-border flex gap-4 overflow-x-auto no-scrollbar shrink-0 transition-colors">
+      <div className="px-8 py-3 bg-white border-b border-editorial-border flex gap-4 overflow-x-auto no-scrollbar shrink-0 transition-colors">
         {categories.map(cat => (
           <button
             key={cat}
             onClick={() => setSelectedCategory(cat)}
-            className={`px-4 py-1 text-[10px] uppercase font-bold tracking-widest transition-all rounded-full whitespace-nowrap ${selectedCategory === cat ? 'bg-editorial-text text-white dark:text-zinc-950 dark:bg-editorial-accent' : 'text-editorial-muted hover:text-editorial-text hover:bg-neutral-50 dark:hover:bg-zinc-900 border border-transparent'}`}
+            className={`px-4 py-1 text-[10px] uppercase font-bold tracking-widest transition-all rounded-full whitespace-nowrap ${selectedCategory === cat ? 'bg-editorial-text text-white' : 'text-editorial-muted hover:text-editorial-text hover:bg-neutral-50 border border-transparent'}`}
           >
             {cat}
           </button>
@@ -109,10 +109,10 @@ export const IdiomsSection: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ delay: idx * 0.02 }}
-              className="bg-white dark:bg-zinc-900 border border-editorial-border p-6 rounded-sm shadow-sm hover:shadow-xl transition-all flex flex-col group"
+              className="bg-white border border-editorial-border p-6 rounded-sm shadow-sm hover:shadow-xl transition-all flex flex-col group"
             >
               <div className="flex justify-between items-start mb-4">
-                <span className="px-2 py-0.5 bg-neutral-100 dark:bg-zinc-800 text-editorial-meta text-[8px] uppercase font-bold tracking-widest rounded-sm border border-neutral-200 dark:border-zinc-700">
+                <span className="px-2 py-0.5 bg-neutral-100 text-editorial-meta text-[8px] uppercase font-bold tracking-widest rounded-sm border border-neutral-200">
                   {idiom.category}
                 </span>
                 <button 
@@ -123,14 +123,14 @@ export const IdiomsSection: React.FC = () => {
                 </button>
               </div>
 
-              <h3 className="text-xl font-serif italic text-editorial-text mb-4 group-hover:text-amber-900 dark:group-hover:text-editorial-accent transition-colors">
+              <h3 className="text-xl font-serif italic text-editorial-text mb-4 group-hover:text-amber-900 transition-colors">
                 {idiom.phrase}
               </h3>
 
               <div className="space-y-4 flex-1">
                 {/* Recall Mode Section */}
                 {showRecallKeys ? (
-                  <div className="bg-neutral-50 dark:bg-zinc-800 border border-dashed border-editorial-border p-4 rounded-sm">
+                  <div className="bg-neutral-50 border border-dashed border-editorial-border p-4 rounded-sm">
                     <p className="text-[9px] uppercase font-black text-editorial-meta mb-2 tracking-tighter">Mnemonic / Recall Key</p>
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-bold text-editorial-text">
@@ -138,7 +138,7 @@ export const IdiomsSection: React.FC = () => {
                       </span>
                       <button 
                         onClick={() => toggleReveal(idiom.phrase)}
-                        className="p-1 hover:bg-white dark:hover:bg-zinc-700 rounded transition-colors text-editorial-meta"
+                        className="p-1 hover:bg-white rounded transition-colors text-editorial-meta"
                       >
                         {revealStates[idiom.phrase] ? <EyeOff size={14} /> : <Eye size={14} />}
                       </button>
@@ -176,7 +176,7 @@ export const IdiomsSection: React.FC = () => {
       </div>
 
       {/* Footer Info */}
-      <footer className="px-8 py-4 bg-white dark:bg-zinc-950 border-t border-editorial-border text-[9px] uppercase font-bold tracking-widest text-editorial-meta flex justify-between shrink-0 transition-colors">
+      <footer className="px-8 py-4 bg-white border-t border-editorial-border text-[9px] uppercase font-bold tracking-widest text-editorial-meta flex justify-between shrink-0 transition-colors">
         <span>Archived Expressions: {IDIOMS_DATA.length}</span>
         <span>Source: Banking and BCS Journey with ASF</span>
       </footer>

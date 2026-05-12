@@ -50,24 +50,6 @@ export default function App() {
     }
   }, [currentBlockId]);
 
-  const [darkMode, setDarkMode] = useState<boolean>(() => {
-    try {
-      const saved = localStorage.getItem('lexicon_dark_mode');
-      return saved === 'true' || (saved === null && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    } catch (e) {
-      return false;
-    }
-  });
-
-  useEffect(() => {
-    localStorage.setItem('lexicon_dark_mode', String(darkMode));
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [darkMode]);
-
   const [view, setView] = useState<AppView>('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -235,7 +217,7 @@ export default function App() {
   const masteredCount = allWords.filter(w => wordStatus[w.word] === 'mastered').length;
 
   return (
-    <div className={`flex h-screen w-full bg-editorial-bg text-editorial-text font-sans overflow-hidden relative transition-colors duration-300 ${darkMode ? 'dark' : ''}`}>
+    <div className="flex h-screen w-full bg-editorial-bg text-editorial-text font-sans overflow-hidden relative">
       {/* HUD Notification */}
       <AnimatePresence>
         {lastAction && (
@@ -281,7 +263,7 @@ export default function App() {
 
       {/* Navigation Sidebar */}
       <aside className={`
-        fixed inset-y-0 left-0 z-50 w-72 border-r border-editorial-border flex flex-col bg-white dark:bg-zinc-950 shrink-0 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0
+        fixed inset-y-0 left-0 z-50 w-72 border-r border-editorial-border flex flex-col bg-white shrink-0 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div className="p-8 pb-4 shrink-0">
@@ -394,18 +376,11 @@ export default function App() {
           <div className="flex gap-2">
             <button 
               onClick={() => setShowHelp(true)}
-              className="flex-1 py-2 bg-white dark:bg-zinc-900 border border-editorial-border rounded-sm text-[8px] uppercase font-black tracking-widest hover:bg-neutral-50 dark:hover:bg-zinc-800 transition-colors flex items-center justify-center gap-2"
+              className="flex-1 py-2 bg-white border border-editorial-border rounded-sm text-[8px] uppercase font-black tracking-widest hover:bg-neutral-50 transition-colors flex items-center justify-center gap-2"
             >
               <HelpCircle size={10} /> Support
             </button>
-            <button 
-              onClick={() => setDarkMode(!darkMode)}
-              className="p-2 bg-white dark:bg-zinc-900 border border-editorial-border rounded-sm text-editorial-muted hover:text-editorial-text transition-colors"
-              title="Toggle Night Mode"
-            >
-              <Sparkles size={14} className={darkMode ? 'text-amber-400' : ''} />
-            </button>
-            <button className="p-2 bg-white dark:bg-zinc-900 border border-editorial-border rounded-sm text-editorial-muted hover:text-editorial-text">
+            <button className="p-2 bg-white border border-editorial-border rounded-sm text-editorial-muted hover:text-editorial-text">
               <Settings size={14} />
             </button>
           </div>
@@ -413,8 +388,8 @@ export default function App() {
       </aside>
 
       {/* Main Container */}
-      <div className="flex-1 flex flex-col min-w-0 bg-editorial-bg transition-colors duration-300">
-        <header className="h-16 border-b border-editorial-border bg-white dark:bg-zinc-950 flex items-center justify-between px-6 shrink-0 z-40 sticky top-0">
+      <div className="flex-1 flex flex-col min-w-0 bg-editorial-bg">
+        <header className="h-16 border-b border-editorial-border bg-white flex items-center justify-between px-6 shrink-0 z-40 sticky top-0">
           <div className="flex items-center gap-4">
             <button 
               onClick={() => setIsSidebarOpen(true)}
@@ -449,7 +424,7 @@ export default function App() {
                   if (view !== 'list') setView('list');
                 }}
                 onFocus={() => setShowSuggestions(true)}
-                className="pl-9 pr-4 py-1.5 bg-neutral-50 dark:bg-zinc-900 border border-editorial-border rounded-full text-xs focus:outline-none focus:ring-1 focus:ring-editorial-text/20 focus:border-editorial-text w-32 sm:w-48 transition-all"
+                className="pl-9 pr-4 py-1.5 bg-neutral-50 border border-editorial-border rounded-full text-xs focus:outline-none focus:ring-1 focus:ring-editorial-text/20 focus:border-editorial-text w-32 sm:w-48 transition-all"
               />
               <AnimatePresence>
                 {showSuggestions && suggestions.length > 0 && (
@@ -457,7 +432,7 @@ export default function App() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
-                    className="absolute top-full right-0 mt-2 bg-white dark:bg-zinc-900 border border-editorial-border shadow-2xl z-50 rounded-sm overflow-hidden min-w-[240px]"
+                    className="absolute top-full right-0 mt-2 bg-white border border-editorial-border shadow-2xl z-50 rounded-sm overflow-hidden min-w-[240px]"
                   >
                     {suggestions.map((suggestion, index) => (
                       <div
@@ -467,7 +442,7 @@ export default function App() {
                           setShowSuggestions(false);
                           setView('list');
                         }}
-                        className="px-4 py-3 text-sm font-medium hover:bg-editorial-accent dark:hover:bg-zinc-800 cursor-pointer border-b border-editorial-border last:border-0 flex items-center justify-between group"
+                        className="px-4 py-3 text-sm font-medium hover:bg-editorial-accent cursor-pointer border-b border-editorial-border last:border-0 flex items-center justify-between group"
                       >
                         <span className="text-editorial-text font-serif italic">{suggestion}</span>
                         <ChevronRight size={12} className="text-editorial-meta opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -480,16 +455,16 @@ export default function App() {
           </div>
         </header>
 
-        <main className="flex-1 flex flex-col overflow-hidden relative">
+        <main className="flex-1 relative overflow-hidden bg-editorial-bg flex flex-col">
           <AnimatePresence mode="wait">
             {view === 'dashboard' && (
-              <motion.div key="dashboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full overflow-hidden flex flex-col">
+              <motion.div key="dashboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 flex flex-col overflow-hidden">
                 <Dashboard wordStatus={wordStatus} bookmarks={bookmarks} onNavigate={setView} currentBlockId={currentBlockId} />
               </motion.div>
             )}
 
             {view === 'study' && currentBlock && (
-              <motion.div key={`study-${currentBlock.id}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
+              <motion.div key={`study-${currentBlock.id}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 flex flex-col overflow-hidden">
                 <StudySession 
                   block={currentBlock} wordStatus={wordStatus} onToggleStatus={toggleStatus}
                   onBulkUpdateStatus={bulkUpdateStatus} isSidebarOpen={isSidebarOpen}
@@ -499,37 +474,43 @@ export default function App() {
             )}
 
             {view === 'bookmarks' && (
-              <ListView key="bookmarks" title="Personal Archive" words={allWords.filter(w => bookmarks.has(w.word))} wordStatus={wordStatus} toggleStatus={toggleStatus} bookmarks={bookmarks} toggleBookmark={toggleBookmark} />
+              <motion.div key="bookmarks" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 flex flex-col overflow-hidden">
+                <ListView title="Personal Archive" words={allWords.filter(w => bookmarks.has(w.word))} wordStatus={wordStatus} toggleStatus={toggleStatus} bookmarks={bookmarks} toggleBookmark={toggleBookmark} />
+              </motion.div>
             )}
 
             {view === 'list' && (
-              <ListView key="list" title="The Lexicon" words={filteredWords} wordStatus={wordStatus} toggleStatus={toggleStatus} bookmarks={bookmarks} toggleBookmark={toggleBookmark} />
+              <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 flex flex-col overflow-hidden">
+                <ListView title="The Lexicon" words={filteredWords} wordStatus={wordStatus} toggleStatus={toggleStatus} bookmarks={bookmarks} toggleBookmark={toggleBookmark} />
+              </motion.div>
             )}
 
             {view === 'review-stack' && (
-              <ListView key="review" title="Review Queue" words={allWords.filter(w => wordStatus[w.word] === 'review')} wordStatus={wordStatus} toggleStatus={toggleStatus} bookmarks={bookmarks} toggleBookmark={toggleBookmark} />
+              <motion.div key="review" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 flex flex-col overflow-hidden">
+                <ListView title="Review Queue" words={allWords.filter(w => wordStatus[w.word] === 'review')} wordStatus={wordStatus} toggleStatus={toggleStatus} bookmarks={bookmarks} toggleBookmark={toggleBookmark} />
+              </motion.div>
             )}
 
             {view === 'practice' && (
-              <motion.div key="practice" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
+              <motion.div key="practice" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 flex flex-col overflow-hidden">
                 <PracticeMode allWords={allWords} wordStatus={wordStatus} onToggleStatus={toggleStatus} bookmarks={bookmarks} onToggleBookmark={toggleBookmark} />
               </motion.div>
             )}
 
             {view === 'phrasal-verbs' && (
-              <motion.div key="phrasals" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
+              <motion.div key="phrasals" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 flex flex-col overflow-hidden">
                 <PhrasalVerbView />
               </motion.div>
             )}
 
             {view === 'editorial' && (
-              <motion.div key="editorial" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
+              <motion.div key="editorial" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 flex flex-col overflow-hidden">
                 <EditorialAnalysis savedVocab={savedVocab} onSaveVocab={setSavedVocab} />
               </motion.div>
             )}
 
             {view === 'idioms' && (
-              <motion.div key="idioms" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
+              <motion.div key="idioms" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 flex flex-col overflow-hidden">
                 <IdiomsSection />
               </motion.div>
             )}
@@ -572,10 +553,11 @@ function ViewToggle({ active, onClick, label }: { active: boolean, onClick: () =
 
 function ListView({ title, words, wordStatus, toggleStatus, bookmarks, toggleBookmark }: any) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-      className="p-6 md:p-12 max-w-5xl mx-auto w-full overflow-y-auto h-full"
-    >
+    <div className="h-full overflow-y-auto">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+        className="p-6 md:p-12 max-w-5xl mx-auto w-full"
+      >
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 border-b border-editorial-border pb-8">
         <div>
           <h2 className="text-3xl md:text-5xl font-serif tracking-tight text-editorial-text mb-2">{title}</h2>
@@ -592,15 +574,16 @@ function ListView({ title, words, wordStatus, toggleStatus, bookmarks, toggleBoo
           </div>
         )}
       </div>
-    </motion.div>
+      </motion.div>
+    </div>
   );
 }
 
 function HelpModal({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-[100] bg-editorial-text/80 backdrop-blur-sm flex items-center justify-center p-6" onClick={onClose}>
-      <div className="bg-white dark:bg-zinc-900 border border-editorial-border p-8 md:p-12 max-w-lg w-full rounded-sm shadow-2xl" onClick={e => e.stopPropagation()}>
-        <h3 className="text-2xl font-serif italic mb-6 dark:text-white">Learning Guide</h3>
+      <div className="bg-white border border-editorial-border p-8 md:p-12 max-w-lg w-full rounded-sm shadow-2xl" onClick={e => e.stopPropagation()}>
+        <h3 className="text-2xl font-serif italic mb-6">Learning Guide</h3>
         <div className="space-y-4">
           <Shortcut label="Global Search" keys={['/']} />
           <Shortcut label="Quick Command" keys={['⌘', 'K']} />
@@ -635,7 +618,7 @@ function CommandPalette({ words, onSelect, onClose }: { words: WordEntry[], onSe
       <motion.div 
         initial={{ opacity: 0, scale: 0.95, y: -20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="w-full max-w-2xl bg-white dark:bg-zinc-900 border border-editorial-border rounded-lg shadow-2xl overflow-hidden flex flex-col"
+        className="w-full max-w-2xl bg-white border border-editorial-border rounded-lg shadow-2xl overflow-hidden flex flex-col"
         onClick={e => e.stopPropagation()}
       >
         <div className="p-6 border-b border-editorial-border flex items-center gap-4">
@@ -644,7 +627,7 @@ function CommandPalette({ words, onSelect, onClose }: { words: WordEntry[], onSe
             autoFocus
             type="text" 
             placeholder="Type to search units, words, or meanings..." 
-            className="flex-1 bg-transparent text-lg font-serif italic outline-none dark:text-white"
+            className="flex-1 bg-transparent text-lg font-serif italic outline-none"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -656,10 +639,10 @@ function CommandPalette({ words, onSelect, onClose }: { words: WordEntry[], onSe
             <div 
               key={word.word + i}
               onClick={() => onSelect(word.word)}
-              className="p-4 rounded-md hover:bg-editorial-accent dark:hover:bg-zinc-800 cursor-pointer group flex items-center justify-between transition-colors border-b border-transparent last:border-0"
+              className="p-4 rounded-md hover:bg-editorial-accent cursor-pointer group flex items-center justify-between transition-colors border-b border-transparent last:border-0"
             >
               <div>
-                <h4 className="text-md font-bold dark:text-white group-hover:translate-x-1 transition-transform">{word.word}</h4>
+                <h4 className="text-md font-bold group-hover:translate-x-1 transition-transform">{word.word}</h4>
                 <p className="text-xs text-editorial-muted italic line-clamp-1">{word.definition}</p>
               </div>
               <ChevronRight size={14} className="text-editorial-meta opacity-0 group-hover:opacity-100 transition-all" />
@@ -672,13 +655,13 @@ function CommandPalette({ words, onSelect, onClose }: { words: WordEntry[], onSe
           )}
         </div>
         
-        <div className="p-4 bg-editorial-accent dark:bg-zinc-950 border-t border-editorial-border flex items-center justify-between">
+        <div className="p-4 bg-editorial-accent border-t border-editorial-border flex items-center justify-between">
           <div className="flex gap-4">
             <span className="flex items-center gap-1.5 text-[9px] uppercase font-black text-editorial-meta">
-              <kbd className="px-1.5 py-0.5 bg-white dark:bg-zinc-800 rounded border border-editorial-border">↵</kbd> Select
+              <kbd className="px-1.5 py-0.5 bg-white rounded border border-editorial-border">↵</kbd> Select
             </span>
             <span className="flex items-center gap-1.5 text-[9px] uppercase font-black text-editorial-meta">
-              <kbd className="px-1.5 py-0.5 bg-white dark:bg-zinc-800 rounded border border-editorial-border">↑↓</kbd> Browse
+              <kbd className="px-1.5 py-0.5 bg-white rounded border border-editorial-border">↑↓</kbd> Browse
             </span>
           </div>
           <span className="text-[10px] uppercase font-black text-editorial-meta tracking-widest italic">Lexical Command Hub</span>
