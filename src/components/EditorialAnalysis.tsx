@@ -10,7 +10,7 @@ import {
   BookOpen,
   ArrowRight,
   TrendingUp,
-  RefreshCw,
+  RotateCcw,
   Bookmark,
   BookmarkCheck,
   Search,
@@ -83,28 +83,6 @@ export const EditorialAnalysis: React.FC<EditorialAnalysisProps> = ({
   };
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [dictionaryLoading, setDictionaryLoading] = useState<string | null>(null);
-
-  const lookupDefinition = async (word: string) => {
-    setDictionaryLoading(word);
-    try {
-      const response = await axios.get(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
-      const data = response.data[0];
-      const primaryDef = data.meanings[0]?.definitions[0]?.definition;
-      
-      if (primaryDef) {
-        onSaveVocab(prev => prev.map(v => 
-          v.word.toLowerCase() === word.toLowerCase() 
-            ? { ...v, definition: primaryDef } 
-            : v
-        ));
-      }
-    } catch (err) {
-      console.error('Dictionary lookup failed', err);
-    } finally {
-      setDictionaryLoading(null);
-    }
-  };
 
   const loadArticle = async (article: Article) => {
     setSelectedArticle(article);
@@ -238,7 +216,7 @@ export const EditorialAnalysis: React.FC<EditorialAnalysisProps> = ({
           onClick={fetchEditorials}
           className="px-8 py-3 bg-editorial-text text-white text-[10px] uppercase font-bold tracking-widest rounded-sm hover:scale-105 transition-transform shadow-lg flex items-center gap-2"
         >
-          <RefreshCw size={14} />
+          <RotateCcw size={14} />
           Retry Connection
         </button>
       </div>
@@ -329,14 +307,6 @@ export const EditorialAnalysis: React.FC<EditorialAnalysisProps> = ({
                           >
                             Collins
                           </a>
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); lookupDefinition(v.word); }}
-                            className="text-[9px] uppercase tracking-tighter text-blue-400 hover:text-blue-300 disabled:opacity-50"
-                            title="Refresh Definition"
-                            disabled={dictionaryLoading === v.word}
-                          >
-                            {dictionaryLoading === v.word ? '...' : <RefreshCw size={10} />}
-                          </button>
                           <button 
                             onClick={(e) => { e.stopPropagation(); removeSavedWord(v.word); }}
                             className="opacity-0 group-hover:opacity-100 text-[8px] uppercase tracking-tighter hover:text-red-400 transition-opacity"

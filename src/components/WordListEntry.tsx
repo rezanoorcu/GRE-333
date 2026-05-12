@@ -7,7 +7,8 @@ import {
   Star, 
   Loader2, 
   ChevronRight, 
-  AlertCircle 
+  AlertCircle,
+  ExternalLink
 } from 'lucide-react';
 import { WordEntry } from '../types';
 import { speakWord } from '../services/aiService';
@@ -99,7 +100,17 @@ export const WordListEntry: React.FC<WordListEntryProps> = ({
           >
             <div className="mt-8 md:mt-12 grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 pb-6">
               <div className="md:col-span-8">
-                <p className="text-[9px] md:text-[10px] uppercase font-bold tracking-widest text-editorial-meta mb-3 md:mb-4">Definition</p>
+                <div className="flex justify-between items-center mb-3 md:mb-4">
+                  <p className="text-[9px] md:text-[10px] uppercase font-bold tracking-widest text-editorial-meta">Definition</p>
+                  <a 
+                    href={`https://www.collinsdictionary.com/dictionary/english/${word.word}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 text-[9px] font-bold uppercase text-editorial-text hover:underline"
+                  >
+                    Collins External <ExternalLink size={10} />
+                  </a>
+                </div>
                 <div className="text-lg md:text-2xl text-editorial-text leading-relaxed font-medium">
                   <div>{word.definition}</div>
                 </div>

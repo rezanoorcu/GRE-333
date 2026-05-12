@@ -13,7 +13,8 @@ import {
   Award,
   Zap,
   RotateCcw,
-  BookOpen
+  BookOpen,
+  Search
 } from 'lucide-react';
 import { WordEntry } from '../types';
 import { speakWord } from '../services/aiService';
@@ -340,6 +341,15 @@ export const PracticeMode: React.FC<PracticeModeProps> = ({
                     >
                       {isSpeaking ? <Loader2 size={20} className="animate-spin" /> : <Volume2 size={20} />}
                     </button>
+                    <a 
+                      href={`https://www.collinsdictionary.com/dictionary/english/${currentWord.word}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-3 bg-white border-2 border-editorial-border text-editorial-meta rounded-full shadow-lg hover:text-editorial-text hover:border-editorial-text transition-all flex items-center justify-center"
+                      title="Open in Collins Dictionary"
+                    >
+                      <Search size={20} />
+                    </a>
                   </div>
 
                   <div className="text-center mb-10 pb-10 border-b border-editorial-border">
