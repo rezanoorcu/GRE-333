@@ -571,10 +571,11 @@ export const EditorialAnalysis: React.FC<EditorialAnalysisProps> = ({
                       </div>
                     </div>
                   </motion.aside>
-                )}
-              </AnimatePresence>
-            </div>
-          </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
+        </motion.div>
         )}
       </AnimatePresence>
     </div>
