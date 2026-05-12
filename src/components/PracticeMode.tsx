@@ -26,6 +26,7 @@ interface PracticeModeProps {
   onToggleStatus: (word: string, status: WordStatus) => void;
   bookmarks: Set<string>;
   onToggleBookmark: (word: string) => void;
+  preferences: any;
 }
 
 interface WordStats {
@@ -39,7 +40,8 @@ export const PracticeMode: React.FC<PracticeModeProps> = ({
   wordStatus, 
   onToggleStatus, 
   bookmarks, 
-  onToggleBookmark 
+  onToggleBookmark,
+  preferences
 }) => {
   const [sessionWords, setSessionWords] = useState<WordEntry[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -77,7 +79,7 @@ export const PracticeMode: React.FC<PracticeModeProps> = ({
     }
 
     // Shuffle final pool
-    setSessionWords(pool.sort(() => Math.random() - 0.5).slice(0, 20));
+    setSessionWords(pool.sort(() => Math.random() - 0.5).slice(0, preferences.sessionLength));
     setCurrentIndex(0);
     setScore({ correct: 0, total: 0 });
     setSessionCompleted(false);
@@ -139,8 +141,14 @@ export const PracticeMode: React.FC<PracticeModeProps> = ({
   const handleSpeak = () => {
     if (isSpeaking || !currentWord) return;
     setIsSpeaking(true);
-    speakWord(currentWord.word, () => setIsSpeaking(false));
+    speakWord(currentWord.word, () => setIsSpeaking(false), preferences.pronunciationSpeed);
   };
+
+  useEffect(() => {
+    if (preferences.autoPlayAudio && showSolution) {
+      handleSpeak();
+    }
+  }, [currentIndex, showSolution, preferences.autoPlayAudio]);
 
   // Determine question type based on performance/stats
   const questionType = useMemo(() => {

@@ -1,4 +1,4 @@
-export async function speakWord(text: string, onEnd?: () => void) {
+export async function speakWord(text: string, onEnd?: () => void, rate: number = 0.88) {
   try {
     if (!window.speechSynthesis) return;
 
@@ -17,7 +17,7 @@ export async function speakWord(text: string, onEnd?: () => void) {
     if (preferredVoice) utterance.voice = preferredVoice;
     
     utterance.lang = 'en-US';
-    utterance.rate = 0.88; 
+    utterance.rate = rate; 
     utterance.pitch = 1.0;
     utterance.volume = 1.0;
 

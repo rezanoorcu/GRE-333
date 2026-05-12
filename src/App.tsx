@@ -51,6 +51,30 @@ export default function App() {
   }, [currentBlockId]);
 
   const [view, setView] = useState<AppView>('dashboard');
+  const [showSettings, setShowSettings] = useState(false);
+  const [preferences, setPreferences] = useState(() => {
+    try {
+      const saved = localStorage.getItem('lexicon_preferences');
+      return saved ? JSON.parse(saved) : {
+        pronunciationSpeed: 0.9,
+        autoPlayAudio: true,
+        fontSize: 'md',
+        sessionLength: 10
+      };
+    } catch (e) {
+      return {
+        pronunciationSpeed: 0.9,
+        autoPlayAudio: true,
+        fontSize: 'md',
+        sessionLength: 10
+      };
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('lexicon_preferences', JSON.stringify(preferences));
+  }, [preferences]);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
@@ -217,7 +241,10 @@ export default function App() {
   const masteredCount = allWords.filter(w => wordStatus[w.word] === 'mastered').length;
 
   return (
-    <div className="flex h-screen w-full bg-editorial-bg text-editorial-text font-sans overflow-hidden relative">
+    <div className={`flex h-screen w-full bg-editorial-bg text-editorial-text font-sans overflow-hidden relative ${
+      preferences.fontSize === 'sm' ? 'text-sm' : 
+      preferences.fontSize === 'md' ? 'text-base' : 'text-lg'
+    }`}>
       {/* HUD Notification */}
       <AnimatePresence>
         {lastAction && (
@@ -236,7 +263,16 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      <AnimatePresence>{showSearch && (
+      <AnimatePresence>
+        {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
+        {showSettings && (
+          <SettingsModal 
+            preferences={preferences} 
+            setPreferences={setPreferences} 
+            onClose={() => setShowSettings(false)} 
+          />
+        )}
+        {showSearch && (
         <CommandPalette 
           words={allWords} 
           onSelect={(word) => {
@@ -247,7 +283,6 @@ export default function App() {
           onClose={() => setShowSearch(false)}
         />
       )}</AnimatePresence>
-      <AnimatePresence>{showHelp && <HelpModal onClose={() => setShowHelp(false)} />}</AnimatePresence>
 
       <AnimatePresence>
         {isSidebarOpen && (
@@ -380,7 +415,11 @@ export default function App() {
             >
               <HelpCircle size={10} /> Support
             </button>
-            <button className="p-2 bg-white border border-editorial-border rounded-sm text-editorial-muted hover:text-editorial-text">
+            <button 
+              onClick={() => setShowSettings(true)}
+              className="p-2 bg-white border border-editorial-border rounded-sm text-editorial-muted hover:text-editorial-text transition-colors"
+              title="Application Settings"
+            >
               <Settings size={14} />
             </button>
           </div>
@@ -469,6 +508,7 @@ export default function App() {
                   block={currentBlock} wordStatus={wordStatus} onToggleStatus={toggleStatus}
                   onBulkUpdateStatus={bulkUpdateStatus} isSidebarOpen={isSidebarOpen}
                   bookmarks={bookmarks} onToggleBookmark={toggleBookmark}
+                  preferences={preferences}
                 />
               </motion.div>
             )}
@@ -493,7 +533,11 @@ export default function App() {
 
             {view === 'practice' && (
               <motion.div key="practice" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 flex flex-col overflow-hidden">
-                <PracticeMode allWords={allWords} wordStatus={wordStatus} onToggleStatus={toggleStatus} bookmarks={bookmarks} onToggleBookmark={toggleBookmark} />
+                <PracticeMode 
+                  allWords={allWords} wordStatus={wordStatus} onToggleStatus={toggleStatus} 
+                  bookmarks={bookmarks} onToggleBookmark={toggleBookmark} 
+                  preferences={preferences}
+                />
               </motion.div>
             )}
 
@@ -574,6 +618,97 @@ function ListView({ title, words, wordStatus, toggleStatus, bookmarks, toggleBoo
           </div>
         )}
       </div>
+      </motion.div>
+    </div>
+  );
+}
+
+function SettingsModal({ preferences, setPreferences, onClose }: any) {
+  return (
+    <div className="fixed inset-0 z-[100] bg-editorial-text/40 backdrop-blur-sm flex items-center justify-center p-6" onClick={onClose}>
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-editorial-bg border-2 border-editorial-text p-8 md:p-12 max-w-lg w-full rounded-sm shadow-2xl relative" 
+        onClick={e => e.stopPropagation()}
+      >
+        <button onClick={onClose} className="absolute top-6 right-6 p-2 text-editorial-meta hover:text-editorial-text transition-colors">
+          <X size={24} />
+        </button>
+
+        <div className="mb-10">
+          <h3 className="text-3xl font-serif italic mb-2 text-editorial-text">Preferences</h3>
+          <p className="text-[10px] uppercase tracking-[0.2em] font-black text-editorial-meta">Customize your learning environment</p>
+        </div>
+
+        <div className="space-y-8">
+          {/* Audio Preference */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[11px] font-black uppercase text-editorial-text mb-1">Aural Assistance</p>
+              <p className="text-[10px] text-editorial-muted italic">Automatically articulate words during study</p>
+            </div>
+            <button 
+              onClick={() => setPreferences({ ...preferences, autoPlayAudio: !preferences.autoPlayAudio })}
+              className={`w-12 h-6 rounded-full transition-colors relative ${preferences.autoPlayAudio ? 'bg-editorial-text' : 'bg-editorial-border'}`}
+            >
+              <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${preferences.autoPlayAudio ? 'left-7' : 'left-1'}`} />
+            </button>
+          </div>
+
+          {/* Speed Control */}
+          <div>
+            <div className="flex justify-between mb-4">
+              <p className="text-[11px] font-black uppercase text-editorial-text">Articulation Speed</p>
+              <span className="text-[10px] font-mono font-bold text-editorial-meta">{preferences.pronunciationSpeed}x</span>
+            </div>
+            <input 
+              type="range" min="0.5" max="1.5" step="0.1" 
+              value={preferences.pronunciationSpeed}
+              onChange={(e) => setPreferences({ ...preferences, pronunciationSpeed: parseFloat(e.target.value) })}
+              className="w-full h-1.5 bg-editorial-border rounded-lg appearance-none cursor-pointer accent-editorial-text"
+            />
+          </div>
+
+          {/* Session Length */}
+          <div>
+            <p className="text-[11px] font-black uppercase text-editorial-text mb-4">Practice Session Volume</p>
+            <div className="grid grid-cols-4 gap-2">
+              {[5, 10, 20, 50].map(val => (
+                <button
+                  key={val}
+                  onClick={() => setPreferences({ ...preferences, sessionLength: val })}
+                  className={`py-2 text-[10px] font-black border rounded-sm transition-all ${preferences.sessionLength === val ? 'bg-editorial-text text-white border-editorial-text' : 'bg-white text-editorial-meta border-editorial-border hover:border-editorial-text'}`}
+                >
+                  {val}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Typography */}
+          <div>
+            <p className="text-[11px] font-black uppercase text-editorial-text mb-4">Lexical Scale (Font)</p>
+            <div className="flex gap-4">
+              {['sm', 'md', 'lg'].map(size => (
+                <button
+                  key={size}
+                  onClick={() => setPreferences({ ...preferences, fontSize: size })}
+                  className={`flex-1 py-3 text-[10px] font-black border rounded-sm transition-all uppercase ${preferences.fontSize === size ? 'bg-editorial-text text-white border-editorial-text' : 'bg-white text-editorial-meta border-editorial-border hover:border-editorial-text'}`}
+                >
+                  {size === 'sm' ? 'Normal' : size === 'md' ? 'Large' : 'Heroic'}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <button 
+          onClick={onClose}
+          className="w-full mt-12 py-4 bg-editorial-text text-white text-[11px] uppercase font-black tracking-widest hover:opacity-90 transition-opacity shadow-xl"
+        >
+          Preserve Settings
+        </button>
       </motion.div>
     </div>
   );

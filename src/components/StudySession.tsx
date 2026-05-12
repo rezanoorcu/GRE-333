@@ -24,6 +24,7 @@ interface StudySessionProps {
   isSidebarOpen: boolean;
   bookmarks: Set<string>;
   onToggleBookmark: (word: string) => void;
+  preferences: any;
 }
 
 export const StudySession: React.FC<StudySessionProps> = ({ 
@@ -32,7 +33,8 @@ export const StudySession: React.FC<StudySessionProps> = ({
   onToggleStatus,
   onBulkUpdateStatus,
   bookmarks,
-  onToggleBookmark
+  onToggleBookmark,
+  preferences
 }) => {
   const [index, setIndex] = useState(() => {
     try {
@@ -66,8 +68,14 @@ export const StudySession: React.FC<StudySessionProps> = ({
   const handleSpeak = () => {
     if (isSpeaking) return;
     setIsSpeaking(true);
-    speakWord(word.word, () => setIsSpeaking(false));
+    speakWord(word.word, () => setIsSpeaking(false), preferences.pronunciationSpeed);
   };
+
+  useEffect(() => {
+    if (preferences.autoPlayAudio) {
+      handleSpeak();
+    }
+  }, [index, preferences.autoPlayAudio]);
 
   const handleBulkAction = (status: 'mastered' | 'review') => {
     onBulkUpdateStatus(block.words.map(w => w.word), status);
