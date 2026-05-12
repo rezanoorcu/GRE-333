@@ -91,6 +91,27 @@ export default function App() {
     }
   });
 
+  const [headerVisible, setHeaderVisible] = useState(true);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    const handleGlobalScroll = (e: any) => {
+      const target = e.target;
+      if (target && target.scrollTop !== undefined) {
+        const currentScrollY = target.scrollTop;
+        if (currentScrollY > lastScrollY.current && currentScrollY > 60) {
+          setHeaderVisible(false);
+        } else if (currentScrollY < lastScrollY.current) {
+          setHeaderVisible(true);
+        }
+        lastScrollY.current = currentScrollY;
+      }
+    };
+
+    window.addEventListener('scroll', handleGlobalScroll, { capture: true, passive: true });
+    return () => window.removeEventListener('scroll', handleGlobalScroll, { capture: true });
+  }, []);
+
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', preferences.theme || 'paper');
     localStorage.setItem('lexicon_preferences', JSON.stringify(preferences));
@@ -470,7 +491,12 @@ export default function App() {
 
       {/* Main Container */}
       <div className="flex-1 flex flex-col min-w-0 bg-editorial-bg relative">
-        <header className="fixed top-4 left-4 right-4 h-14 border border-editorial-border bg-white/80 backdrop-blur-md flex items-center justify-between px-4 shrink-0 z-50 rounded-full shadow-lg lg:left-auto lg:right-8 lg:w-[calc(100%-18rem-2rem)] transition-all">
+        <motion.header 
+          initial={{ y: 0 }}
+          animate={{ y: headerVisible ? 0 : -80 }}
+          transition={{ duration: 0.3, ease: 'easeInOut' }}
+          className="fixed top-4 left-4 right-4 h-14 border border-editorial-border bg-white/80 backdrop-blur-md flex items-center justify-between px-4 shrink-0 z-50 rounded-full shadow-lg lg:left-auto lg:right-8 lg:w-[calc(100%-18rem-2rem)] transition-all"
+        >
           <div className="flex items-center gap-4">
             <button 
               onClick={() => setIsSidebarOpen(true)}
@@ -534,7 +560,7 @@ export default function App() {
               </AnimatePresence>
             </div>
           </div>
-        </header>
+        </motion.header>
 
         <main className="flex-1 relative overflow-hidden bg-editorial-bg flex flex-col pt-20">
           <AnimatePresence mode="wait">

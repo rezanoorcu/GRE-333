@@ -7,6 +7,18 @@ import { PHRASAL_VERBS_DATA } from '../phrasalVerbsData';
 export const PhrasalVerbView: React.FC = () => {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [headerVisible, setHeaderVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  const handleScroll = (e: React.UIEvent<HTMLElement>) => {
+    const currentScrollY = e.currentTarget.scrollTop;
+    if (currentScrollY > lastScrollY && currentScrollY > 100) {
+      setHeaderVisible(false);
+    } else {
+      setHeaderVisible(true);
+    }
+    setLastScrollY(currentScrollY);
+  };
 
   const categories = useMemo(() => {
     const cats = new Set(PHRASAL_VERBS_DATA.map(pv => pv.category));
@@ -25,7 +37,12 @@ export const PhrasalVerbView: React.FC = () => {
   return (
     <div className="flex flex-col h-full bg-editorial-bg relative overflow-hidden">
       {/* Floating Header Hub */}
-      <header className="fixed top-4 left-1/2 -translate-x-1/2 z-40 bg-white/90 backdrop-blur-md border border-editorial-border px-6 py-2 flex items-center justify-between gap-6 transition-all rounded-full shadow-lg w-fit min-w-[320px] max-w-[95vw]">
+      <motion.header 
+        initial={{ y: 0 }}
+        animate={{ y: headerVisible ? 0 : -100 }}
+        transition={{ duration: 0.3, ease: 'easeInOut' }}
+        className="fixed top-4 left-1/2 -translate-x-1/2 z-40 bg-white/90 backdrop-blur-md border border-editorial-border px-6 py-2 flex items-center justify-between gap-6 rounded-full shadow-lg w-fit min-w-[320px] max-w-[95vw]"
+      >
         <div className="flex items-center gap-3">
           <div className="p-1.5 bg-editorial-text rounded-full text-white shrink-0">
             <Type size={12} />
@@ -59,9 +76,12 @@ export const PhrasalVerbView: React.FC = () => {
             ))}
           </select>
         </div>
-      </header>
+      </motion.header>
 
-      <div className="flex-1 overflow-y-auto pt-24 pb-20 px-6 md:px-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+      <div 
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto pt-24 pb-20 px-6 md:px-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
+      >
         {filteredVerbs.map((pv, idx) => (
           <motion.div 
             key={pv.verb + idx}

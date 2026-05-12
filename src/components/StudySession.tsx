@@ -61,6 +61,19 @@ export const StudySession: React.FC<StudySessionProps> = ({
   const isBookmarked = bookmarks.has(word.word);
 
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card');
+  const [headerVisible, setHeaderVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  // Handle scroll to hide/show header
+  const handleScroll = (e: React.UIEvent<HTMLElement>) => {
+    const currentScrollY = e.currentTarget.scrollTop;
+    if (currentScrollY > lastScrollY && currentScrollY > 100) {
+      setHeaderVisible(false);
+    } else {
+      setHeaderVisible(true);
+    }
+    setLastScrollY(currentScrollY);
+  };
 
   useEffect(() => {
     // Reset to card view when block changes
@@ -120,7 +133,12 @@ export const StudySession: React.FC<StudySessionProps> = ({
         </p>
       </div>
 
-      <header className="fixed top-4 left-1/2 -translate-x-1/2 z-40 bg-white/90 backdrop-blur-md border border-editorial-border px-6 py-2 flex items-center justify-between gap-8 transition-all rounded-full shadow-lg w-fit min-w-[320px] max-w-[95vw]">
+      <motion.header 
+        initial={{ y: 0 }}
+        animate={{ y: headerVisible ? 0 : -100 }}
+        transition={{ duration: 0.3, ease: 'easeInOut' }}
+        className="fixed top-4 left-1/2 -translate-x-1/2 z-40 bg-white/90 backdrop-blur-md border border-editorial-border px-6 py-2 flex items-center justify-between gap-8 rounded-full shadow-lg w-fit min-w-[320px] max-w-[95vw]"
+      >
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 text-[8px] md:text-[9px] uppercase tracking-widest font-black text-editorial-text whitespace-nowrap">
             <span>Block {blockIdx}</span>
@@ -173,19 +191,27 @@ export const StudySession: React.FC<StudySessionProps> = ({
             </button>
           </div>
         </div>
-      </header>
+      </motion.header>
 
       {/* Block Progress Bar - Floating Pill below header */}
-      <div className="fixed top-16 left-1/2 -translate-x-1/2 w-48 h-1 z-40 bg-editorial-border/30 rounded-full overflow-hidden backdrop-blur-sm shadow-sm md:top-14">
+      <motion.div 
+        initial={{ y: 0 }}
+        animate={{ y: headerVisible ? 0 : -80 }}
+        transition={{ duration: 0.3, ease: 'easeInOut' }}
+        className="fixed top-16 left-1/2 -translate-x-1/2 w-48 h-1 z-40 bg-editorial-border/30 rounded-full overflow-hidden backdrop-blur-sm shadow-sm md:top-14"
+      >
         <motion.div 
           initial={{ width: 0 }}
           animate={{ width: `${((index + 1) / block.words.length) * 100}%` }}
           className="h-full bg-editorial-text"
           transition={{ type: 'spring', damping: 20, stiffness: 100 }}
         />
-      </div>
+      </motion.div>
 
-      <section className="flex-1 overflow-y-auto px-4 md:px-12 pt-16 pb-28 relative z-10 custom-scrollbar">
+      <section 
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto px-4 md:px-12 pt-16 pb-28 relative z-10 custom-scrollbar"
+      >
         <div className="max-w-5xl w-full mx-auto min-h-full flex flex-col py-8">
           <AnimatePresence mode="wait">
             {viewMode === 'card' ? (
@@ -204,8 +230,7 @@ export const StudySession: React.FC<StudySessionProps> = ({
                 >
                   <Star size={24} fill={isBookmarked ? "currentColor" : "none"} />
                 </button>
-                <div className="flex flex-col lg:flex-row gap-12 lg:gap-20 mb-12">
-                <div className="flex-1 min-w-0">
+                <div className="w-full">
                   <div className="flex items-center gap-4 md:gap-6 mb-8 overflow-visible">
                     <h2 
                       className="text-4xl sm:text-6xl lg:text-8xl font-serif leading-tight tracking-tight text-editorial-text select-all cursor-pointer hover:text-editorial-muted transition-colors break-words max-w-full"
@@ -245,6 +270,15 @@ export const StudySession: React.FC<StudySessionProps> = ({
                         </div>
                       )}
                     </div>
+
+                    {word.context && (
+                      <div className="bg-editorial-accent p-6 border-l-4 border-editorial-text rounded-sm">
+                        <p className="text-[10px] uppercase font-bold tracking-widest text-editorial-meta mb-2">Usage Context</p>
+                        <p className="text-sm md:text-base font-serif italic text-editorial-text leading-relaxed">
+                          {word.context}
+                        </p>
+                      </div>
+                    )}
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
                       {word.synonyms && word.synonyms.length > 0 && (
@@ -289,44 +323,7 @@ export const StudySession: React.FC<StudySessionProps> = ({
                   </div>
                 </div>
 
-                <aside className="lg:w-80 shrink-0 space-y-8">
-                  <div className="bg-white border border-editorial-border p-6 rounded-sm shadow-sm space-y-6">
-                    <div className="flex gap-2">
-                      <button 
-                        onClick={() => onToggleStatus(word.word, 'mastered')}
-                        className={`flex-1 flex flex-col items-center gap-2 p-4 rounded-sm border transition-all ${status === 'mastered' ? 'bg-editorial-text text-white border-editorial-text shadow-lg' : 'bg-neutral-50 border-editorial-border text-editorial-meta hover:border-editorial-text'}`}
-                      >
-                        <CheckCircle2 size={24} />
-                        <span className="text-[9px] font-black uppercase tracking-widest">Mastered</span>
-                      </button>
-                      <button 
-                        onClick={() => onToggleStatus(word.word, 'review')}
-                        className={`flex-1 flex flex-col items-center gap-2 p-4 rounded-sm border transition-all ${status === 'review' ? 'bg-amber-600 text-white border-amber-600 shadow-lg' : 'bg-neutral-50 border-editorial-border text-editorial-meta hover:border-editorial-text'}`}
-                      >
-                        <AlertCircle size={24} />
-                        <span className="text-[9px] font-black uppercase tracking-widest">Review</span>
-                      </button>
-                    </div>
-
-                    <div className="pt-6 border-t border-editorial-border">
-                      <p className="text-[10px] uppercase font-bold tracking-widest text-editorial-meta mb-4">Contextual Nuance</p>
-                      <div className="p-4 bg-editorial-accent rounded-sm italic text-sm text-editorial-text leading-relaxed font-serif border-l-2 border-editorial-text">
-                        {word.context}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-editorial-text text-white p-6 rounded-sm shadow-xl">
-                    <p className="text-[8px] uppercase tracking-[0.3em] font-bold opacity-40 mb-4">Learning Shortcut</p>
-                    <div className="flex items-center justify-between text-[10px]">
-                      <span className="opacity-60">Status:</span>
-                      <span className="font-bold underline decoration-editorial-accent uppercase tracking-widest">{status}</span>
-                    </div>
-                  </div>
-                </aside>
-              </div>
-
-              <div className="bg-editorial-text text-white p-8 md:p-16 rounded-sm shadow-2xl relative overflow-hidden group">
+                <div className="bg-editorial-text text-white p-8 md:p-16 rounded-sm shadow-2xl relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 -rotate-45 translate-x-24 -translate-y-24 group-hover:scale-110 transition-transform"></div>
                 <p className="text-[10px] uppercase tracking-[0.5em] opacity-30 mb-8 font-bold text-center">Contextual Prototype</p>
                 <div className="text-xl md:text-3xl lg:text-5xl font-serif italic text-center leading-tight max-w-4xl mx-auto tracking-tight">

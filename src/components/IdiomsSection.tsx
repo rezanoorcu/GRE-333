@@ -19,6 +19,18 @@ export const IdiomsSection: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [showRecallKeys, setShowRecallKeys] = useState(false);
   const [revealStates, setRevealStates] = useState<Record<string, boolean>>({});
+  const [headerVisible, setHeaderVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  const handleScroll = (e: React.UIEvent<HTMLElement>) => {
+    const currentScrollY = e.currentTarget.scrollTop;
+    if (currentScrollY > lastScrollY && currentScrollY > 100) {
+      setHeaderVisible(false);
+    } else {
+      setHeaderVisible(true);
+    }
+    setLastScrollY(currentScrollY);
+  };
 
   const categories = ['All', ...new Set(IDIOMS_DATA.map(i => i.category))];
 
@@ -49,7 +61,12 @@ export const IdiomsSection: React.FC = () => {
   return (
     <div className="flex flex-col h-full bg-editorial-bg relative overflow-hidden">
       {/* Floating Header Hub */}
-      <header className="fixed top-4 left-1/2 -translate-x-1/2 z-40 bg-white/90 backdrop-blur-md border border-editorial-border px-4 py-2 flex flex-col md:flex-row items-center gap-3 transition-all rounded-2xl md:rounded-full shadow-lg w-[95vw] md:w-fit min-w-[320px]">
+      <motion.header 
+        initial={{ y: 0 }}
+        animate={{ y: headerVisible ? 0 : -120 }}
+        transition={{ duration: 0.3, ease: 'easeInOut' }}
+        className="fixed top-4 left-1/2 -translate-x-1/2 z-40 bg-white/90 backdrop-blur-md border border-editorial-border px-4 py-2 flex flex-col md:flex-row items-center gap-3 rounded-2xl md:rounded-full shadow-lg w-[95vw] md:w-fit min-w-[320px]"
+      >
         <div className="flex items-center gap-3 pr-3 border-b md:border-b-0 md:border-r border-editorial-border/30 pb-2 md:pb-0">
           <div className="p-1.5 bg-editorial-text rounded-full text-white shrink-0">
             <Sparkles size={12} />
@@ -98,10 +115,13 @@ export const IdiomsSection: React.FC = () => {
             {showRecallKeys ? <EyeOff size={12} /> : <Eye size={12} />}
           </button>
         </div>
-      </header>
+      </motion.header>
 
       {/* Content Grid */}
-      <div className="flex-1 overflow-y-auto pt-24 pb-24 px-6 md:px-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+      <div 
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto pt-24 pb-24 px-6 md:px-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
+      >
         <AnimatePresence mode="popLayout">
           {filteredIdioms.map((idiom, idx) => (
             <motion.div
