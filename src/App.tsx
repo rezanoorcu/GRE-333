@@ -495,7 +495,7 @@ export default function App() {
           initial={{ y: 0 }}
           animate={{ y: headerVisible ? 0 : -80 }}
           transition={{ duration: 0.3, ease: 'easeInOut' }}
-          className="fixed top-4 left-4 right-4 h-14 border border-editorial-border bg-white/80 backdrop-blur-md flex items-center justify-between px-4 shrink-0 z-50 rounded-full shadow-lg lg:left-auto lg:right-8 lg:w-[calc(100%-18rem-2rem)] transition-all"
+          className="fixed top-0 left-0 right-0 h-16 border-b border-editorial-border bg-white/90 backdrop-blur-md flex items-center justify-between px-6 shrink-0 z-50 transition-all lg:left-72"
         >
           <div className="flex items-center gap-4">
             <button 
@@ -562,7 +562,7 @@ export default function App() {
           </div>
         </motion.header>
 
-        <main className="flex-1 relative overflow-hidden bg-editorial-bg flex flex-col pt-20">
+        <main className="flex-1 relative overflow-hidden bg-editorial-bg flex flex-col pt-16">
           <AnimatePresence mode="wait">
             {view === 'dashboard' && (
               <motion.div key="dashboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 flex flex-col overflow-hidden">

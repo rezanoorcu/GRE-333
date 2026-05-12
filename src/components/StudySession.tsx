@@ -137,7 +137,7 @@ export const StudySession: React.FC<StudySessionProps> = ({
         initial={{ y: 0 }}
         animate={{ y: headerVisible ? 0 : -100 }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
-        className="fixed top-4 left-1/2 -translate-x-1/2 z-40 bg-white/90 backdrop-blur-md border border-editorial-border px-6 py-2 flex items-center justify-between gap-8 rounded-full shadow-lg w-fit min-w-[320px] max-w-[95vw]"
+        className="fixed top-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-md border-b border-editorial-border px-6 py-3 flex items-center justify-between gap-8 shadow-sm"
       >
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 text-[8px] md:text-[9px] uppercase tracking-widest font-black text-editorial-text whitespace-nowrap">
@@ -193,12 +193,12 @@ export const StudySession: React.FC<StudySessionProps> = ({
         </div>
       </motion.header>
 
-      {/* Block Progress Bar - Floating Pill below header */}
+      {/* Block Progress Bar - Docked below header */}
       <motion.div 
         initial={{ y: 0 }}
         animate={{ y: headerVisible ? 0 : -80 }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
-        className="fixed top-16 left-1/2 -translate-x-1/2 w-48 h-1 z-40 bg-editorial-border/30 rounded-full overflow-hidden backdrop-blur-sm shadow-sm md:top-14"
+        className="fixed top-16 left-0 right-0 h-1 z-40 bg-editorial-border/30 overflow-hidden"
       >
         <motion.div 
           initial={{ width: 0 }}
@@ -270,15 +270,6 @@ export const StudySession: React.FC<StudySessionProps> = ({
                         </div>
                       )}
                     </div>
-
-                    {word.context && (
-                      <div className="bg-editorial-accent p-6 border-l-4 border-editorial-text rounded-sm">
-                        <p className="text-[10px] uppercase font-bold tracking-widest text-editorial-meta mb-2">Usage Context</p>
-                        <p className="text-sm md:text-base font-serif italic text-editorial-text leading-relaxed">
-                          {word.context}
-                        </p>
-                      </div>
-                    )}
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
                       {word.synonyms && word.synonyms.length > 0 && (
@@ -361,55 +352,51 @@ export const StudySession: React.FC<StudySessionProps> = ({
 
       {/* Deleted bulky bottom control bar */}
 
-      {/* Floating Sticky Navigation Bar */}
+      {/* Sticky Navigation Bar - Docked to bottom */}
       {viewMode === 'card' && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-30 pointer-events-none w-full max-w-sm px-6">
-        <motion.div 
-          initial={{ y: 50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="pointer-events-auto bg-white/80 backdrop-blur-md border border-editorial-text/20 shadow-[0_20px_50px_rgba(0,0,0,0.15)] rounded-full px-6 py-3 flex items-center justify-between gap-4"
-        >
-          <button 
-            onClick={handlePrev}
-            className="p-2 text-editorial-muted hover:text-editorial-text transition-colors"
-            title="Previous (←)"
-          >
-            <ChevronLeft size={24} />
-          </button>
-          
-          <div className="flex items-center gap-2 border-x border-editorial-border px-4 mx-2">
+        <div className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-editorial-border px-8 py-4 flex items-center justify-center pointer-events-auto">
+          <div className="w-full max-w-sm flex items-center justify-between gap-4">
             <button 
-              onClick={() => onToggleStatus(word.word, 'mastered')}
-              className={`p-2 rounded-full transition-all ${status === 'mastered' ? 'bg-emerald-600 text-white' : 'text-emerald-500 hover:bg-emerald-50'}`}
-              title="Mastered (M)"
+              onClick={handlePrev}
+              className="p-2 text-editorial-muted hover:text-editorial-text transition-colors"
+              title="Previous (←)"
             >
-              <CheckCircle2 size={20} />
+              <ChevronLeft size={24} />
             </button>
+            
+            <div className="flex items-center gap-2 border-x border-editorial-border px-4 mx-2">
+              <button 
+                onClick={() => onToggleStatus(word.word, 'mastered')}
+                className={`p-2 rounded-full transition-all ${status === 'mastered' ? 'bg-emerald-600 text-white' : 'text-emerald-500 hover:bg-emerald-50'}`}
+                title="Mastered (M)"
+              >
+                <CheckCircle2 size={20} />
+              </button>
+              <button 
+                onClick={() => onToggleBookmark(word.word)}
+                className={`p-2 rounded-full transition-all ${isBookmarked ? 'bg-editorial-text text-white' : 'text-editorial-meta hover:bg-neutral-100'}`}
+                title="Bookmark (B)"
+              >
+                <Star size={20} fill={isBookmarked ? "currentColor" : "none"} />
+              </button>
+              <button 
+                onClick={() => onToggleStatus(word.word, 'review')}
+                className={`p-2 rounded-full transition-all ${status === 'review' ? 'bg-amber-600 text-white' : 'text-amber-500 hover:bg-amber-50'}`}
+                title="Review (R)"
+              >
+                <AlertCircle size={20} />
+              </button>
+            </div>
+
             <button 
-              onClick={() => onToggleBookmark(word.word)}
-              className={`p-2 rounded-full transition-all ${isBookmarked ? 'bg-editorial-text text-white' : 'text-editorial-meta hover:bg-neutral-100'}`}
-              title="Bookmark (B)"
+              onClick={handleNext}
+              className="p-2 text-editorial-muted hover:text-editorial-text transition-colors"
+              title="Next (→)"
             >
-              <Star size={20} fill={isBookmarked ? "currentColor" : "none"} />
-            </button>
-            <button 
-              onClick={() => onToggleStatus(word.word, 'review')}
-              className={`p-2 rounded-full transition-all ${status === 'review' ? 'bg-amber-600 text-white' : 'text-amber-500 hover:bg-amber-50'}`}
-              title="Review (R)"
-            >
-              <AlertCircle size={20} />
+              <ChevronRight size={24} />
             </button>
           </div>
-
-          <button 
-            onClick={handleNext}
-            className="p-2 text-editorial-muted hover:text-editorial-text transition-colors"
-            title="Next (→)"
-          >
-            <ChevronRight size={24} />
-          </button>
-        </motion.div>
-      </div>
+        </div>
       )}
 
       {/* Bulk Actions Confirmation Overlay */}

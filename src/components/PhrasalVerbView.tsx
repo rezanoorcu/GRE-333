@@ -36,12 +36,12 @@ export const PhrasalVerbView: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full bg-editorial-bg relative overflow-hidden">
-      {/* Floating Header Hub */}
+      {/* Docked Header Hub */}
       <motion.header 
         initial={{ y: 0 }}
         animate={{ y: headerVisible ? 0 : -100 }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
-        className="fixed top-4 left-1/2 -translate-x-1/2 z-40 bg-white/90 backdrop-blur-md border border-editorial-border px-6 py-2 flex items-center justify-between gap-6 rounded-full shadow-lg w-fit min-w-[320px] max-w-[95vw]"
+        className="fixed top-0 left-0 right-0 z-40 bg-white border-b border-editorial-border px-6 py-3 flex items-center justify-between gap-6 shadow-sm"
       >
         <div className="flex items-center gap-3">
           <div className="p-1.5 bg-editorial-text rounded-full text-white shrink-0">
@@ -126,8 +126,8 @@ export const PhrasalVerbView: React.FC = () => {
           </div>
         )}
       </div>
-      {/* Floating Footer Info */}
-      <footer className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-white/80 backdrop-blur-md border border-editorial-border px-6 py-2 transition-all rounded-full shadow-lg text-[8px] uppercase font-bold tracking-widest text-editorial-meta flex items-center gap-6 whitespace-nowrap">
+      {/* Docked Footer Info */}
+      <footer className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-editorial-border px-6 py-3 shadow-sm text-[8px] uppercase font-bold tracking-widest text-editorial-meta flex items-center justify-center gap-6 whitespace-nowrap">
         <span>Curated Phrasals: {PHRASAL_VERBS_DATA.length} Entries</span>
         <div className="w-[1px] h-3 bg-editorial-border" />
         <span>Academic Lexicon Archive</span>
