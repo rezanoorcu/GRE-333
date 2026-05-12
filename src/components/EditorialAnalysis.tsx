@@ -255,7 +255,7 @@ export const EditorialAnalysis: React.FC<EditorialAnalysisProps> = ({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-8">
+                  <div className="grid grid-cols-1 gap-8">
                 {articles.map((article, idx) => (
                   <motion.div
                     key={article.link + idx}
@@ -263,11 +263,11 @@ export const EditorialAnalysis: React.FC<EditorialAnalysisProps> = ({
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.05 }}
                     onClick={() => loadArticle(article)}
-                    className="group bg-white border border-editorial-border p-8 rounded-sm shadow-sm hover:shadow-xl transition-all cursor-pointer flex flex-col md:flex-row gap-8 items-start"
+                    className="group bg-white dark:bg-zinc-900 border border-editorial-border p-8 rounded-sm shadow-sm hover:shadow-xl transition-all cursor-pointer flex flex-col md:flex-row gap-8 items-start"
                   >
                     <div className="flex-1">
                       <div className="flex justify-between items-start mb-4">
-                        <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 bg-editorial-accent border border-editorial-border rounded-sm">
+                        <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 bg-editorial-accent dark:bg-zinc-950 border border-editorial-border rounded-sm">
                           {article.source}
                         </span>
                         <span className="text-[9px] font-mono text-editorial-meta flex items-center gap-1">
@@ -348,10 +348,10 @@ export const EditorialAnalysis: React.FC<EditorialAnalysisProps> = ({
             exit={{ opacity: 0, x: 20 }}
             className="flex-1 flex flex-col h-full overflow-hidden"
           >
-            <div className="shrink-0 border-b border-editorial-border bg-white px-6 md:px-12 py-3 flex items-center justify-between sticky top-0 z-30 shadow-sm">
+            <div className="shrink-0 border-b border-editorial-border bg-white dark:bg-zinc-950 px-6 md:px-12 py-3 flex items-center justify-between sticky top-0 z-30 shadow-sm transition-colors">
               <button 
                 onClick={() => setSelectedArticle(null)}
-                className="flex items-center gap-2 text-[10px] uppercase font-black tracking-widest text-editorial-text hover:opacity-60 transition-all"
+                className="flex items-center gap-2 text-[10px] uppercase font-black tracking-widest text-editorial-text hover:opacity-60 transition-all font-sans"
               >
                 <ChevronLeft size={16} />
                 Library
@@ -390,7 +390,7 @@ export const EditorialAnalysis: React.FC<EditorialAnalysisProps> = ({
               </div>
             </div>
 
-            <div className="flex-1 flex relative overflow-hidden bg-[#FAF9F6]">
+            <div className="flex-1 flex relative overflow-hidden bg-editorial-bg transition-colors">
               {/* Main Reading Area */}
               <div className="flex-1 overflow-y-auto custom-scrollbar scroll-smooth">
                 <main className="max-w-3xl mx-auto px-6 py-12 md:py-24">
@@ -403,7 +403,7 @@ export const EditorialAnalysis: React.FC<EditorialAnalysisProps> = ({
                         {new Date(selectedArticle.pubDate).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}
                       </span>
                     </div>
-                    <h1 className="text-4xl md:text-7xl font-serif tracking-tighter leading-[1.05] text-editorial-text mb-10 selection:bg-editorial-accent underline decoration-editorial-accent transition-all">
+                    <h1 className="text-4xl md:text-7xl font-serif tracking-tighter leading-[1.05] text-editorial-text mb-10 selection:bg-editorial-accent underline decoration-editorial-accent transition-all dark:text-zinc-100">
                       {selectedArticle.title}
                     </h1>
                     <div className="flex items-center gap-2 text-editorial-meta">
@@ -412,7 +412,7 @@ export const EditorialAnalysis: React.FC<EditorialAnalysisProps> = ({
                     </div>
                   </header>
 
-                  <article className="prose prose-neutral max-w-none">
+                  <article className="prose prose-neutral dark:prose-invert max-w-none">
                     {isScraping ? (
                       <div className="py-32 text-center flex flex-col items-center">
                         <Loader2 className="animate-spin text-editorial-text mb-6" size={48} />
@@ -427,15 +427,15 @@ export const EditorialAnalysis: React.FC<EditorialAnalysisProps> = ({
                         </div>
                       </div>
                     ) : (
-                      <div className="text-xl md:text-2xl leading-[1.7] text-editorial-text/90 whitespace-pre-wrap font-serif selection:bg-editorial-accent selection:text-editorial-text first-letter:text-7xl first-letter:font-black first-letter:mr-3 first-letter:float-left first-letter:leading-none">
+                      <div className="text-xl md:text-2xl leading-[1.7] text-editorial-text/90 dark:text-zinc-300 whitespace-pre-wrap font-serif selection:bg-editorial-accent selection:text-editorial-text first-letter:text-7xl first-letter:font-black first-letter:mr-3 first-letter:float-left first-letter:leading-none">
                         {highlightedContent.length > 0 ? highlightedContent : (
-                          <div className="text-center py-20 bg-white border border-editorial-border p-12 rounded-sm shadow-sm">
+                          <div className="text-center py-20 bg-white dark:bg-zinc-900 border border-editorial-border p-12 rounded-sm shadow-sm">
                             <p className="mb-6">Content extraction was restricted for this specific editorial.</p>
                             <a 
                               href={selectedArticle.link} 
                               target="_blank" 
                               rel="noopener noreferrer"
-                              className="px-8 py-3 bg-editorial-text text-white text-[10px] uppercase font-bold tracking-widest rounded-sm inline-flex items-center gap-2 hover:bg-neutral-800 transition-colors"
+                              className="px-8 py-3 bg-editorial-text text-white text-[10px] uppercase font-bold tracking-widest rounded-sm inline-flex items-center gap-2 hover:bg-zinc-800 transition-colors"
                             >
                               Open Full Source <ExternalLink size={12} />
                             </a>
@@ -449,7 +449,7 @@ export const EditorialAnalysis: React.FC<EditorialAnalysisProps> = ({
                     <p className="text-[10px] uppercase font-black tracking-[0.5em] text-editorial-meta mb-8">End of Analysis</p>
                     <button 
                       onClick={() => setSelectedArticle(null)}
-                      className="px-10 py-4 bg-white border-2 border-editorial-text text-editorial-text text-[11px] uppercase font-black tracking-widest hover:bg-editorial-text hover:text-white transition-all shadow-xl"
+                      className="px-10 py-4 bg-white dark:bg-zinc-900 border-2 border-editorial-text text-editorial-text text-[11px] uppercase font-black tracking-widest hover:bg-editorial-text hover:text-white transition-all shadow-xl font-sans"
                     >
                       Return to Research Feed
                     </button>
@@ -473,9 +473,9 @@ export const EditorialAnalysis: React.FC<EditorialAnalysisProps> = ({
                       animate={{ x: 0 }}
                       exit={{ x: '100%' }}
                       transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                      className="absolute top-0 right-0 h-full w-full md:w-[450px] bg-white border-l-2 border-editorial-text z-50 shadow-[-20px_0_50px_rgba(0,0,0,0.1)] flex flex-col"
+                      className="absolute top-0 right-0 h-full w-full md:w-[450px] bg-white dark:bg-zinc-950 border-l-2 border-editorial-text z-50 shadow-[-20px_0_50px_rgba(0,0,0,0.1)] flex flex-col"
                     >
-                    <div className="shrink-0 p-8 border-b border-editorial-border flex items-center justify-between bg-editorial-bg">
+                    <div className="shrink-0 p-8 border-b border-editorial-border flex items-center justify-between bg-editorial-bg transition-colors">
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-editorial-text text-white rounded-sm">
                           <BookOpen size={18} />
@@ -487,13 +487,13 @@ export const EditorialAnalysis: React.FC<EditorialAnalysisProps> = ({
                       </div>
                       <button 
                         onClick={() => setIsSidebarOpen(false)}
-                        className="p-2 hover:bg-neutral-200 rounded-full transition-colors text-editorial-text"
+                        className="p-2 hover:bg-editorial-accent dark:hover:bg-zinc-800 rounded-full transition-colors text-editorial-text"
                       >
                         <X size={20} />
                       </button>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-8 custom-scrollbar space-y-10">
+                    <div className="flex-1 overflow-y-auto p-8 custom-scrollbar space-y-10 bg-white dark:bg-zinc-950 transition-colors">
                       {isScraping ? (
                         <div className="space-y-6">
                           {[1, 2, 3, 4].map(i => (
@@ -523,12 +523,12 @@ export const EditorialAnalysis: React.FC<EditorialAnalysisProps> = ({
                                       saveWord(word.word, ctx, word.definition);
                                     }}
                                     disabled={isSaved}
-                                    className={`p-2 rounded-full border transition-all ${isSaved ? 'bg-editorial-text text-white border-editorial-text' : 'bg-white text-editorial-meta border-editorial-border hover:border-editorial-text hover:text-editorial-text shadow-sm'}`}
+                                    className={`p-2 rounded-full border transition-all ${isSaved ? 'bg-editorial-text text-white border-editorial-text' : 'bg-white dark:bg-zinc-900 text-editorial-meta border-editorial-border hover:border-editorial-text hover:text-editorial-text shadow-sm'}`}
                                   >
                                     {isSaved ? <BookmarkCheck size={16} /> : <Bookmark size={16} />}
                                   </button>
                                 </div>
-                                <div className="bg-editorial-accent/30 border-l-4 border-editorial-text p-5 rounded-r-sm">
+                                <div className="bg-editorial-accent/30 dark:bg-zinc-900/50 border-l-4 border-editorial-text p-5 rounded-r-sm">
                                   <p className="text-[10px] uppercase font-black tracking-widest text-editorial-meta mb-3 opacity-60">Academic Definition</p>
                                   <p className="text-sm leading-relaxed text-editorial-text font-medium mb-4">{word.definition}</p>
                                   {word.nuance && (
@@ -543,7 +543,7 @@ export const EditorialAnalysis: React.FC<EditorialAnalysisProps> = ({
                         </div>
                       ) : (
                         <div className="py-20 text-center px-6">
-                          <div className="w-16 h-16 bg-editorial-accent rounded-full flex items-center justify-center mx-auto mb-6 text-editorial-text shadow-inner">
+                          <div className="w-16 h-16 bg-editorial-accent dark:bg-zinc-900 rounded-full flex items-center justify-center mx-auto mb-6 text-editorial-text shadow-inner">
                             <Search size={32} />
                           </div>
                           <h5 className="text-xl font-serif italic text-editorial-text mb-4">No Automatic Matches</h5>

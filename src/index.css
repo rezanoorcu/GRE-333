@@ -13,5 +13,40 @@
   --color-editorial-meta: #A69F95;
 }
 
+@layer base {
+  :root {
+    --editorial-bg: #FDFCFB;
+    --editorial-text: #1A1A1A;
+    --editorial-border: #E5E1DA;
+    --editorial-accent: #F5F2ED;
+    --editorial-muted: #8B8680;
+    --editorial-meta: #A69F95;
+  }
+
+  .dark {
+    --editorial-bg: #0A0A0A;
+    --editorial-text: #E5E5E5;
+    --editorial-border: #1F1F1F;
+    --editorial-accent: #141414;
+    --editorial-muted: #A1A1AA;
+    --editorial-meta: #52525B;
+  }
+
+  body {
+    background-color: var(--editorial-bg);
+    color: var(--editorial-text);
+  }
+}
+
 @layer utilities {
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--editorial-border);
+    border-radius: 10px;
+  }
 }

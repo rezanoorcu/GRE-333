@@ -41,41 +41,39 @@ export const PhrasalVerbView: React.FC = () => {
             />
           </div>
           <select 
-            value={selectedCategory || ''} 
-            onChange={(e) => setSelectedCategory(e.target.value || null)}
-            className="bg-transparent border-b border-editorial-border py-2 text-sm font-bold uppercase tracking-widest text-editorial-muted focus:outline-none focus:border-editorial-text cursor-pointer"
+            className="bg-transparent border-b border-editorial-border py-2 text-sm font-bold uppercase tracking-widest text-editorial-muted focus:outline-none focus:border-editorial-text cursor-pointer dark:text-zinc-400"
           >
-            <option value="">All Categories</option>
+            <option className="dark:bg-zinc-950" value="">All Categories</option>
             {categories.map(cat => (
-              <option key={cat} value={cat}>{cat}</option>
+              <option className="dark:bg-zinc-950" key={cat} value={cat}>{cat}</option>
             ))}
           </select>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 transition-colors">
         {filteredVerbs.map((pv, idx) => (
           <motion.div 
             key={pv.verb + idx}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.02 }}
-            className="group bg-white border border-editorial-border p-6 rounded-sm shadow-sm hover:shadow-xl hover:translate-y-[-4px] transition-all relative overflow-hidden"
+            className="group bg-white dark:bg-zinc-900 border border-editorial-border p-6 rounded-sm shadow-sm hover:shadow-xl hover:translate-y-[-4px] transition-all relative overflow-hidden"
           >
-            <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+            <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity dark:text-zinc-100">
               <Type size={48} />
             </div>
             <div className="flex flex-col h-full relative z-10">
               <div className="flex items-center gap-3 mb-4">
-                <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 bg-editorial-accent border border-editorial-border rounded-sm">{pv.category}</span>
+                <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 bg-editorial-accent dark:bg-zinc-800 border border-editorial-border rounded-sm dark:text-zinc-100">{pv.category}</span>
               </div>
-              <h3 className="text-2xl md:text-3xl font-serif italic text-editorial-text mb-3 group-hover:text-editorial-muted transition-colors">{pv.verb}</h3>
-              <p className="text-sm font-medium text-editorial-text mb-6 flex-1 border-l-2 border-editorial-accent pl-4 py-1">
+              <h3 className="text-2xl md:text-3xl font-serif italic text-editorial-text mb-3 group-hover:text-editorial-muted transition-colors dark:text-zinc-100">{pv.verb}</h3>
+              <p className="text-sm font-medium text-editorial-text mb-6 flex-1 border-l-2 border-editorial-accent pl-4 py-1 dark:text-zinc-300">
                 {pv.meaning}
               </p>
-              <div className="bg-neutral-50 border border-editorial-border p-4 rounded-sm">
+              <div className="bg-neutral-50 dark:bg-zinc-800/50 border border-editorial-border p-4 rounded-sm">
                 <p className="text-[8px] uppercase font-serif font-black tracking-widest text-editorial-meta mb-2">Usage Instance</p>
-                <p className="text-xs leading-relaxed italic text-editorial-muted">
+                <p className="text-xs leading-relaxed italic text-editorial-muted dark:text-zinc-400">
                   “{pv.example}”
                 </p>
               </div>
@@ -84,14 +82,14 @@ export const PhrasalVerbView: React.FC = () => {
         ))}
         {filteredVerbs.length === 0 && (
           <div className="col-span-full py-24 text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-neutral-100 rounded-full mb-6 text-editorial-meta">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-neutral-100 dark:bg-zinc-800 rounded-full mb-6 text-editorial-meta">
               <X size={32} />
             </div>
-            <h3 className="text-2xl font-serif italic text-editorial-text mb-4">No phrasal verbs matched your query</h3>
+            <h3 className="text-2xl font-serif italic text-editorial-text mb-4 dark:text-zinc-100">No phrasal verbs matched your query</h3>
             <p className="text-sm text-editorial-muted max-w-sm mx-auto mb-8">Try adjusting your filters or expanding your search parameters.</p>
             <button 
               onClick={() => { setSearch(''); setSelectedCategory(null); }}
-              className="px-8 py-3 bg-editorial-text text-white text-[10px] uppercase font-bold tracking-widest rounded-sm hover:translate-y-[-2px] transition-transform shadow-lg"
+              className="px-8 py-3 bg-editorial-text text-white dark:bg-editorial-accent dark:text-zinc-950 text-[10px] uppercase font-bold tracking-widest rounded-sm hover:translate-y-[-2px] transition-transform shadow-lg"
             >
               Reset Archive Filters
             </button>

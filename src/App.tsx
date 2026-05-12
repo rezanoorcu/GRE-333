@@ -35,11 +35,44 @@ type WordStatus = 'new' | 'mastered' | 'review';
 type AppView = 'dashboard' | 'study' | 'list' | 'bookmarks' | 'review-stack' | 'practice' | 'phrasal-verbs' | 'editorial' | 'idioms';
 
 export default function App() {
-  const [currentBlockId, setCurrentBlockId] = useState<string | null>(VOCABULARY_DATA[0].id);
+  const [currentBlockId, setCurrentBlockId] = useState<string | null>(() => {
+    try {
+      const saved = localStorage.getItem('lexicon_current_block');
+      return saved || VOCABULARY_DATA[0].id;
+    } catch (e) {
+      return VOCABULARY_DATA[0].id;
+    }
+  });
+
+  useEffect(() => {
+    if (currentBlockId) {
+      localStorage.setItem('lexicon_current_block', currentBlockId);
+    }
+  }, [currentBlockId]);
+
+  const [darkMode, setDarkMode] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('lexicon_dark_mode');
+      return saved === 'true' || (saved === null && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    } catch (e) {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('lexicon_dark_mode', String(darkMode));
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
+
   const [view, setView] = useState<AppView>('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
   const [lastAction, setLastAction] = useState<{word: string, status: WordStatus} | null>(null);
 
   // Persistent Saved Vocab from Editorials
@@ -181,19 +214,28 @@ export default function App() {
       if (e.key === '?') {
         setShowHelp(prev => !prev);
       }
+      if (e.key === '/' && !showSearch) {
+        e.preventDefault();
+        setShowSearch(true);
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setShowSearch(true);
+      }
       if (e.key === 'Escape') {
         setShowHelp(false);
         setIsSidebarOpen(false);
+        setShowSearch(false);
       }
     };
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, []);
+  }, [showSearch]);
 
   const masteredCount = allWords.filter(w => wordStatus[w.word] === 'mastered').length;
 
   return (
-    <div className="flex h-screen w-full bg-editorial-bg text-editorial-text font-sans overflow-hidden relative">
+    <div className={`flex h-screen w-full bg-editorial-bg text-editorial-text font-sans overflow-hidden relative transition-colors duration-300 ${darkMode ? 'dark' : ''}`}>
       {/* HUD Notification */}
       <AnimatePresence>
         {lastAction && (
@@ -212,6 +254,17 @@ export default function App() {
         )}
       </AnimatePresence>
 
+      <AnimatePresence>{showSearch && (
+        <CommandPalette 
+          words={allWords} 
+          onSelect={(word) => {
+            setSearchQuery(word);
+            setView('list');
+            setShowSearch(false);
+          }}
+          onClose={() => setShowSearch(false)}
+        />
+      )}</AnimatePresence>
       <AnimatePresence>{showHelp && <HelpModal onClose={() => setShowHelp(false)} />}</AnimatePresence>
 
       <AnimatePresence>
@@ -228,7 +281,7 @@ export default function App() {
 
       {/* Navigation Sidebar */}
       <aside className={`
-        fixed inset-y-0 left-0 z-50 w-72 border-r border-editorial-border flex flex-col bg-white shrink-0 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0
+        fixed inset-y-0 left-0 z-50 w-72 border-r border-editorial-border flex flex-col bg-white dark:bg-zinc-950 shrink-0 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div className="p-8 pb-4 shrink-0">
@@ -330,7 +383,7 @@ export default function App() {
         
         <div className="p-6 bg-editorial-accent border-t border-editorial-border">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 rounded-full bg-editorial-text flex items-center justify-center text-white text-[10px] font-black">
+            <div className="w-8 h-8 rounded-full bg-editorial-text text-white flex items-center justify-center text-[10px] font-black">
               {Math.round((masteredCount / (allWords.length || 1)) * 100)}%
             </div>
             <div>
@@ -341,11 +394,18 @@ export default function App() {
           <div className="flex gap-2">
             <button 
               onClick={() => setShowHelp(true)}
-              className="flex-1 py-2 bg-white border border-editorial-border rounded-sm text-[8px] uppercase font-black tracking-widest hover:bg-neutral-50 transition-colors flex items-center justify-center gap-2"
+              className="flex-1 py-2 bg-white dark:bg-zinc-900 border border-editorial-border rounded-sm text-[8px] uppercase font-black tracking-widest hover:bg-neutral-50 dark:hover:bg-zinc-800 transition-colors flex items-center justify-center gap-2"
             >
               <HelpCircle size={10} /> Support
             </button>
-            <button className="p-2 bg-white border border-editorial-border rounded-sm text-editorial-muted hover:text-editorial-text">
+            <button 
+              onClick={() => setDarkMode(!darkMode)}
+              className="p-2 bg-white dark:bg-zinc-900 border border-editorial-border rounded-sm text-editorial-muted hover:text-editorial-text transition-colors"
+              title="Toggle Night Mode"
+            >
+              <Sparkles size={14} className={darkMode ? 'text-amber-400' : ''} />
+            </button>
+            <button className="p-2 bg-white dark:bg-zinc-900 border border-editorial-border rounded-sm text-editorial-muted hover:text-editorial-text">
               <Settings size={14} />
             </button>
           </div>
@@ -353,8 +413,8 @@ export default function App() {
       </aside>
 
       {/* Main Container */}
-      <div className="flex-1 flex flex-col min-w-0 bg-editorial-bg">
-        <header className="h-16 border-b border-editorial-border bg-white flex items-center justify-between px-6 shrink-0 z-40 sticky top-0">
+      <div className="flex-1 flex flex-col min-w-0 bg-editorial-bg transition-colors duration-300">
+        <header className="h-16 border-b border-editorial-border bg-white dark:bg-zinc-950 flex items-center justify-between px-6 shrink-0 z-40 sticky top-0">
           <div className="flex items-center gap-4">
             <button 
               onClick={() => setIsSidebarOpen(true)}
@@ -381,7 +441,7 @@ export default function App() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-editorial-meta" size={14} />
               <input 
                 type="text" 
-                placeholder="Find anything..."
+                placeholder="Find anything ( / )..."
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
@@ -389,7 +449,7 @@ export default function App() {
                   if (view !== 'list') setView('list');
                 }}
                 onFocus={() => setShowSuggestions(true)}
-                className="pl-9 pr-4 py-1.5 bg-neutral-50 border border-editorial-border rounded-full text-xs focus:outline-none focus:ring-1 focus:ring-editorial-text/20 focus:border-editorial-text w-32 sm:w-48 transition-all"
+                className="pl-9 pr-4 py-1.5 bg-neutral-50 dark:bg-zinc-900 border border-editorial-border rounded-full text-xs focus:outline-none focus:ring-1 focus:ring-editorial-text/20 focus:border-editorial-text w-32 sm:w-48 transition-all"
               />
               <AnimatePresence>
                 {showSuggestions && suggestions.length > 0 && (
@@ -397,7 +457,7 @@ export default function App() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
-                    className="absolute top-full right-0 mt-2 bg-white border border-editorial-border shadow-2xl z-50 rounded-sm overflow-hidden min-w-[240px]"
+                    className="absolute top-full right-0 mt-2 bg-white dark:bg-zinc-900 border border-editorial-border shadow-2xl z-50 rounded-sm overflow-hidden min-w-[240px]"
                   >
                     {suggestions.map((suggestion, index) => (
                       <div
@@ -407,7 +467,7 @@ export default function App() {
                           setShowSuggestions(false);
                           setView('list');
                         }}
-                        className="px-4 py-3 text-sm font-medium hover:bg-editorial-accent cursor-pointer border-b border-editorial-border last:border-0 flex items-center justify-between group"
+                        className="px-4 py-3 text-sm font-medium hover:bg-editorial-accent dark:hover:bg-zinc-800 cursor-pointer border-b border-editorial-border last:border-0 flex items-center justify-between group"
                       >
                         <span className="text-editorial-text font-serif italic">{suggestion}</span>
                         <ChevronRight size={12} className="text-editorial-meta opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -539,18 +599,91 @@ function ListView({ title, words, wordStatus, toggleStatus, bookmarks, toggleBoo
 function HelpModal({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-[100] bg-editorial-text/80 backdrop-blur-sm flex items-center justify-center p-6" onClick={onClose}>
-      <div className="bg-white p-8 md:p-12 max-w-lg w-full rounded-sm" onClick={e => e.stopPropagation()}>
-        <h3 className="text-2xl font-serif italic mb-6">Learning Guide</h3>
+      <div className="bg-white dark:bg-zinc-900 border border-editorial-border p-8 md:p-12 max-w-lg w-full rounded-sm shadow-2xl" onClick={e => e.stopPropagation()}>
+        <h3 className="text-2xl font-serif italic mb-6 dark:text-white">Learning Guide</h3>
         <div className="space-y-4">
+          <Shortcut label="Global Search" keys={['/']} />
+          <Shortcut label="Quick Command" keys={['⌘', 'K']} />
           <Shortcut label="Next Entry" keys={['→']} />
           <Shortcut label="Previous Entry" keys={['←']} />
           <Shortcut label="Mark Mastered" keys={['M']} />
           <Shortcut label="Mark Review" keys={['R']} />
           <Shortcut label="Bookmark Entry" keys={['B']} />
           <Shortcut label="Pronunciation" keys={['S']} />
+          <Shortcut label="Help" keys={['?']} />
         </div>
-        <button onClick={onClose} className="w-full mt-10 py-4 bg-editorial-text text-white text-[10px] uppercase font-bold tracking-widest">Close</button>
+        <button onClick={onClose} className="w-full mt-10 py-4 bg-editorial-text text-white text-[10px] uppercase font-black tracking-[0.3em] hover:bg-neutral-800 transition-all">Close Guide</button>
       </div>
+    </div>
+  );
+}
+
+function CommandPalette({ words, onSelect, onClose }: { words: WordEntry[], onSelect: (w: string) => void, onClose: () => void }) {
+  const [query, setQuery] = useState('');
+  const fuse = useMemo(() => new Fuse(words, {
+    keys: ['word', 'definition'],
+    threshold: 0.3
+  }), [words]);
+
+  const results = useMemo(() => {
+    if (!query) return words.slice(0, 5);
+    return fuse.search(query).slice(0, 8).map(r => r.item);
+  }, [query, words, fuse]);
+
+  return (
+    <div className="fixed inset-0 z-[100] bg-zinc-950/60 backdrop-blur-md flex items-start justify-center pt-[15vh] px-6" onClick={onClose}>
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95, y: -20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        className="w-full max-w-2xl bg-white dark:bg-zinc-900 border border-editorial-border rounded-lg shadow-2xl overflow-hidden flex flex-col"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="p-6 border-b border-editorial-border flex items-center gap-4">
+          <Search size={20} className="text-editorial-meta" />
+          <input 
+            autoFocus
+            type="text" 
+            placeholder="Type to search units, words, or meanings..." 
+            className="flex-1 bg-transparent text-lg font-serif italic outline-none dark:text-white"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          <kbd className="px-2 py-1 bg-editorial-accent rounded text-[10px] uppercase font-black text-editorial-meta">ESC</kbd>
+        </div>
+        
+        <div className="max-h-[50vh] overflow-y-auto p-2 no-scrollbar">
+          {results.map((word, i) => (
+            <div 
+              key={word.word + i}
+              onClick={() => onSelect(word.word)}
+              className="p-4 rounded-md hover:bg-editorial-accent dark:hover:bg-zinc-800 cursor-pointer group flex items-center justify-between transition-colors border-b border-transparent last:border-0"
+            >
+              <div>
+                <h4 className="text-md font-bold dark:text-white group-hover:translate-x-1 transition-transform">{word.word}</h4>
+                <p className="text-xs text-editorial-muted italic line-clamp-1">{word.definition}</p>
+              </div>
+              <ChevronRight size={14} className="text-editorial-meta opacity-0 group-hover:opacity-100 transition-all" />
+            </div>
+          ))}
+          {results.length === 0 && (
+            <div className="p-12 text-center">
+              <p className="text-editorial-muted italic font-serif">No matches found for "{query}"</p>
+            </div>
+          )}
+        </div>
+        
+        <div className="p-4 bg-editorial-accent dark:bg-zinc-950 border-t border-editorial-border flex items-center justify-between">
+          <div className="flex gap-4">
+            <span className="flex items-center gap-1.5 text-[9px] uppercase font-black text-editorial-meta">
+              <kbd className="px-1.5 py-0.5 bg-white dark:bg-zinc-800 rounded border border-editorial-border">↵</kbd> Select
+            </span>
+            <span className="flex items-center gap-1.5 text-[9px] uppercase font-black text-editorial-meta">
+              <kbd className="px-1.5 py-0.5 bg-white dark:bg-zinc-800 rounded border border-editorial-border">↑↓</kbd> Browse
+            </span>
+          </div>
+          <span className="text-[10px] uppercase font-black text-editorial-meta tracking-widest italic">Lexical Command Hub</span>
+        </div>
+      </motion.div>
     </div>
   );
 }

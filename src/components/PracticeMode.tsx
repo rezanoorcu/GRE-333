@@ -158,27 +158,56 @@ export const PracticeMode: React.FC<PracticeModeProps> = ({
 
   if (sessionCompleted) {
     const percentage = Math.round((score.correct / sessionWords.length) * 100);
+    
+    // Streak logic in result view
+    const updateStreak = () => {
+      const today = new Date().toLocaleDateString();
+      const lastDate = localStorage.getItem('lexicon_streak_date');
+      let streak = parseInt(localStorage.getItem('lexicon_streak') || '0', 10);
+      
+      if (lastDate !== today) {
+        if (lastDate) {
+          const last = new Date(lastDate);
+          const current = new Date();
+          const diffDays = Math.floor((current.getTime() - last.getTime()) / (1000 * 60 * 60 * 24));
+          if (diffDays === 1) streak += 1;
+          else if (diffDays > 1) streak = 1;
+        } else {
+          streak = 1;
+        }
+        localStorage.setItem('lexicon_streak', streak.toString());
+        localStorage.setItem('lexicon_streak_date', today);
+      }
+      return streak;
+    };
+    const currentStreak = updateStreak();
+
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12 bg-editorial-bg text-center">
+      <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12 bg-editorial-bg text-center transition-colors">
         <motion.div 
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="max-w-md w-full bg-white border-2 border-editorial-text p-12 shadow-2xl rounded-sm"
+          className="max-w-md w-full bg-white dark:bg-zinc-900 border-2 border-editorial-text p-12 shadow-2xl rounded-sm"
         >
-          <div className="flex justify-center mb-8">
-            <div className="p-4 bg-editorial-accent rounded-full text-editorial-text">
+          <div className="flex justify-center mb-8 relative">
+            <div className="p-4 bg-editorial-accent dark:bg-zinc-800 rounded-full text-editorial-text">
               <Award size={48} />
             </div>
+            {currentStreak > 0 && (
+              <div className="absolute -top-2 -right-2 bg-editorial-text text-white px-3 py-1 rounded-full text-[10px] font-black tracking-widest flex items-center gap-1 shadow-lg">
+                <Zap size={10} className="fill-current" /> {currentStreak} DAY STREAK
+              </div>
+            )}
           </div>
           <h2 className="text-3xl font-serif italic text-editorial-text mb-2">Practice Session Finished</h2>
           <p className="text-[10px] uppercase font-bold tracking-[0.3em] text-editorial-meta mb-8 border-b border-editorial-border pb-4">Performance Assessment</p>
           
           <div className="grid grid-cols-2 gap-4 mb-10">
-            <div className="bg-neutral-50 p-6 rounded-sm border border-editorial-border">
+            <div className="bg-neutral-50 dark:bg-zinc-800 p-6 rounded-sm border border-editorial-border">
               <p className="text-[8px] uppercase tracking-widest text-editorial-muted mb-1">Accuracy</p>
               <p className="text-3xl font-serif text-editorial-text">{percentage}%</p>
             </div>
-            <div className="bg-neutral-50 p-6 rounded-sm border border-editorial-border">
+            <div className="bg-neutral-50 dark:bg-zinc-800 p-6 rounded-sm border border-editorial-border">
               <p className="text-[8px] uppercase tracking-widest text-editorial-muted mb-1">Mastered</p>
               <p className="text-3xl font-serif text-editorial-text">{score.correct}/{sessionWords.length}</p>
             </div>
@@ -186,13 +215,13 @@ export const PracticeMode: React.FC<PracticeModeProps> = ({
 
           <button 
             onClick={generateSession}
-            className="w-full py-4 bg-editorial-text text-white text-[10px] uppercase font-bold tracking-[0.2em] rounded-sm hover:translate-y-[-2px] transition-transform shadow-xl mb-4"
+            className="w-full py-4 bg-editorial-text text-white text-[10px] uppercase font-bold tracking-[0.2em] rounded-sm hover:-translate-y-1 transition-all shadow-xl mb-4"
           >
             Initiate New Session
           </button>
           <button 
-            onClick={() => window.location.reload()} // Quick hack to return if props-based nav is complex
-            className="w-full py-4 border border-editorial-border text-editorial-text text-[10px] uppercase font-bold tracking-[0.2em] rounded-sm hover:bg-neutral-50"
+            onClick={() => window.location.reload()}
+            className="w-full py-4 border border-editorial-border text-editorial-text text-[10px] uppercase font-bold tracking-[0.2em] rounded-sm hover:bg-neutral-50 dark:hover:bg-zinc-800 bg-transparent transition-colors"
           >
             Review Lexicon
           </button>
@@ -208,7 +237,7 @@ export const PracticeMode: React.FC<PracticeModeProps> = ({
   );
 
   return (
-    <div className="flex-1 flex flex-col bg-editorial-bg overflow-hidden relative">
+    <div className="flex-1 flex flex-col bg-editorial-bg overflow-hidden relative transition-colors">
       <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12 overflow-y-auto">
         <div className="max-w-3xl w-full">
           <div className="mb-8 md:mb-12 flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-editorial-muted">
@@ -236,7 +265,7 @@ export const PracticeMode: React.FC<PracticeModeProps> = ({
                 exit={{ opacity: 0, x: -20 }}
                 className="flex flex-col items-center"
               >
-                <div className="w-full bg-white border-2 border-editorial-border p-10 md:p-20 shadow-xl rounded-sm text-center mb-12 min-h-[350px] flex flex-col justify-center relative">
+                <div className="w-full bg-white dark:bg-zinc-900 border-2 border-editorial-border p-10 md:p-20 shadow-xl rounded-sm text-center mb-12 min-h-[350px] flex flex-col justify-center relative">
                    <p className="absolute top-6 left-1/2 -translate-x-1/2 text-[9px] uppercase tracking-[0.4em] font-black text-editorial-meta opacity-40">
                     {questionType === 'def' && 'Identify word from definition'}
                     {questionType === 'recall' && 'Define this lexeme'}
@@ -259,7 +288,7 @@ export const PracticeMode: React.FC<PracticeModeProps> = ({
                      <div className="space-y-6">
                         <div className="flex flex-wrap justify-center gap-3">
                           {currentWord.synonyms?.slice(0, 3).map(s => (
-                            <span key={s} className="px-4 py-2 bg-editorial-accent border border-editorial-border rounded-sm text-lg font-serif italic">{s}</span>
+                            <span key={s} className="px-4 py-2 bg-editorial-accent dark:bg-zinc-800 border border-editorial-border rounded-sm text-lg font-serif italic text-editorial-text">{s}</span>
                           ))}
                         </div>
                         <p className="text-xs text-editorial-muted italic">Which word fits these synonyms?</p>
@@ -270,13 +299,13 @@ export const PracticeMode: React.FC<PracticeModeProps> = ({
                 <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
                   <button 
                     onClick={() => setShowSolution(true)}
-                    className="flex-1 sm:flex-none px-12 py-5 bg-editorial-text text-white text-[10px] md:text-xs uppercase font-bold tracking-[0.3em] rounded-sm hover:scale-[1.02] shadow-xl transition-all"
+                    className="flex-1 sm:flex-none px-12 py-5 bg-editorial-text text-white text-[10px] md:text-xs uppercase font-bold tracking-[0.3em] rounded-sm hover:-translate-y-1 shadow-xl transition-all"
                   >
                     Reveal Solution
                   </button>
                   <button 
                     onClick={handleNext}
-                    className="flex-1 sm:flex-none px-12 py-5 border-2 border-editorial-border text-editorial-meta text-[10px] md:text-xs uppercase font-bold tracking-[0.3em] rounded-sm hover:bg-white/50 transition-all"
+                    className="flex-1 sm:flex-none px-12 py-5 border-2 border-editorial-border text-editorial-meta text-[10px] md:text-xs uppercase font-bold tracking-[0.3em] rounded-sm hover:bg-white/10 dark:hover:bg-zinc-800 transition-all"
                   >
                     Skip Entry
                   </button>
@@ -289,27 +318,27 @@ export const PracticeMode: React.FC<PracticeModeProps> = ({
                 animate={{ opacity: 1, scale: 1 }}
                 className="w-full"
               >
-                <div className="bg-white border-4 border-editorial-text p-8 md:p-12 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.2)] rounded-sm relative">
+                <div className="bg-white dark:bg-zinc-900 border-4 border-editorial-text p-8 md:p-12 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.2)] rounded-sm relative">
                   <div className="absolute -top-4 -right-4 flex gap-2">
                     <button 
                       onClick={() => onToggleBookmark(currentWord.word)}
-                      className={`p-3 rounded-full border-2 transition-all shadow-lg ${bookmarks.has(currentWord.word) ? 'bg-editorial-text text-white border-editorial-text' : 'bg-white border-editorial-border text-editorial-meta hover:text-editorial-text'}`}
+                      className={`p-3 rounded-full border-2 transition-all shadow-lg ${bookmarks.has(currentWord.word) ? 'bg-editorial-text text-white border-editorial-text' : 'bg-white dark:bg-zinc-800 border-editorial-border text-editorial-meta hover:text-editorial-text'}`}
                     >
                       <Star size={20} fill={bookmarks.has(currentWord.word) ? "currentColor" : "none"} />
                     </button>
                     <button 
                       onClick={handleSpeak}
-                      className="p-3 bg-white border-2 border-editorial-border text-editorial-meta rounded-full shadow-lg hover:text-editorial-text hover:border-editorial-text transition-all"
+                      className="p-3 bg-white dark:bg-zinc-800 border-2 border-editorial-border text-editorial-meta rounded-full shadow-lg hover:text-editorial-text hover:border-editorial-text transition-all"
                     >
-                      <Volume2 size={20} />
+                      {isSpeaking ? <Loader2 size={20} className="animate-spin" /> : <Volume2 size={20} />}
                     </button>
                   </div>
 
                   <div className="text-center mb-10 pb-10 border-b border-editorial-border">
                     <p className="text-[10px] uppercase tracking-widest text-editorial-meta mb-2">Lexeme Solution</p>
                     <h3 className="text-4xl md:text-7xl font-serif text-editorial-text mb-2">{currentWord.word}</h3>
-                    <div className="flex justify-center items-center gap-4 text-xs font-mono text-editorial-meta">
-                      <span>{currentWord.context}</span>
+                    <div className="flex justify-center items-center gap-4 text-xs font-mono text-editorial-meta overflow-hidden">
+                      <span className="truncate max-w-xs">{currentWord.context}</span>
                     </div>
                   </div>
 
@@ -347,20 +376,20 @@ export const PracticeMode: React.FC<PracticeModeProps> = ({
         </div>
       </div>
 
-      <div className="h-20 bg-white border-t border-editorial-border px-8 flex items-center justify-between shrink-0">
+      <div className="h-20 bg-white dark:bg-zinc-950 border-t border-editorial-border px-8 flex items-center justify-between shrink-0 transition-colors">
         <div className="flex gap-8">
           <div className="flex items-center gap-3">
              <div className="h-2 w-2 rounded-full bg-emerald-500" />
              <div className="flex flex-col">
                 <span className="text-[9px] font-black uppercase tracking-tighter text-editorial-text">Correct</span>
-                <span className="text-xs font-mono font-bold">{score.correct}</span>
+                <span className="text-xs font-mono font-bold dark:text-editorial-accent">{score.correct}</span>
              </div>
           </div>
           <div className="flex items-center gap-3">
              <div className="h-2 w-2 rounded-full bg-red-500" />
              <div className="flex flex-col">
                 <span className="text-[9px] font-black uppercase tracking-tighter text-editorial-text">Required Review</span>
-                <span className="text-xs font-mono font-bold">{score.total - score.correct}</span>
+                <span className="text-xs font-mono font-bold dark:text-editorial-accent">{score.total - score.correct}</span>
              </div>
           </div>
         </div>
