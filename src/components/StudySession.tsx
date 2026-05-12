@@ -8,7 +8,8 @@ import {
   ChevronRight, 
   Volume2, 
   Star, 
-  Loader2 
+  Loader2,
+  Search
 } from 'lucide-react';
 import { WordBlock, WordEntry } from '../types';
 import { VOCABULARY_DATA } from '../data';
@@ -181,13 +182,24 @@ export const StudySession: React.FC<StudySessionProps> = ({
                   >
                     {word.word}
                   </h2>
-                  <button 
-                    onClick={handleSpeak}
-                    disabled={isSpeaking}
-                    className={`p-2.5 sm:p-3 md:p-4 rounded-full border-2 border-editorial-border hover:border-editorial-text transition-all shrink-0 ${isSpeaking ? 'animate-pulse text-editorial-muted' : 'text-editorial-meta hover:text-editorial-text'}`}
-                  >
-                    {isSpeaking ? <Loader2 size={18} className="animate-spin" /> : <Volume2 size={18} />}
-                  </button>
+                  <div className="flex flex-col gap-2">
+                    <button 
+                      onClick={handleSpeak}
+                      disabled={isSpeaking}
+                      className={`p-2.5 sm:p-3 md:p-4 rounded-full border-2 border-editorial-border hover:border-editorial-text transition-all shrink-0 ${isSpeaking ? 'animate-pulse text-editorial-muted' : 'text-editorial-meta hover:text-editorial-text'}`}
+                    >
+                      {isSpeaking ? <Loader2 size={18} className="animate-spin" /> : <Volume2 size={18} />}
+                    </button>
+                    <a 
+                      href={`https://www.collinsdictionary.com/dictionary/english/${word.word}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-2 border border-editorial-border rounded-full text-editorial-meta hover:text-editorial-text hover:border-editorial-text transition-all flex items-center justify-center"
+                      title="Open in Collins Dictionary"
+                    >
+                      <Search size={14} />
+                    </a>
+                  </div>
                 </div>
                 <div className="flex gap-2 md:gap-3 shrink-0">
                   <button 

@@ -170,7 +170,18 @@ export const EditorialAnalysis: React.FC<EditorialAnalysisProps> = ({
                 {isSaved ? <BookmarkCheck size={12} className="text-emerald-400" /> : <Bookmark size={12} className="opacity-50" />}
               </span>
               <span className="block opacity-80 leading-relaxed mb-2">{match.definition}</span>
-              <span className="block pt-2 border-t border-white/20 italic opacity-60">Click to save in Important Vocab</span>
+              <div className="flex items-center justify-between pt-2 border-t border-white/20">
+                <span className="italic opacity-60">Click to save</span>
+                <a 
+                  href={`https://www.collinsdictionary.com/dictionary/english/${match.word}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-editorial-accent hover:underline flex items-center gap-1"
+                  onClick={e => e.stopPropagation()}
+                >
+                  Collins <ExternalLink size={10} />
+                </a>
+              </div>
             </span>
           </span>
         );
@@ -309,12 +320,22 @@ export const EditorialAnalysis: React.FC<EditorialAnalysisProps> = ({
                       <div className="flex justify-between items-start mb-1">
                         <span className="text-editorial-accent font-serif italic uppercase">{v.word}</span>
                         <div className="flex items-center gap-2">
+                          <a 
+                            href={`https://www.collinsdictionary.com/dictionary/english/${v.word}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[9px] uppercase tracking-tighter text-editorial-accent hover:underline opacity-60 group-hover:opacity-100 transition-opacity"
+                            title="Open in Collins Dictionary"
+                          >
+                            Collins
+                          </a>
                           <button 
                             onClick={(e) => { e.stopPropagation(); lookupDefinition(v.word); }}
                             className="text-[9px] uppercase tracking-tighter text-blue-400 hover:text-blue-300 disabled:opacity-50"
+                            title="Refresh Definition"
                             disabled={dictionaryLoading === v.word}
                           >
-                            {dictionaryLoading === v.word ? '...' : <Search size={10} />}
+                            {dictionaryLoading === v.word ? '...' : <RefreshCw size={10} />}
                           </button>
                           <button 
                             onClick={(e) => { e.stopPropagation(); removeSavedWord(v.word); }}
@@ -533,7 +554,17 @@ export const EditorialAnalysis: React.FC<EditorialAnalysisProps> = ({
                                   </button>
                                 </div>
                                 <div className="bg-editorial-accent/30 border-l-4 border-editorial-text p-5 rounded-r-sm">
-                                  <p className="text-[10px] uppercase font-black tracking-widest text-editorial-meta mb-3 opacity-60">Academic Definition</p>
+                                <div className="flex justify-between items-center mb-3">
+                                  <p className="text-[10px] uppercase font-black tracking-widest text-editorial-meta opacity-60">Academic Definition</p>
+                                  <a 
+                                    href={`https://www.collinsdictionary.com/dictionary/english/${word.word}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-[9px] uppercase font-bold text-editorial-text hover:underline"
+                                  >
+                                    Collins External
+                                  </a>
+                                </div>
                                   <p className="text-sm leading-relaxed text-editorial-text font-medium mb-4">{word.definition}</p>
                                   {word.nuance && (
                                     <p className="text-[10px] italic text-editorial-muted border-t border-editorial-text/10 pt-3 mt-3">
