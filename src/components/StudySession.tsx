@@ -9,11 +9,14 @@ import {
   Volume2, 
   Star, 
   Loader2,
-  Search
+  Search,
+  LayoutGrid,
+  List as ListIcon
 } from 'lucide-react';
 import { WordBlock, WordEntry } from '../types';
 import { VOCABULARY_DATA } from '../data';
 import { speakWord } from '../services/aiService';
+import { WordListEntry } from './WordListEntry';
 
 type WordStatus = 'new' | 'mastered' | 'review';
 
@@ -56,6 +59,13 @@ export const StudySession: React.FC<StudySessionProps> = ({
   const blockIdx = VOCABULARY_DATA.findIndex(b => b.id === block.id) + 1;
   const status = wordStatus[word.word] || 'new';
   const isBookmarked = bookmarks.has(word.word);
+
+  const [viewMode, setViewMode] = useState<'card' | 'list'>('card');
+
+  useEffect(() => {
+    // Reset to card view when block changes
+    setViewMode('card');
+  }, [block.id]);
 
   const handleNext = () => {
     setIndex((prev) => (prev + 1) % block.words.length);
@@ -141,8 +151,26 @@ export const StudySession: React.FC<StudySessionProps> = ({
             </button>
           </div>
         </div>
-        <div className="text-[9px] md:text-[10px] font-mono text-editorial-meta bg-editorial-accent px-3 py-1.5 rounded-sm font-bold border border-editorial-border shadow-sm">
-          WORD {index + 1} / {block.words.length}
+        <div className="flex items-center gap-4">
+          <div className="text-[9px] md:text-[10px] font-mono text-editorial-meta bg-editorial-accent px-3 py-1.5 rounded-sm font-bold border border-editorial-border shadow-sm">
+            WORD {index + 1} / {block.words.length}
+          </div>
+          <div className="flex items-center gap-1 p-1 bg-editorial-accent rounded-sm border border-editorial-border">
+            <button 
+              onClick={() => setViewMode('card')}
+              className={`p-1 rounded-sm transition-all ${viewMode === 'card' ? 'bg-editorial-text text-white shadow-sm' : 'text-editorial-meta hover:text-editorial-text'}`}
+              title="Card View"
+            >
+              <LayoutGrid size={14} />
+            </button>
+            <button 
+              onClick={() => setViewMode('list')}
+              className={`p-1 rounded-sm transition-all ${viewMode === 'list' ? 'bg-editorial-text text-white shadow-sm' : 'text-editorial-meta hover:text-editorial-text'}`}
+              title="List View (Reading Mode)"
+            >
+              <ListIcon size={14} />
+            </button>
+          </div>
         </div>
       </header>
 
@@ -157,137 +185,150 @@ export const StudySession: React.FC<StudySessionProps> = ({
       </div>
 
       <section className="flex-1 overflow-y-auto px-4 md:px-12 py-6 md:py-8 relative z-10 custom-scrollbar">
-        <div className="max-w-4xl w-full mx-auto min-h-full flex items-center py-8">
+        <div className="max-w-5xl w-full mx-auto min-h-full flex flex-col py-8">
           <AnimatePresence mode="wait">
-            <motion.div
-              key={word.word}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="relative"
-            >
-              <button 
-                onClick={() => onToggleBookmark(word.word)}
-                className={`absolute -top-4 -right-4 md:-right-8 p-3 md:p-5 rounded-full border-2 transition-all shadow-lg hover:scale-110 active:scale-95 ${isBookmarked ? 'bg-editorial-text text-white border-editorial-text' : 'bg-white border-editorial-border text-editorial-meta hover:border-editorial-text hover:text-editorial-text'}`}
-                title="Bookmark Word (B)"
+            {viewMode === 'card' ? (
+              <motion.div
+                key={`card-${word.word}`}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+                className="relative"
               >
-                <Star size={24} fill={isBookmarked ? "currentColor" : "none"} />
-              </button>
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 md:gap-8 mb-6 md:mb-10">
-                <div className="flex items-center gap-4 md:gap-6 overflow-visible">
-                  <h2 
-                    className="text-3xl sm:text-5xl md:text-7xl lg:text-[120px] font-serif leading-none tracking-tight text-editorial-text select-all cursor-pointer hover:text-editorial-muted transition-colors break-words"
-                    onClick={handleSpeak}
-                  >
-                    {word.word}
-                  </h2>
-                  <div className="flex flex-col gap-2">
-                    <button 
+                <button 
+                  onClick={() => onToggleBookmark(word.word)}
+                  className={`absolute -top-4 -right-4 md:-right-8 p-3 md:p-5 rounded-full border-2 transition-all shadow-lg hover:scale-110 active:scale-95 ${isBookmarked ? 'bg-editorial-text text-white border-editorial-text' : 'bg-white border-editorial-border text-editorial-meta hover:border-editorial-text hover:text-editorial-text'}`}
+                  title="Bookmark Word (B)"
+                >
+                  <Star size={24} fill={isBookmarked ? "currentColor" : "none"} />
+                </button>
+                <div className="flex flex-col lg:flex-row gap-12 lg:gap-20 mb-12">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-4 md:gap-6 mb-8 overflow-visible">
+                    <h2 
+                      className="text-4xl sm:text-6xl lg:text-8xl font-serif leading-tight tracking-tight text-editorial-text select-all cursor-pointer hover:text-editorial-muted transition-colors break-words max-w-full"
                       onClick={handleSpeak}
-                      disabled={isSpeaking}
-                      className={`p-2.5 sm:p-3 md:p-4 rounded-full border-2 border-editorial-border hover:border-editorial-text transition-all shrink-0 ${isSpeaking ? 'animate-pulse text-editorial-muted' : 'text-editorial-meta hover:text-editorial-text'}`}
                     >
-                      {isSpeaking ? <Loader2 size={18} className="animate-spin" /> : <Volume2 size={18} />}
-                    </button>
-                    <a 
-                      href={`https://www.collinsdictionary.com/dictionary/english/${word.word}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-2 border border-editorial-border rounded-full text-editorial-meta hover:text-editorial-text hover:border-editorial-text transition-all flex items-center justify-center"
-                      title="Open in Collins Dictionary"
-                    >
-                      <Search size={14} />
-                    </a>
+                      {word.word}
+                    </h2>
+                    <div className="flex flex-col gap-2 shrink-0">
+                      <button 
+                        onClick={handleSpeak}
+                        disabled={isSpeaking}
+                        className={`p-2.5 sm:p-3 md:p-3.5 rounded-full border border-editorial-border hover:border-editorial-text transition-all ${isSpeaking ? 'animate-pulse text-editorial-muted' : 'text-editorial-meta hover:text-editorial-text'}`}
+                      >
+                        {isSpeaking ? <Loader2 size={16} className="animate-spin" /> : <Volume2 size={16} />}
+                      </button>
+                      <a 
+                        href={`https://www.collinsdictionary.com/dictionary/english/${word.word}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 border border-editorial-border rounded-full text-editorial-meta hover:text-editorial-text hover:border-editorial-text transition-all flex items-center justify-center"
+                        title="Open in Collins Dictionary"
+                      >
+                        <Search size={12} />
+                      </a>
+                    </div>
                   </div>
-                </div>
-                <div className="flex gap-2 md:gap-3 shrink-0">
-                  <button 
-                    onClick={() => onToggleStatus(word.word, 'mastered')}
-                    className={`flex-1 md:flex-none flex items-center justify-center p-3 md:p-4 rounded-sm border-2 transition-all duration-300 shadow-sm md:shadow-lg ${status === 'mastered' ? 'bg-editorial-text text-editorial-bg border-editorial-text' : 'bg-white border-editorial-border text-editorial-meta hover:border-editorial-text'}`}
-                    title="Toggle Mastery"
-                  >
-                    <CheckCircle2 size={18} className="md:size-24" />
-                    <span className="md:hidden ml-2 text-[9px] font-bold uppercase tracking-widest">Master</span>
-                  </button>
-                  <button 
-                    onClick={() => onToggleStatus(word.word, 'review')}
-                    className={`flex-1 md:flex-none flex items-center justify-center p-3 md:p-4 rounded-sm border-2 transition-all duration-300 shadow-sm md:shadow-lg ${status === 'review' ? 'bg-amber-600 text-white border-amber-600' : 'bg-white border-editorial-border text-editorial-meta hover:border-editorial-text'}`}
-                    title="Mark for Review"
-                  >
-                    <AlertCircle size={18} className="md:size-24" />
-                    <span className="md:hidden ml-2 text-[9px] font-bold uppercase tracking-widest">Review</span>
-                  </button>
-                </div>
-              </div>
-              
-              <div className="flex flex-col md:flex-row gap-8 md:gap-12 mb-8 md:mb-12">
-                <div className="w-full md:w-1/3">
-                  <p className="text-[10px] uppercase font-bold tracking-widest text-editorial-meta mb-3">Context</p>
-                  <p className="text-sm md:text-base font-semibold border-l-4 border-editorial-text pl-4 md:pl-5 py-2">
-                    {word.context}
-                  </p>
-                </div>
-                <div className="w-full md:w-2/3">
-                  <p className="text-[10px] uppercase font-bold tracking-widest text-editorial-meta mb-3">Definition</p>
-                  <div className="text-xl md:text-2xl leading-snug text-editorial-text font-medium">
-                    <div className="mb-4">{word.definition}</div>
-                    {word.nuance && (
-                      <div className="mt-4 md:mt-6 text-base md:text-lg italic text-editorial-muted border-t border-editorial-border pt-4 md:pt-6 font-serif leading-relaxed">
-                        “{word.nuance}”
-                      </div>
-                    )}
 
-                    <div className="mt-8 space-y-8">
-                      {word.derivatives && word.derivatives.length > 0 && (
-                        <div className="bg-neutral-50 border border-editorial-border p-4 rounded-sm">
-                          <p className="text-[9px] uppercase font-bold tracking-widest text-editorial-meta mb-3 border-b border-editorial-border pb-2">Morphological Derivatives</p>
-                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                            {word.derivatives.map((d, i) => (
-                              <div key={i} className="flex flex-col">
-                                <span className="text-[8px] font-black text-editorial-meta uppercase mb-0.5">{d.form}</span>
-                                <span className="text-sm font-serif italic text-editorial-text">{d.word}</span>
-                              </div>
+                  <div className="space-y-10">
+                    <div>
+                      <p className="text-[10px] uppercase font-bold tracking-widest text-editorial-meta mb-3">Core Definition</p>
+                      <div className="text-xl md:text-2xl lg:text-3xl leading-[1.3] text-editorial-text font-medium">
+                        {word.definition}
+                      </div>
+                      {word.nuance && (
+                        <div className="mt-6 text-base md:text-lg italic text-editorial-muted border-l-2 border-editorial-border pl-6 py-1 font-serif">
+                          “{word.nuance}”
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
+                      {word.synonyms && word.synonyms.length > 0 && (
+                        <div>
+                          <p className="text-[10px] uppercase font-bold tracking-widest text-editorial-meta mb-3">Synonyms</p>
+                          <div className="flex flex-wrap gap-2">
+                            {word.synonyms.map(s => (
+                              <span key={s} className="px-3 py-1 bg-editorial-accent text-[11px] font-bold tracking-tight border border-editorial-border rounded-sm">
+                                {s}
+                              </span>
                             ))}
                           </div>
                         </div>
                       )}
+                      {word.antonyms && word.antonyms.length > 0 && (
+                        <div>
+                          <p className="text-[10px] uppercase font-bold tracking-widest text-editorial-meta mb-3">Antonyms</p>
+                          <div className="flex flex-wrap gap-2">
+                            {word.antonyms.map(a => (
+                              <span key={a} className="px-3 py-1 bg-white text-[11px] font-bold tracking-tight border border-editorial-border rounded-sm italic text-editorial-muted">
+                                {a}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        {word.synonyms && word.synonyms.length > 0 && (
-                          <div>
-                            <p className="text-[9px] uppercase font-bold tracking-widest text-editorial-meta mb-2">Architectural Synonyms</p>
-                            <div className="flex flex-wrap gap-2">
-                              {word.synonyms.map(s => (
-                                <span key={s} className="px-3 py-1 bg-editorial-accent text-[11px] font-bold tracking-tight border border-editorial-border rounded-sm hover:translate-y-[-1px] transition-transform cursor-default">
-                                  {s}
-                                </span>
-                              ))}
+                    {word.derivatives && word.derivatives.length > 0 && (
+                      <div className="bg-editorial-accent/30 border border-editorial-border p-6 rounded-sm">
+                        <p className="text-[10px] uppercase font-bold tracking-widest text-editorial-meta mb-4 border-b border-editorial-border/50 pb-2">Lexical Derivatives</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
+                          {word.derivatives.map((d, i) => (
+                            <div key={i} className="flex flex-col">
+                              <span className="text-[9px] font-black text-editorial-meta uppercase mb-1">{d.form}</span>
+                              <span className="text-base font-serif italic text-editorial-text">{d.word}</span>
                             </div>
-                          </div>
-                        )}
-                        {word.antonyms && word.antonyms.length > 0 && (
-                          <div>
-                            <p className="text-[9px] uppercase font-bold tracking-widest text-editorial-meta mb-2">Lexical Antonyms</p>
-                            <div className="flex flex-wrap gap-2">
-                              {word.antonyms.map(a => (
-                                <span key={a} className="px-3 py-1 bg-white text-[11px] font-bold tracking-tight border border-editorial-border rounded-sm italic text-editorial-muted hover:translate-y-[-1px] transition-transform cursor-default">
-                                  {a}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <aside className="lg:w-80 shrink-0 space-y-8">
+                  <div className="bg-white border border-editorial-border p-6 rounded-sm shadow-sm space-y-6">
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => onToggleStatus(word.word, 'mastered')}
+                        className={`flex-1 flex flex-col items-center gap-2 p-4 rounded-sm border transition-all ${status === 'mastered' ? 'bg-editorial-text text-white border-editorial-text shadow-lg' : 'bg-neutral-50 border-editorial-border text-editorial-meta hover:border-editorial-text'}`}
+                      >
+                        <CheckCircle2 size={24} />
+                        <span className="text-[9px] font-black uppercase tracking-widest">Mastered</span>
+                      </button>
+                      <button 
+                        onClick={() => onToggleStatus(word.word, 'review')}
+                        className={`flex-1 flex flex-col items-center gap-2 p-4 rounded-sm border transition-all ${status === 'review' ? 'bg-amber-600 text-white border-amber-600 shadow-lg' : 'bg-neutral-50 border-editorial-border text-editorial-meta hover:border-editorial-text'}`}
+                      >
+                        <AlertCircle size={24} />
+                        <span className="text-[9px] font-black uppercase tracking-widest">Review</span>
+                      </button>
+                    </div>
+
+                    <div className="pt-6 border-t border-editorial-border">
+                      <p className="text-[10px] uppercase font-bold tracking-widest text-editorial-meta mb-4">Contextual Nuance</p>
+                      <div className="p-4 bg-editorial-accent rounded-sm italic text-sm text-editorial-text leading-relaxed font-serif border-l-2 border-editorial-text">
+                        {word.context}
                       </div>
                     </div>
                   </div>
-                </div>
+
+                  <div className="bg-editorial-text text-white p-6 rounded-sm shadow-xl">
+                    <p className="text-[8px] uppercase tracking-[0.3em] font-bold opacity-40 mb-4">Learning Shortcut</p>
+                    <div className="flex items-center justify-between text-[10px]">
+                      <span className="opacity-60">Status:</span>
+                      <span className="font-bold underline decoration-editorial-accent uppercase tracking-widest">{status}</span>
+                    </div>
+                  </div>
+                </aside>
               </div>
 
-              <div className="bg-editorial-text text-white p-5 md:p-12 rounded-sm shadow-2xl relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-32 md:w-48 h-32 md:h-48 bg-white/5 -rotate-45 translate-x-12 md:translate-x-24 -translate-y-12 md:-translate-y-24 group-hover:scale-110 transition-transform"></div>
-                <p className="text-[8px] md:text-[10px] uppercase tracking-[0.4em] opacity-40 mb-4 md:mb-8 font-bold text-center">In Practice</p>
-                <div className="text-lg md:text-3xl lg:text-4xl font-serif italic text-center leading-relaxed max-w-3xl mx-auto tracking-wide">
+              <div className="bg-editorial-text text-white p-8 md:p-16 rounded-sm shadow-2xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 -rotate-45 translate-x-24 -translate-y-24 group-hover:scale-110 transition-transform"></div>
+                <p className="text-[10px] uppercase tracking-[0.5em] opacity-30 mb-8 font-bold text-center">Contextual Prototype</p>
+                <div className="text-xl md:text-3xl lg:text-5xl font-serif italic text-center leading-tight max-w-4xl mx-auto tracking-tight">
                   “{word.example.split(new RegExp(`(${word.word})`, 'gi')).map((part, i) => (
                     part.toLowerCase() === word.word.toLowerCase() 
                       ? <span key={i} className="text-[#C7B7A3] not-italic font-bold border-b border-[#C7B7A3]/30">{part}</span> 
@@ -296,12 +337,33 @@ export const StudySession: React.FC<StudySessionProps> = ({
                 </div>
               </div>
             </motion.div>
+            ) : (
+              <motion.div
+                key="list-view"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="space-y-1 w-full"
+              >
+                {block.words.map((w, idx) => (
+                  <WordListEntry 
+                    key={w.word + idx} 
+                    word={w} 
+                    status={wordStatus[w.word] || 'new'} 
+                    onToggleStatus={onToggleStatus} 
+                    isBookmarked={bookmarks.has(w.word)} 
+                    onToggleBookmark={onToggleBookmark} 
+                  />
+                ))}
+              </motion.div>
+            )}
           </AnimatePresence>
         </div>
       </section>
 
       {/* Bottom Control Bar */}
-      <section className="h-28 md:h-44 border-t-2 border-editorial-text bg-white relative z-10 shrink-0 transition-colors">
+      {viewMode === 'card' && (
+        <section className="h-28 md:h-44 border-t-2 border-editorial-text bg-white relative z-10 shrink-0 transition-colors">
         <div className="flex h-full divide-x divide-editorial-border">
           <button 
             onClick={handlePrev}
@@ -349,9 +411,11 @@ export const StudySession: React.FC<StudySessionProps> = ({
           </div>
         </div>
       </section>
+      )}
 
       {/* Floating Sticky Navigation Bar */}
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-30 pointer-events-none w-full max-w-sm px-6">
+      {viewMode === 'card' && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-30 pointer-events-none w-full max-w-sm px-6">
         <motion.div 
           initial={{ y: 50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -398,6 +462,7 @@ export const StudySession: React.FC<StudySessionProps> = ({
           </button>
         </motion.div>
       </div>
+      )}
 
       {/* Bulk Actions Confirmation Overlay */}
       <AnimatePresence>
