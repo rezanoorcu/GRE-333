@@ -480,7 +480,7 @@ export default function App() {
             )}
 
             {view === 'list' && (
-              <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 flex flex-col overflow-hidden">
+              <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0">
                 <ListView title="The Lexicon" words={filteredWords} wordStatus={wordStatus} toggleStatus={toggleStatus} bookmarks={bookmarks} toggleBookmark={toggleBookmark} />
               </motion.div>
             )}
@@ -581,10 +581,16 @@ function ListView({ title, words, wordStatus, toggleStatus, bookmarks, toggleBoo
 
 function HelpModal({ onClose }: { onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-[100] bg-editorial-text/80 backdrop-blur-sm flex items-center justify-center p-6" onClick={onClose}>
-      <div className="bg-white border border-editorial-border p-8 md:p-12 max-w-lg w-full rounded-sm shadow-2xl" onClick={e => e.stopPropagation()}>
-        <h3 className="text-2xl font-serif italic mb-6">Learning Guide</h3>
-        <div className="space-y-4">
+    <div className="fixed inset-0 z-[100] bg-editorial-text/40 backdrop-blur-sm flex items-center justify-center p-6" onClick={onClose}>
+      <div className="bg-editorial-bg border border-editorial-border p-8 md:p-12 max-w-lg w-full rounded-sm shadow-2xl relative" onClick={e => e.stopPropagation()}>
+        <button onClick={onClose} className="absolute top-4 right-4 p-2 text-editorial-meta hover:text-editorial-text transition-colors">
+          <X size={20} />
+        </button>
+        <div className="flex items-center gap-3 mb-8">
+          <HelpCircle className="text-editorial-text" size={24} />
+          <h3 className="text-2xl font-serif italic">Learning Guide</h3>
+        </div>
+        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
           <Shortcut label="Global Search" keys={['/']} />
           <Shortcut label="Quick Command" keys={['⌘', 'K']} />
           <Shortcut label="Next Entry" keys={['→']} />
@@ -614,11 +620,11 @@ function CommandPalette({ words, onSelect, onClose }: { words: WordEntry[], onSe
   }, [query, words, fuse]);
 
   return (
-    <div className="fixed inset-0 z-[100] bg-zinc-950/60 backdrop-blur-md flex items-start justify-center pt-[15vh] px-6" onClick={onClose}>
+    <div className="fixed inset-0 z-[100] bg-editorial-text/30 backdrop-blur-md flex items-start justify-center pt-[15vh] px-6" onClick={onClose}>
       <motion.div 
         initial={{ opacity: 0, scale: 0.95, y: -20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="w-full max-w-2xl bg-white border border-editorial-border rounded-lg shadow-2xl overflow-hidden flex flex-col"
+        className="w-full max-w-2xl bg-white border border-editorial-border rounded-sm shadow-[0_30px_100px_rgba(0,0,0,0.1)] overflow-hidden flex flex-col"
         onClick={e => e.stopPropagation()}
       >
         <div className="p-6 border-b border-editorial-border flex items-center gap-4">

@@ -23,15 +23,6 @@
     --editorial-meta: #A69F95;
   }
 
-  .dark {
-    --editorial-bg: #0A0A0A;
-    --editorial-text: #E5E5E5;
-    --editorial-border: #1F1F1F;
-    --editorial-accent: #141414;
-    --editorial-muted: #A1A1AA;
-    --editorial-meta: #52525B;
-  }
-
   body {
     background-color: var(--editorial-bg);
     color: var(--editorial-text);

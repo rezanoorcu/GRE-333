@@ -48,54 +48,58 @@ export const IdiomsSection: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full bg-editorial-bg overflow-hidden">
-      {/* Header */}
-      <header className="px-8 py-10 border-b border-editorial-border bg-white shrink-0 transition-colors">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div>
-            <div className="flex items-center gap-3 mb-4">
-              <Sparkles className="text-editorial-text" size={24} />
-              <h2 className="text-4xl font-serif tracking-tight text-editorial-text italic underline decoration-neutral-200 underline-offset-8">
-                Phrases & Idioms
-              </h2>
+      {/* Header & Controls Hub */}
+      <div className="sticky top-0 z-30 bg-editorial-bg transition-all border-b border-editorial-border">
+        <header className="px-6 md:px-8 py-6 md:py-8 bg-white shrink-0">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-editorial-accent rounded-full text-editorial-text shrink-0">
+                <Sparkles size={24} />
+              </div>
+              <div>
+                <h2 className="text-2xl md:text-3xl font-serif tracking-tight text-editorial-text italic">
+                  Phrases & Idioms
+                </h2>
+                <p className="text-[9px] uppercase tracking-[0.2em] font-black text-editorial-muted mt-1">
+                  Linguistic Inventory • Contextual Proficiency
+                </p>
+              </div>
             </div>
-            <p className="text-[10px] uppercase tracking-[0.3em] font-black text-editorial-muted">
-              Linguistic Inventory • Contextual Proficiency
-            </p>
-          </div>
 
-          <div className="flex flex-col md:flex-row gap-4 items-center">
-            <div className="relative w-full md:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-editorial-meta" size={14} />
-              <input
-                type="text"
-                placeholder="Locate expression..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-neutral-50 border border-editorial-border text-xs focus:outline-none focus:border-editorial-text transition-all rounded-sm italic text-editorial-text"
-              />
+            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+              <div className="relative flex-1 sm:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-editorial-meta" size={14} />
+                <input
+                  type="text"
+                  placeholder="Locate expression..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 bg-neutral-50 border border-editorial-border text-xs focus:outline-none focus:border-editorial-text focus:ring-1 focus:ring-editorial-text/5 transition-all rounded-sm italic text-editorial-text"
+                />
+              </div>
+              <button 
+                onClick={() => setShowRecallKeys(!showRecallKeys)}
+                className={`px-4 py-2 border rounded-sm text-[9px] uppercase font-black tracking-widest flex items-center justify-center gap-2 transition-all ${showRecallKeys ? 'bg-editorial-text text-white border-editorial-text' : 'bg-white text-editorial-text border-editorial-border hover:bg-neutral-50'}`}
+              >
+                {showRecallKeys ? <EyeOff size={12} /> : <Eye size={12} />}
+                {showRecallKeys ? "Recall Mode Active" : "Enable Recall Mode"}
+              </button>
             </div>
-            <button 
-              onClick={() => setShowRecallKeys(!showRecallKeys)}
-              className="px-4 py-2 bg-editorial-text text-white text-[9px] uppercase font-bold tracking-widest rounded-sm flex items-center gap-2 hover:opacity-80 transition-all shrink-0"
+          </div>
+        </header>
+
+        {/* Categories Bar */}
+        <div className="px-6 md:px-8 py-2 bg-neutral-50/50 backdrop-blur-sm flex gap-3 overflow-x-auto no-scrollbar shrink-0 border-t border-editorial-border/50">
+          {categories.map(cat => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`px-3 py-1 text-[9px] uppercase font-black tracking-wider transition-all rounded-full whitespace-nowrap border ${selectedCategory === cat ? 'bg-editorial-text text-white border-editorial-text shadow-sm' : 'text-editorial-muted border-editorial-border/50 hover:border-editorial-text bg-white/50 hover:bg-white'}`}
             >
-              {showRecallKeys ? <EyeOff size={12} /> : <Eye size={12} />}
-              {showRecallKeys ? "Hide Recall Keys" : "Focus Recall Mode"}
+              {cat}
             </button>
-          </div>
+          ))}
         </div>
-      </header>
-
-      {/* Categories Bar */}
-      <div className="px-8 py-3 bg-white border-b border-editorial-border flex gap-4 overflow-x-auto no-scrollbar shrink-0 transition-colors">
-        {categories.map(cat => (
-          <button
-            key={cat}
-            onClick={() => setSelectedCategory(cat)}
-            className={`px-4 py-1 text-[10px] uppercase font-bold tracking-widest transition-all rounded-full whitespace-nowrap ${selectedCategory === cat ? 'bg-editorial-text text-white' : 'text-editorial-muted hover:text-editorial-text hover:bg-neutral-50 border border-transparent'}`}
-          >
-            {cat}
-          </button>
-        ))}
       </div>
 
       {/* Content Grid */}
@@ -134,7 +138,7 @@ export const IdiomsSection: React.FC = () => {
                     <p className="text-[9px] uppercase font-black text-editorial-meta mb-2 tracking-tighter">Mnemonic / Recall Key</p>
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-bold text-editorial-text">
-                        {idiom.recallKey}
+                        {revealStates[idiom.phrase] ? idiom.recallKey : '••••••••'}
                       </span>
                       <button 
                         onClick={() => toggleReveal(idiom.phrase)}
