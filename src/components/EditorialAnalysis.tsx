@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { VOCABULARY_DATA } from '../data';
+import { BARRON_800_DATA } from '../constants/barronData';
 import { WordEntry, SavedVocab } from '../types';
 
 interface Article {
@@ -46,7 +47,10 @@ export const EditorialAnalysis: React.FC<EditorialAnalysisProps> = ({
 
   // Removed local savedVocab state as it's now a prop
 
-  const allWords = useMemo(() => VOCABULARY_DATA.flatMap(b => b.words), []);
+  const allWords = useMemo(() => [
+    ...VOCABULARY_DATA.flatMap(b => b.words),
+    ...BARRON_800_DATA.flatMap(b => b.words)
+  ], []);
 
   useEffect(() => {
     fetchEditorials();
