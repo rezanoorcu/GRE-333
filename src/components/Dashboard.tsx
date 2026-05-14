@@ -224,13 +224,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             <ModuleCard 
               icon={<GraduationCap size={20} />}
               title="GRE Elite"
               count={stats.greMastered}
               total={greWords.length}
-              description="High-frequency academic terms."
+              description="High-frequency academic terms for graduate studies."
               onClick={() => onNavigate('study')}
             />
             <ModuleCard 
@@ -238,7 +238,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               title="Barron"
               count={stats.barronMastered}
               total={barronWords.length}
-              description="Comprehensive lexical archive."
+              description="Comprehensive archive of essential academic lexicon."
               onClick={() => onNavigate('barron-study')}
               delay={0.1}
             />
@@ -246,17 +246,33 @@ export const Dashboard: React.FC<DashboardProps> = ({
               icon={<Sparkles size={20} />}
               title="Idioms"
               count={stats.totalIdioms}
-              description="Natural linguistic expressions."
+              description="Natural linguistic expressions and metaphors."
               onClick={() => onNavigate('idioms')}
               delay={0.2}
+            />
+            <ModuleCard 
+              icon={<Type size={20} />}
+              title="Group Verbs"
+              count={stats.totalPhrasalVerbs}
+              description="Complex phrasal combinations and prepositional patterns."
+              onClick={() => onNavigate('phrasal-verbs')}
+              delay={0.3}
             />
             <ModuleCard 
               icon={<Brain size={20} />}
               title="Lab"
               count="Active"
-              description="Performance-based testing."
+              description="Performance-based testing and cognitive reinforcement."
               onClick={() => onNavigate('practice')}
-              delay={0.3}
+              delay={0.4}
+            />
+            <ModuleCard 
+              icon={<Star size={20} />}
+              title="Archive"
+              count={stats.bookmarkCount}
+              description="Your curated collection of high-priority terms."
+              onClick={() => onNavigate('bookmarks')}
+              delay={0.5}
             />
           </div>
         </div>
