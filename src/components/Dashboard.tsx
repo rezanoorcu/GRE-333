@@ -11,7 +11,8 @@ import {
   TrendingUp,
   Clock,
   LayoutDashboard,
-  Type
+  Type,
+  Newspaper
 } from 'lucide-react';
 import { VOCABULARY_DATA } from '../data';
 import { BARRON_800_DATA } from '../constants/barronData';

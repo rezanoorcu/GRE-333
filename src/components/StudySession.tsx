@@ -11,7 +11,8 @@ import {
   Loader2,
   Search,
   LayoutGrid,
-  List as ListIcon
+  List as ListIcon,
+  Sparkles
 } from 'lucide-react';
 import { WordBlock, WordEntry } from '../types';
 import { VOCABULARY_DATA } from '../data';
