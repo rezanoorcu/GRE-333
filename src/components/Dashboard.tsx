@@ -31,7 +31,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
   bookmarks, 
   onNavigate,
   currentBlockId,
-  currentBarronBlockId
 }) => {
   const allWords = useMemo(() => [...VOCABULARY_DATA.flatMap(b => b.words), ...BARRON_800_DATA.flatMap(b => b.words)], []);
   const greWords = useMemo(() => VOCABULARY_DATA.flatMap(b => b.words), []);
@@ -59,7 +58,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
   }, [currentBlockId]);
 
   const dailyDigest = useMemo(() => {
-    // Stable pseudo-random pick for the day
     const dayOfYear = Math.floor(Date.now() / 86400000);
     const wordIdx = dayOfYear % allWords.length;
     const idiomIdx = dayOfYear % IDIOMS_DATA.length;
@@ -71,166 +69,203 @@ export const Dashboard: React.FC<DashboardProps> = ({
   }, [allWords]);
 
   return (
-    <div className="flex-1 overflow-y-auto p-6 md:p-12 bg-editorial-bg transition-colors duration-300">
-      <div className="max-w-6xl mx-auto space-y-12">
-        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 py-10">
-          <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-          >
-            <div className="flex items-center gap-4 mb-3">
-              <div className="p-3 bg-white border border-editorial-border rounded-full shadow-sm text-editorial-text">
-                <LayoutDashboard size={20} />
+    <div className="flex-1 overflow-y-auto bg-editorial-bg transition-colors duration-300">
+      <div className="max-w-7xl mx-auto px-6 py-12 md:px-12 md:py-20">
+        <header className="mb-16">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="max-w-2xl"
+            >
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-editorial-accent border border-editorial-border mb-6">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[10px] font-black tracking-widest uppercase text-editorial-meta">System Online</span>
               </div>
-              <h1 className="text-3xl md:text-5xl font-serif tracking-tight text-editorial-text italic">
-                Scholar's Dashboard
+              <h1 className="text-5xl md:text-7xl font-serif tracking-tight text-editorial-text leading-[0.9] mb-6">
+                Scholar's <span className="italic">Perspective</span>.
               </h1>
-            </div>
-            <p className="text-[9px] uppercase tracking-[0.4em] font-black text-editorial-muted ml-16">
-              Cognitive Progress • Linguistic Mastery
-            </p>
-          </motion.div>
-          
-          <div className="flex items-center gap-10 bg-white border border-editorial-border px-8 py-5 rounded-full shadow-sm">
-            <div className="text-center">
-              <p className="text-[8px] uppercase font-black text-editorial-meta mb-1 tracking-tighter">Mastery</p>
-              <p className="text-3xl font-serif italic text-editorial-text">{stats.progress}%</p>
-            </div>
-            <div className="h-8 w-px bg-editorial-border" />
-            <div className="text-center">
-              <p className="text-[8px] uppercase font-black text-editorial-meta mb-1 tracking-tighter">Curated</p>
-              <p className="text-3xl font-serif italic text-editorial-text">{stats.bookmarkCount}</p>
+              <p className="text-lg md:text-xl text-editorial-muted font-serif italic max-w-lg leading-relaxed">
+                A curated environment for the high-performance acquisition of academic lexicon.
+              </p>
+            </motion.div>
+            
+            <div className="flex items-center gap-12 bg-white border border-editorial-border p-10 rounded-sm shadow-editorial relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-editorial-accent rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-500" />
+              <div className="relative z-10 text-center">
+                <p className="text-[9px] uppercase font-black text-editorial-muted mb-2 tracking-widest">Global Progress</p>
+                <p className="text-6xl font-serif italic text-editorial-text leading-none">{stats.progress}<span className="text-2xl not-italic opacity-30">%</span></p>
+              </div>
+              <div className="relative z-10 h-10 w-px bg-editorial-border" />
+              <div className="relative z-10 text-center">
+                <p className="text-[9px] uppercase font-black text-editorial-muted mb-2 tracking-widest">Mastery</p>
+                <p className="text-6xl font-serif italic text-editorial-text leading-none">{stats.masteredWords}</p>
+              </div>
             </div>
           </div>
         </header>
 
-        {/* Core Sections Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 bg-white border border-editorial-border p-8 rounded-sm shadow-[4px_4px_0_0_rgba(0,0,0,0.05)] transition-all flex flex-col justify-between group relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-1 h-full bg-editorial-text opacity-10 group-hover:opacity-100 transition-opacity" />
+        {/* Bento Grid layout */}
+        <div className="grid grid-cols-1 md:grid-cols-4 md:grid-rows-2 gap-6 mb-20">
+          {/* Main Study Block */}
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            onClick={() => onNavigate('study')}
+            className="md:col-span-2 md:row-span-2 bg-white border border-editorial-border p-10 rounded-sm shadow-editorial hover:shadow-editorial-lg transition-all cursor-pointer group relative overflow-hidden flex flex-col justify-between"
+          >
+            <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+              <GraduationCap size={160} />
+            </div>
             
-            <div className="relative z-10">
-              <div className="flex items-center gap-2 mb-6">
+            <div>
+              <div className="flex items-center gap-2 mb-8">
                 <Clock className="text-editorial-meta" size={14} />
-                <span className="text-[10px] uppercase font-bold tracking-widest text-editorial-meta">Recent Activity</span>
+                <span className="text-[10px] uppercase font-bold tracking-widest text-editorial-meta">Deep Work Mode</span>
               </div>
-              <h2 className="text-2xl font-serif text-editorial-text mb-4">Continue with <span className="italic">{currentBlock.title.split(': ')[1]}</span></h2>
-              <div className="h-1.5 w-full bg-editorial-accent rounded-full overflow-hidden mb-8">
+              <h2 className="text-4xl font-serif text-editorial-text mb-6">Continue <span className="italic">{currentBlock.title.split(': ')[1]}</span></h2>
+              <p className="text-editorial-muted text-sm max-w-sm mb-10 leading-relaxed">
+                Resume your focus on this lexical block. You have mastered 
+                <span className="text-editorial-text font-bold mx-1">
+                  {currentBlock.words.filter(w => wordStatus[w.word] === 'mastered').length}
+                </span> 
+                out of {currentBlock.words.length} terms in this unit.
+              </p>
+            </div>
+
+            <div className="space-y-6">
+              <div className="h-1 w-full bg-editorial-accent relative overflow-hidden">
                 <motion.div 
                   initial={{ width: 0 }}
                   animate={{ width: `${(currentBlock.words.filter(w => wordStatus[w.word] === 'mastered').length / currentBlock.words.length) * 100}%` }}
                   className="h-full bg-editorial-text"
                 />
               </div>
+              <div className="flex items-center gap-3 text-editorial-text font-black text-[10px] uppercase tracking-widest group-hover:gap-5 transition-all">
+                Enter Study Session <ChevronRight size={14} />
+              </div>
             </div>
-            <button 
-              onClick={() => onNavigate('study')}
-              className="w-full py-4 bg-editorial-text text-white text-[10px] uppercase font-bold tracking-[0.2em] rounded-sm hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0 transition-all flex items-center justify-center gap-3 relative z-10"
-            >
-              Resume Study Session <ChevronRight size={14} />
-            </button>
-          </div>
+          </motion.div>
 
-          {/* Daily Insight */}
-          <div className="bg-editorial-text text-white p-8 rounded-sm shadow-xl flex flex-col justify-between relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-4 opacity-10 rotate-12 scale-150 group-hover:rotate-45 transition-transform">
-              <Sparkles size={120} />
+          {/* Daily Selection */}
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.1 }}
+            className="md:col-span-2 bg-editorial-text text-white p-10 rounded-sm shadow-editorial-lg flex flex-col justify-between relative overflow-hidden group"
+          >
+            <div className="absolute -bottom-8 -right-8 p-4 opacity-10 rotate-12 scale-150 group-hover:rotate-[30deg] transition-transform duration-700">
+              <Sparkles size={180} />
             </div>
             
             <div className="relative z-10">
-              <div className="flex items-center gap-2 mb-6 opacity-60">
+              <div className="flex items-center gap-2 mb-8 opacity-60">
                 <Sparkles size={14} />
-                <span className="text-[10px] uppercase font-bold tracking-widest">Daily Selection</span>
+                <span className="text-[10px] uppercase font-bold tracking-widest">Thought for the Day</span>
               </div>
-              <h3 className="text-sm font-black uppercase tracking-tighter text-[#C7B7A3] mb-2">{dailyDigest.word.word}</h3>
-              <p className="text-xl font-serif italic mb-4 leading-relaxed group-hover:translate-x-1 transition-transform">
+              <h3 className="text-xl font-black uppercase tracking-tighter text-editorial-meta mb-3">{dailyDigest.word.word}</h3>
+              <p className="text-3xl font-serif italic mb-6 leading-tight max-w-md">
                 “{dailyDigest.word.definition}”
               </p>
             </div>
+            
             <button 
               onClick={() => onNavigate('list')}
-              className="mt-6 text-[10px] uppercase font-bold tracking-widest border border-white/20 px-4 py-2 hover:bg-white/10 transition-colors inline-flex w-fit items-center gap-2 relative z-10"
+              className="mt-6 text-[10px] uppercase font-bold tracking-[0.3em] bg-white text-editorial-text px-6 py-3 hover:bg-neutral-100 transition-colors inline-flex w-fit items-center gap-3 relative z-10"
             >
-              Explore Dictionary <ChevronRight size={12} />
+              Lexicon Search <ChevronRight size={12} />
             </button>
-          </div>
+          </motion.div>
+
+          {/* Mini Stats Card */}
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2 }}
+            className="md:col-span-1 bg-white border border-editorial-border p-8 rounded-sm hover:-translate-y-1 transition-all group"
+          >
+            <div className="flex items-center gap-2 mb-6">
+              <Star className="text-editorial-meta" size={14} />
+              <span className="text-[10px] uppercase font-black tracking-widest text-editorial-meta">Vault</span>
+            </div>
+            <div className="mb-4">
+              <p className="text-4xl font-serif italic text-editorial-text leading-none mb-2">{stats.bookmarkCount}</p>
+              <p className="text-[9px] uppercase font-black tracking-widest text-editorial-meta">Curated Units</p>
+            </div>
+            <p className="text-xs text-editorial-muted italic">Important terms saved across all modules.</p>
+          </motion.div>
+
+          {/* Small Feature Card */}
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3 }}
+            onClick={() => onNavigate('editorial')}
+            className="md:col-span-1 bg-editorial-accent border border-editorial-border p-8 rounded-sm hover:-translate-y-1 transition-all cursor-pointer group"
+          >
+            <div className="flex items-center gap-2 mb-6">
+              <Newspaper className="text-editorial-meta" size={14} />
+              <span className="text-[10px] uppercase font-black tracking-widest text-editorial-meta">Analysis</span>
+            </div>
+            <p className="text-xl font-serif text-editorial-text mb-4 leading-[1.1]">The <span className="italic">Editorial</span> Reader.</p>
+            <div className="inline-flex items-center gap-2 text-editorial-text font-black text-[9px] uppercase tracking-widest group-hover:translate-x-1 transition-transform">
+              Launch <ChevronRight size={12} />
+            </div>
+          </motion.div>
         </div>
 
-        {/* Modules Grid */}
+        {/* Categories Section */}
         <div>
-          <div className="flex items-center gap-2 mb-8">
-            <TrendingUp size={16} className="text-editorial-meta" />
-            <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-editorial-meta">Academic Modules</span>
+          <div className="flex items-center justify-between gap-4 mb-12">
+            <div className="flex items-center gap-3">
+              <div className="h-px w-8 bg-editorial-text" />
+              <span className="text-[11px] uppercase font-black tracking-[0.4em] text-editorial-text">Strategic Modules</span>
+            </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <ModuleCard 
               icon={<GraduationCap size={20} />}
-              title="GRE 333 High Frequency"
-              count={`${stats.greMastered} / ${greWords.length}`}
-              description="Essential vocabulary for the GRE exam."
+              title="GRE Elite"
+              count={stats.greMastered}
+              total={greWords.length}
+              description="High-frequency academic terms."
               onClick={() => onNavigate('study')}
             />
             <ModuleCard 
               icon={<div className="w-[20px] h-[20px] rounded-sm bg-editorial-text text-white flex items-center justify-center text-xs font-black">B</div>}
-              title="Barron High Frequency"
-              count={`${stats.barronMastered} / ${barronWords.length}`}
-              description="A comprehensive archive of academic terms."
+              title="Barron"
+              count={stats.barronMastered}
+              total={barronWords.length}
+              description="Comprehensive lexical archive."
               onClick={() => onNavigate('barron-study')}
               delay={0.1}
             />
             <ModuleCard 
               icon={<Sparkles size={20} />}
-              title="Phrases & Idioms"
-              count={`${stats.totalIdioms} Entries`}
-              description="Master idiomatic and phrasal expressions."
+              title="Idioms"
+              count={stats.totalIdioms}
+              description="Natural linguistic expressions."
               onClick={() => onNavigate('idioms')}
               delay={0.2}
             />
             <ModuleCard 
-              icon={<Type size={20} />}
-              title="Group Verbs"
-              count={`${stats.totalPhrasalVerbs} Units`}
-              description="Common phrasal combinations and patterns."
-              onClick={() => onNavigate('phrasal-verbs')}
-              delay={0.3}
-            />
-            <ModuleCard 
               icon={<Brain size={20} />}
-              title="Practice Lab"
-              count={`Active Review`}
-              description="Testing and reinforcement through flashcards."
+              title="Lab"
+              count="Active"
+              description="Performance-based testing."
               onClick={() => onNavigate('practice')}
-              delay={0.4}
-            />
-             <ModuleCard 
-              icon={<Star size={20} />}
-              title="Personal Archive"
-              count={`${bookmarks.size} Bookmarks`}
-              description="Review your curated vocabulary list."
-              onClick={() => onNavigate('bookmarks')}
-              delay={0.5}
+              delay={0.3}
             />
           </div>
         </div>
 
-        {/* Daily Idiom Highlight */}
-        <div className="bg-editorial-accent border border-editorial-border p-10 rounded-sm italic font-serif transition-all hover:shadow-inner">
-          <div className="flex flex-col md:flex-row gap-8 items-center">
-            <div className="w-16 h-16 shrink-0 bg-white border border-editorial-border rounded-full flex items-center justify-center text-editorial-text shadow-sm ring-4 ring-white/50">
-              <Sparkles size={32} />
-            </div>
-            <div className="flex-1 text-center md:text-left">
-              <p className="text-[10px] font-sans font-black uppercase text-editorial-meta tracking-[0.3em] mb-3 not-italic">Featured Expression</p>
-              <h4 className="text-3xl text-editorial-text mb-2">“{dailyDigest.idiom.phrase}”</h4>
-              <p className="text-lg text-editorial-muted">{dailyDigest.idiom.meaning}</p>
-            </div>
-            <button 
-              onClick={() => onNavigate('idioms')}
-              className="px-8 py-3 bg-white border border-editorial-border text-[9px] uppercase font-black tracking-[0.2em] hover:bg-editorial-text hover:text-white transition-all shrink-0 font-sans not-italic shadow-sm"
-            >
-              View Full Archive
-            </button>
-          </div>
+        {/* Editorial Feature Quote */}
+        <div className="mt-24 border-t border-editorial-border py-20 flex flex-col md:flex-row items-center gap-12 text-center md:text-left">
+          <div className="w-1.5 h-1.5 rounded-full bg-editorial-text opacity-20" />
+          <p className="text-2xl md:text-3xl font-serif italic text-editorial-muted max-w-4xl text-balance leading-relaxed">
+            "The limit of my language means the limit of my world. Expand yours with precision, intent, and discipline."
+          </p>
         </div>
       </div>
     </div>
@@ -240,27 +275,35 @@ export const Dashboard: React.FC<DashboardProps> = ({
 interface ModuleCardProps {
   icon: React.ReactNode;
   title: string;
-  count: string;
+  count: string | number;
+  total?: number;
   description: string;
   onClick: () => void;
   delay?: number;
 }
 
-const ModuleCard: React.FC<ModuleCardProps> = ({ icon, title, count, description, onClick, delay = 0 }) => (
+const ModuleCard: React.FC<ModuleCardProps> = ({ icon, title, count, total, description, onClick, delay = 0 }) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
-    transition={{ delay }}
+    transition={{ delay, duration: 0.5 }}
     onClick={onClick}
-    className="bg-white border border-editorial-border p-6 rounded-sm hover:-translate-y-1 hover:shadow-xl transition-all cursor-pointer group"
+    className="bg-white border border-editorial-border p-8 rounded-sm hover:-translate-y-1 hover:shadow-editorial transition-all cursor-pointer group flex flex-col items-start"
   >
-    <div className="w-10 h-10 bg-editorial-accent rounded-sm flex items-center justify-center text-editorial-text mb-6 group-hover:bg-editorial-text group-hover:text-white transition-colors">
+    <div className="w-12 h-12 bg-editorial-accent rounded-sm flex items-center justify-center text-editorial-text mb-8 group-hover:bg-editorial-text group-hover:text-white transition-all duration-300">
       {icon}
     </div>
-    <h3 className="text-sm font-bold text-editorial-text mb-1 tracking-tight">{title}</h3>
-    <p className="text-[10px] font-mono text-editorial-meta mb-4">{count}</p>
-    <p className="text-xs text-editorial-muted leading-relaxed">
+    <div className="mb-4">
+      <h3 className="text-base font-bold text-editorial-text tracking-tight mb-1">{title}</h3>
+      <p className="text-[10px] font-black tracking-widest uppercase text-editorial-meta">
+        {total ? `${count} / ${total}` : count}
+      </p>
+    </div>
+    <p className="text-xs text-editorial-muted leading-relaxed italic mb-8">
       {description}
     </p>
+    <div className="mt-auto inline-flex items-center gap-2 text-editorial-text font-black text-[8px] uppercase tracking-[0.2em] opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+      Explore <ChevronRight size={10} />
+    </div>
   </motion.div>
 );

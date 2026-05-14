@@ -382,50 +382,46 @@ export const EditorialAnalysis: React.FC<EditorialAnalysisProps> = ({
               {/* Main Reading Area */}
               <div className="flex-1 overflow-y-auto custom-scrollbar scroll-smooth pt-16">
                 <main className="max-w-3xl mx-auto px-6 py-12 md:py-24">
-                  <header className="mb-16 border-b-2 border-editorial-text pb-12">
-                    <div className="flex items-center gap-3 mb-8">
-                      <span className="text-[10px] font-black uppercase tracking-[0.3em] px-3 py-1.5 bg-editorial-text text-white rounded-sm">
+                  <header className="mb-20 border-b border-editorial-border pb-16">
+                    <div className="flex items-center gap-4 mb-10">
+                      <div className="h-0.5 w-12 bg-editorial-text" />
+                      <span className="text-[11px] font-black uppercase tracking-[0.4em] text-editorial-text">
                         {selectedArticle.source} • Opinion
                       </span>
-                      <span className="text-[10px] font-mono text-editorial-meta bg-editorial-accent/30 px-2 py-1 rounded-sm border border-editorial-border">
-                        {new Date(selectedArticle.pubDate).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}
-                      </span>
                     </div>
-                    <h1 className="text-4xl md:text-7xl font-serif tracking-tighter leading-[1.05] text-editorial-text mb-10 selection:bg-editorial-accent underline decoration-editorial-accent transition-all">
+                    <h1 className="text-5xl md:text-8xl font-serif tracking-tighter leading-[0.95] text-editorial-text mb-12 selection:bg-editorial-accent decoration-editorial-accent transition-all text-balance">
                       {selectedArticle.title}
                     </h1>
-                    <div className="flex items-center gap-2 text-editorial-meta">
-                      <Clock size={12} />
-                      <span className="text-[10px] uppercase font-bold tracking-widest italic">{Math.ceil(articleContent.split(' ').length / 200)} Minute Read</span>
+                    <div className="flex items-center gap-6">
+                      <div className="flex items-center gap-2 text-editorial-meta">
+                        <Clock size={12} />
+                        <span className="text-[10px] uppercase font-black tracking-widest italic">{Math.ceil(articleContent.split(' ').length / 200)} Minute Read</span>
+                      </div>
+                      <div className="h-4 w-px bg-editorial-border" />
+                      <span className="text-[10px] font-mono text-editorial-meta uppercase tracking-tighter">
+                        {new Date(selectedArticle.pubDate).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}
+                      </span>
                     </div>
                   </header>
 
                   <article className="prose prose-neutral max-w-none">
                     {isScraping ? (
-                      <div className="py-32 text-center flex flex-col items-center">
-                        <Loader2 className="animate-spin text-editorial-text mb-6" size={48} />
-                        <p className="text-lg font-serif italic text-editorial-text opacity-60">Decrypting linguistic patterns...</p>
-                        <div className="mt-8 w-48 h-1 bg-editorial-border rounded-full overflow-hidden">
-                          <motion.div 
-                            initial={{ x: '-100%' }}
-                            animate={{ x: '100%' }}
-                            transition={{ repeat: Infinity, duration: 1.5, ease: 'linear' }}
-                            className="w-full h-full bg-editorial-text"
-                          />
-                        </div>
+                      <div className="py-40 text-center flex flex-col items-center">
+                        <Loader2 className="animate-spin text-editorial-text mb-8" size={60} />
+                        <p className="text-2xl font-serif italic text-editorial-text opacity-40">Decrypting linguistic patterns...</p>
                       </div>
                     ) : (
-                      <div className="text-xl md:text-2xl leading-[1.7] text-editorial-text/90 whitespace-pre-wrap font-serif selection:bg-editorial-accent selection:text-editorial-text first-letter:text-7xl first-letter:font-black first-letter:mr-3 first-letter:float-left first-letter:leading-none">
+                      <div className="text-2xl md:text-3xl leading-[1.8] text-editorial-text/90 whitespace-pre-wrap font-serif selection:bg-editorial-text selection:text-white first-letter:text-9xl first-letter:font-black first-letter:mr-4 first-letter:float-left first-letter:leading-[0.8] first-letter:mt-2 text-justify md:text-left">
                         {highlightedContent.length > 0 ? highlightedContent : (
-                          <div className="text-center py-20 bg-white border border-editorial-border p-12 rounded-sm shadow-sm">
-                            <p className="mb-6">Content extraction was restricted for this specific editorial.</p>
+                          <div className="text-center py-20 bg-white border border-editorial-border p-12 rounded-sm shadow-editorial">
+                            <p className="mb-8 font-serif italic text-3xl">Access to this editorial was restricted.</p>
                             <a 
                               href={selectedArticle.link} 
                               target="_blank" 
                               rel="noopener noreferrer"
-                              className="px-8 py-3 bg-editorial-text text-white text-[10px] uppercase font-bold tracking-widest rounded-sm inline-flex items-center gap-2 hover:bg-zinc-800 transition-colors"
+                              className="px-12 py-5 bg-editorial-text text-white text-[10px] uppercase font-black tracking-[0.4em] rounded-sm inline-flex items-center gap-3 hover:opacity-90 transition-all shadow-editorial-lg"
                             >
-                              Open Full Source <ExternalLink size={12} />
+                              View Original Source <ExternalLink size={14} />
                             </a>
                           </div>
                         )}

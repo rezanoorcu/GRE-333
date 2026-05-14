@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,700;0,800;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Playfair+Display:ital,wght@0,700;0,900;1,400;1,700&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -6,41 +6,57 @@
   --font-serif: "Playfair Display", ui-serif, Georgia, serif;
   
   --color-editorial-bg: #FDFCFB;
-  --color-editorial-text: #1A1A1A;
-  --color-editorial-border: #E5E1DA;
-  --color-editorial-accent: #F5F2ED;
-  --color-editorial-muted: #8B8680;
-  --color-editorial-meta: #A69F95;
+  --color-editorial-text: #171717;
+  --color-editorial-border: #E8E4DD;
+  --color-editorial-accent: #F7F4F0;
+  --color-editorial-muted: #737373;
+  --color-editorial-meta: #A3A3A3;
+
+  --shadow-editorial: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 8px -1px rgba(0, 0, 0, 0.03);
+  --shadow-editorial-lg: 0 20px 50px -12px rgba(0, 0, 0, 0.1);
 }
 
 @layer base {
   :root {
     --editorial-bg: #FDFCFB;
-    --editorial-text: #1A1A1A;
-    --editorial-border: #E5E1DA;
-    --editorial-accent: #F5F2ED;
-    --editorial-muted: #8B8680;
-    --editorial-meta: #A69F95;
+    --editorial-text: #171717;
+    --editorial-border: #E8E4DD;
+    --editorial-accent: #F7F4F0;
+    --editorial-muted: #737373;
+    --editorial-meta: #A3A3A3;
+    scroll-behavior: smooth;
   }
 
   :root[data-theme="midnight"] {
-    --editorial-bg: #121212;
-    --editorial-text: #E5E5E5;
-    --editorial-border: #2D2D2D;
-    --editorial-accent: #1E1E1E;
-    --editorial-muted: #9CA3AF;
-    --editorial-meta: #6B7280;
+    --editorial-bg: #0A0A0A;
+    --editorial-text: #FAFAFA;
+    --editorial-border: #262626;
+    --editorial-accent: #171717;
+    --editorial-muted: #A3A3A3;
+    --editorial-meta: #525252;
   }
 
   body {
     background-color: var(--editorial-bg);
     color: var(--editorial-text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  * {
+    border-color: var(--editorial-border);
+  }
+
+  ::selection {
+    background-color: var(--editorial-text);
+    color: var(--editorial-bg);
   }
 }
 
 @layer utilities {
   .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
+    width: 5px;
+    height: 5px;
   }
   .custom-scrollbar::-webkit-scrollbar-track {
     background: transparent;
@@ -48,5 +64,12 @@
   .custom-scrollbar::-webkit-scrollbar-thumb {
     background: var(--editorial-border);
     border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--editorial-muted);
+  }
+  
+  .text-balance {
+    text-wrap: balance;
   }
 }

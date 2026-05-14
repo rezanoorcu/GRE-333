@@ -212,100 +212,100 @@ export const StudySession: React.FC<StudySessionProps> = ({
                   <Star size={24} fill={isBookmarked ? "currentColor" : "none"} />
                 </button>
                 <div className="w-full">
-                  <div className="flex items-center gap-4 md:gap-6 mb-8 overflow-visible">
-                    <h2 
-                      className="text-4xl sm:text-6xl lg:text-8xl font-serif leading-tight tracking-tight text-editorial-text select-all cursor-pointer hover:text-editorial-muted transition-colors break-words max-w-full"
-                      onClick={handleSpeak}
-                    >
-                      {word.word}
-                    </h2>
-                    <div className="flex flex-col gap-2 shrink-0">
-                      <button 
+                  <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-4 mb-4">
+                        <span className="text-[10px] font-black uppercase tracking-[0.5em] text-editorial-meta border-b-2 border-editorial-text/10 pb-1">Primary Lexeme</span>
+                      </div>
+                      <h2 
+                        className="text-6xl sm:text-7xl lg:text-9xl font-serif font-black leading-[0.8] tracking-tighter text-editorial-text select-all cursor-pointer hover:opacity-80 transition-all break-words py-2"
+                        onClick={handleSpeak}
+                      >
+                        {word.word}<span className="text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">.</span>
+                      </h2>
+                    </div>
+                    
+                    <div className="flex gap-3 shrink-0 mb-2">
+                       <button 
                         onClick={handleSpeak}
                         disabled={isSpeaking}
-                        className={`p-2.5 sm:p-3 md:p-3.5 rounded-full border border-editorial-border hover:border-editorial-text transition-all ${isSpeaking ? 'animate-pulse text-editorial-muted' : 'text-editorial-meta hover:text-editorial-text'}`}
+                        className={`w-14 h-14 rounded-full border border-editorial-border flex items-center justify-center transition-all ${isSpeaking ? 'bg-editorial-text text-white' : 'text-editorial-meta hover:border-editorial-text hover:text-editorial-text hover:bg-editorial-accent'}`}
                       >
-                        {isSpeaking ? <Loader2 size={16} className="animate-spin" /> : <Volume2 size={16} />}
+                        {isSpeaking ? <Loader2 size={24} className="animate-spin" /> : <Volume2 size={24} />}
                       </button>
                       <a 
                         href={`https://www.collinsdictionary.com/dictionary/english/${word.word}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-2 border border-editorial-border rounded-full text-editorial-meta hover:text-editorial-text hover:border-editorial-text transition-all flex items-center justify-center"
+                        className="w-14 h-14 border border-editorial-border rounded-full text-editorial-meta hover:text-editorial-text hover:border-editorial-text hover:bg-editorial-accent transition-all flex items-center justify-center"
                         title="Open in Collins Dictionary"
                       >
-                        <Search size={12} />
+                        <Search size={20} />
                       </a>
                     </div>
                   </div>
 
-                  <div className="space-y-10">
-                    <div>
-                      <p className="text-[10px] uppercase font-bold tracking-widest text-editorial-meta mb-3">Core Definition</p>
-                      <div className="text-xl md:text-2xl lg:text-3xl leading-[1.3] text-editorial-text font-medium">
-                        {word.definition}
-                      </div>
-                      {word.nuance && (
-                        <div className="mt-6 text-base md:text-lg italic text-editorial-muted border-l-2 border-editorial-border pl-6 py-1 font-serif">
-                          “{word.nuance}”
-                        </div>
-                      )}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-16">
+                    <div className="lg:col-span-12">
+                       <p className="text-[10px] uppercase font-black tracking-[0.3em] text-editorial-meta mb-4">Functional Definition</p>
+                       <div className="text-2xl md:text-3xl lg:text-4xl leading-[1.2] text-editorial-text font-serif italic font-medium tracking-tight max-w-4xl">
+                         “{word.definition}”
+                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
+                    <div className="lg:col-span-8">
+                       {word.nuance && (
+                        <div className="text-lg md:text-xl text-editorial-muted leading-relaxed font-serif py-6 border-y border-editorial-border/50 italic">
+                          <span className="not-italic uppercase font-sans font-black text-[9px] tracking-widest block mb-2 opacity-50">Linguistic Nuance</span>
+                          {word.nuance}
+                        </div>
+                      )}
+
+                      <div className="mt-12 group p-10 bg-editorial-text text-white rounded-sm shadow-editorial-lg relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-4 opacity-5 rotate-12 scale-150 group-hover:rotate-45 transition-transform duration-700">
+                          <Sparkles size={120} />
+                        </div>
+                        <p className="text-[9px] uppercase tracking-[0.4em] opacity-30 mb-8 font-black text-center">Applied Context</p>
+                        <div className="text-2xl md:text-3xl lg:text-4xl font-serif italic text-center leading-snug tracking-tight relative z-10">
+                          “{word.example.split(new RegExp(`(${word.word})`, 'gi')).map((part, i) => (
+                            part.toLowerCase() === word.word.toLowerCase() 
+                              ? <span key={i} className="text-[#C7B7A3] not-italic font-bold border-b-2 border-[#C7B7A3]/30">{part}</span> 
+                              : part
+                          ))}”
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="lg:col-span-4 space-y-12">
                       {word.synonyms && word.synonyms.length > 0 && (
                         <div>
-                          <p className="text-[10px] uppercase font-bold tracking-widest text-editorial-meta mb-3">Synonyms</p>
+                          <p className="text-[10px] uppercase font-black tracking-widest text-editorial-meta mb-4 border-b border-editorial-border pb-2">Synonyms</p>
                           <div className="flex flex-wrap gap-2">
                             {word.synonyms.map(s => (
-                              <span key={s} className="px-3 py-1 bg-editorial-accent text-[11px] font-bold tracking-tight border border-editorial-border rounded-sm">
+                              <span key={s} className="px-3 py-1 bg-white text-[11px] font-black tracking-tight border border-editorial-border rounded-sm hover:bg-editorial-accent transition-colors cursor-default">
                                 {s}
                               </span>
                             ))}
                           </div>
                         </div>
                       )}
-                      {word.antonyms && word.antonyms.length > 0 && (
+
+                      {word.derivatives && word.derivatives.length > 0 && (
                         <div>
-                          <p className="text-[10px] uppercase font-bold tracking-widest text-editorial-meta mb-3">Antonyms</p>
-                          <div className="flex flex-wrap gap-2">
-                            {word.antonyms.map(a => (
-                              <span key={a} className="px-3 py-1 bg-white text-[11px] font-bold tracking-tight border border-editorial-border rounded-sm italic text-editorial-muted">
-                                {a}
-                              </span>
+                          <p className="text-[10px] uppercase font-black tracking-widest text-editorial-meta mb-6 border-b border-editorial-border pb-2">Derivatives</p>
+                          <div className="space-y-4">
+                            {word.derivatives.map((d, i) => (
+                              <div key={i} className="flex items-center justify-between border-b border-editorial-border/30 pb-2">
+                                <span className="text-[9px] font-black text-editorial-meta uppercase">{d.form}</span>
+                                <span className="text-base font-serif italic text-editorial-text">{d.word}</span>
+                              </div>
                             ))}
                           </div>
                         </div>
                       )}
                     </div>
-
-                    {word.derivatives && word.derivatives.length > 0 && (
-                      <div className="bg-editorial-accent/30 border border-editorial-border p-6 rounded-sm">
-                        <p className="text-[10px] uppercase font-bold tracking-widest text-editorial-meta mb-4 border-b border-editorial-border/50 pb-2">Lexical Derivatives</p>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
-                          {word.derivatives.map((d, i) => (
-                            <div key={i} className="flex flex-col">
-                              <span className="text-[9px] font-black text-editorial-meta uppercase mb-1">{d.form}</span>
-                              <span className="text-base font-serif italic text-editorial-text">{d.word}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
-
-                <div className="bg-editorial-text text-white p-8 md:p-16 rounded-sm shadow-2xl relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 -rotate-45 translate-x-24 -translate-y-24 group-hover:scale-110 transition-transform"></div>
-                <p className="text-[10px] uppercase tracking-[0.5em] opacity-30 mb-8 font-bold text-center">Contextual Prototype</p>
-                <div className="text-xl md:text-3xl lg:text-5xl font-serif italic text-center leading-tight max-w-4xl mx-auto tracking-tight">
-                  “{word.example.split(new RegExp(`(${word.word})`, 'gi')).map((part, i) => (
-                    part.toLowerCase() === word.word.toLowerCase() 
-                      ? <span key={i} className="text-[#C7B7A3] not-italic font-bold border-b border-[#C7B7A3]/30">{part}</span> 
-                      : part
-                  ))}”
-                </div>
-              </div>
             </motion.div>
             ) : (
               <motion.div

@@ -352,39 +352,39 @@ export const PracticeMode: React.FC<PracticeModeProps> = ({
                     </a>
                   </div>
 
-                  <div className="text-center mb-10 pb-10 border-b border-editorial-border">
-                    <p className="text-[10px] uppercase tracking-widest text-editorial-meta mb-2">Lexeme Solution</p>
-                    <h3 className="text-4xl md:text-7xl font-serif text-editorial-text mb-2">{currentWord.word}</h3>
-                    <div className="flex justify-center items-center gap-4 text-xs font-mono text-editorial-meta overflow-hidden">
-                      <span className="truncate max-w-xs">{currentWord.context}</span>
+                  <div className="text-center mb-12 pb-12 border-b-2 border-editorial-text">
+                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-editorial-meta mb-4">Lexical Solution Resolved</p>
+                    <h3 className="text-5xl md:text-9xl font-serif font-black tracking-tighter text-editorial-text leading-none mb-4">{currentWord.word}</h3>
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-editorial-accent rounded-sm text-[9px] font-mono font-bold uppercase tracking-tighter border border-editorial-border">
+                      <TrendingUp size={10} /> Precision Capture
                     </div>
                   </div>
 
-                  <div className="space-y-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                     <div>
-                      <p className="text-[9px] uppercase font-bold tracking-widest text-editorial-meta mb-2">Primary Definition</p>
-                      <p className="text-xl md:text-2xl font-serif leading-relaxed text-editorial-text">“{currentWord.definition}”</p>
+                      <p className="text-[10px] uppercase font-black tracking-widest text-editorial-meta mb-4 border-b border-editorial-border pb-2">Academic Definition</p>
+                      <p className="text-2xl md:text-3xl font-serif italic leading-snug text-editorial-text font-medium">“{currentWord.definition}”</p>
                     </div>
                     <div>
-                      <p className="text-[9px] uppercase font-bold tracking-widest text-editorial-meta mb-2">Contextual Application</p>
-                      <p className="text-base md:text-lg italic text-editorial-muted leading-relaxed">“{currentWord.example}”</p>
+                      <p className="text-[10px] uppercase font-black tracking-widest text-editorial-meta mb-4 border-b border-editorial-border pb-2">Contextual Application</p>
+                      <p className="text-lg md:text-xl italic text-editorial-muted leading-relaxed font-serif">“{currentWord.example}”</p>
                     </div>
                   </div>
 
-                  <div className="mt-12 pt-12 border-t-2 border-dashed border-editorial-border grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="mt-16 pt-10 border-t border-editorial-border grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <button 
                       onClick={() => handleAssessment(true)}
-                      className="group py-5 bg-emerald-600 text-white text-[10px] uppercase font-bold tracking-widest rounded-sm hover:bg-emerald-700 transition-all flex items-center justify-center gap-3 shadow-xl"
+                      className="group py-6 bg-editorial-text text-white text-[11px] uppercase font-black tracking-[0.4em] rounded-sm hover:opacity-90 transition-all flex items-center justify-center gap-3 shadow-editorial-lg active:scale-95"
                     >
-                      <CheckCircle2 size={18} className="group-hover:scale-110 transition-transform" />
-                      Correct Assessment
+                      <CheckCircle2 size={20} className="text-emerald-400" />
+                      Mark Authenticated
                     </button>
                     <button 
                       onClick={() => handleAssessment(false)}
-                      className="group py-5 bg-red-800 text-white text-[10px] uppercase font-bold tracking-widest rounded-sm hover:bg-red-900 transition-all flex items-center justify-center gap-3 shadow-xl"
+                      className="group py-6 bg-white border-2 border-editorial-text text-editorial-text text-[11px] uppercase font-black tracking-[0.4em] rounded-sm hover:bg-zinc-50 transition-all flex items-center justify-center gap-3 shadow-editorial active:scale-95"
                     >
-                      <AlertCircle size={18} className="group-hover:scale-110 transition-transform" />
-                      Incorrect / Review
+                      <AlertCircle size={20} className="text-amber-500" />
+                      Requires Review
                     </button>
                   </div>
                 </div>
