@@ -42,4 +42,11 @@ export const SENTENCE_COMPLETION_DATA: SentenceCompletionQuestion[] = [
   ...expandQuestions(chunk3),
   ...expandQuestions(chunk4),
   ...expandQuestions(chunk5)
-];
+].sort((a, b) => {
+  if (a.chapter !== b.chapter) {
+    return a.chapter - b.chapter;
+  }
+  const idA = parseInt(a.id.replace('sc-', ''), 10);
+  const idB = parseInt(b.id.replace('sc-', ''), 10);
+  return idA - idB;
+});

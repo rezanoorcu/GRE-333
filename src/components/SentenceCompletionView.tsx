@@ -79,6 +79,7 @@ export function SentenceCompletionView() {
   // Practice Filters
   const [filterDifficulty, setFilterDifficulty] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<string | null>(null);
+  const [filterChapter, setFilterChapter] = useState<number | null>(null);
 
   // Dictionary Search Query
   const [searchDict, setSearchDict] = useState('');
@@ -88,9 +89,10 @@ export function SentenceCompletionView() {
     return SENTENCE_COMPLETION_DATA.filter(q => {
       if (filterDifficulty && q.difficulty !== filterDifficulty) return false;
       if (filterType && q.type !== filterType) return false;
+      if (filterChapter && q.chapter !== filterChapter) return false;
       return true;
     });
-  }, [filterDifficulty, filterType]);
+  }, [filterDifficulty, filterType, filterChapter]);
 
   // Current active question
   const currentQuestionIndexClamped = Math.min(currentQuestionIndex, Math.max(0, activeQuestions.length - 1));
@@ -325,104 +327,186 @@ export function SentenceCompletionView() {
         
         {/* VIEW: HUB */}
         {viewMode === 'hub' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <div className="lg:col-span-8 space-y-8">
-              <div className="bg-white border border-editorial-border p-8 rounded-sm shadow-editorial relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none rotate-12 scale-150">
-                  <Award size={180} />
+          <div className="space-y-12">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+              <div className="lg:col-span-8 space-y-8">
+                <div className="bg-white border border-editorial-border p-8 rounded-sm shadow-editorial relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none rotate-12 scale-150">
+                    <Award size={180} />
+                  </div>
+                  <div className="relative z-10 max-w-2xl">
+                    <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-600 mb-4 block">Official 501 Verbal Coursework</span>
+                    <h3 className="text-4xl md:text-5xl font-serif text-editorial-text leading-tight mb-4">Master Standard Sentence Completions</h3>
+                    <p className="text-base text-editorial-muted leading-relaxed mb-6 font-serif italic">
+                      Train your lexicon on the logic pathways testing comparisons, restatements, contrasts, and cause-and-effect indicators that appear repeatedly on the SAT, GRE, and professional entrance registries.
+                    </p>
+                    <div className="flex flex-wrap gap-4">
+                      <button 
+                        onClick={() => { setFilterChapter(null); setViewMode('practice'); setCurrentQuestionIndex(0); }}
+                        className="px-6 py-3.5 bg-editorial-text text-white text-[11px] font-black tracking-widest uppercase rounded-sm hover:opacity-90 transition-all flex items-center gap-2.5 shadow-editorial-lg active:scale-95"
+                      >
+                        <Play size={12} fill="currentColor" /> Begin Practice Session
+                      </button>
+                      <button 
+                        onClick={handleStartTest}
+                        className="px-6 py-3.5 bg-white border border-editorial-border text-editorial-text text-[11px] font-black tracking-widest uppercase rounded-sm hover:bg-neutral-50 transition-all flex items-center gap-2.5 active:scale-95"
+                      >
+                        <Clock size={12} /> Start 10-Min Exam
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <div className="relative z-10 max-w-2xl">
-                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-600 mb-4 block">Official 501 Verbal Coursework</span>
-                  <h3 className="text-4xl md:text-5xl font-serif text-editorial-text leading-tight mb-4">Master Standard Sentence Completions</h3>
-                  <p className="text-base text-editorial-muted leading-relaxed mb-6 font-serif italic">
-                    Train your lexicon on the logic pathways testing comparisons, restatements, contrasts, and cause-and-effect indicators that appear repeatedly on the SAT, GRE, and professional entrance registries.
-                  </p>
-                  <div className="flex flex-wrap gap-4">
-                    <button 
-                      onClick={() => { setViewMode('practice'); setCurrentQuestionIndex(0); }}
-                      className="px-6 py-3.5 bg-editorial-text text-white text-[11px] font-black tracking-widest uppercase rounded-sm hover:opacity-90 transition-all flex items-center gap-2.5 shadow-editorial-lg active:scale-95"
-                    >
-                      <Play size={12} fill="currentColor" /> Begin Practice Session
-                    </button>
-                    <button 
-                      onClick={handleStartTest}
-                      className="px-6 py-3.5 bg-white border border-editorial-border text-editorial-text text-[11px] font-black tracking-widest uppercase rounded-sm hover:bg-neutral-50 transition-all flex items-center gap-2.5 active:scale-95"
-                    >
-                      <Clock size={12} /> Start 10-Min Exam
-                    </button>
+
+                {/* Cognitive Strategies Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-white border border-editorial-border p-6 rounded-sm">
+                    <div className="w-10 h-10 rounded-full bg-amber-500/10 text-amber-600 flex items-center justify-center mb-4">
+                      <TrendingUp size={16} />
+                    </div>
+                    <h4 className="text-lg font-serif italic text-editorial-text mb-2">Identify Verbal Signal Clues</h4>
+                    <p className="text-xs text-editorial-muted leading-relaxed">
+                      Watch for contrast tags like <span className="font-semibold text-neutral-800">although, despite, however</span> and restatements like <span className="font-semibold text-neutral-800">namely, in other words</span> to quickly predict the missing semantic value of the blank.
+                    </p>
+                  </div>
+
+                  <div className="bg-white border border-editorial-border p-6 rounded-sm">
+                    <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center mb-4">
+                      <Timer size={16} />
+                    </div>
+                    <h4 className="text-lg font-serif italic text-editorial-text mb-2">Simulated Timed Performance</h4>
+                    <p className="text-xs text-editorial-muted leading-relaxed">
+                      Take high-pressure, realistic exam mocks with strict clock parameters to establish strong time-management reflexes and reduce test anxiety.
+                    </p>
                   </div>
                 </div>
               </div>
 
-              {/* Cognitive Strategies Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-white border border-editorial-border p-6 rounded-sm">
-                  <div className="w-10 h-10 rounded-full bg-amber-500/10 text-amber-600 flex items-center justify-center mb-4">
-                    <TrendingUp size={16} />
+              <div className="lg:col-span-4 space-y-6">
+                {/* Stat Card */}
+                <div className="bg-editorial-accent border border-editorial-border p-6 rounded-sm">
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-editorial-meta mb-4">Module Statistics</h4>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-end">
+                      <span className="text-xs text-editorial-muted">Total Solved</span>
+                      <span className="text-2xl font-serif font-black">{history.length}</span>
+                    </div>
+                    <div className="flex justify-between items-end">
+                      <span className="text-xs text-editorial-muted">Global Accuracy</span>
+                      <span className="text-2xl font-serif font-black">{analytics.accuracy}%</span>
+                    </div>
+                    <div className="flex justify-between items-end">
+                      <span className="text-xs text-editorial-muted">Review Queue</span>
+                      <span className="text-2xl font-serif font-black text-amber-600">{reviewStackIds.length}</span>
+                    </div>
+
+                    <div className="pt-4 border-t border-editorial-border/60">
+                      <div className="flex justify-between text-[9px] uppercase font-black tracking-wider text-editorial-meta mb-2">
+                        <span>Completed Progress</span>
+                        <span>{Math.round((history.length / SENTENCE_COMPLETION_DATA.length) * 100)}%</span>
+                      </div>
+                      <div className="w-full h-1 bg-white border border-editorial-border overflow-hidden rounded-full">
+                        <div 
+                          className="h-full bg-editorial-text"
+                          style={{ width: `${Math.min(100, Math.round((history.length / SENTENCE_COMPLETION_DATA.length) * 100))}%` }}
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <h4 className="text-lg font-serif italic text-editorial-text mb-2">Identify Verbal Signal Clues</h4>
-                  <p className="text-xs text-editorial-muted leading-relaxed">
-                    Watch for contrast tags like <span className="font-semibold text-neutral-800">although, despite, however</span> and restatements like <span className="font-semibold text-neutral-800">namely, in other words</span> to quickly predict the missing semantic value of the blank.
-                  </p>
                 </div>
 
+                {/* Dictionary Brief */}
                 <div className="bg-white border border-editorial-border p-6 rounded-sm">
-                  <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center mb-4">
-                    <Timer size={16} />
-                  </div>
-                  <h4 className="text-lg font-serif italic text-editorial-text mb-2">Simulated Timed Performance</h4>
-                  <p className="text-xs text-editorial-muted leading-relaxed">
-                    Take high-pressure, realistic exam mocks with strict clock parameters to establish strong time-management reflexes and reduce test anxiety.
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-editorial-meta mb-3">Vocabulary Support</h4>
+                  <p className="text-xs text-editorial-muted leading-relaxed mb-4">
+                    Access a detailed list of verified academic definitions directly linked to the 501 test booklet questions.
                   </p>
+                  <button 
+                    onClick={() => setViewMode('dictionary')}
+                    className="w-full py-2.5 bg-neutral-100 hover:bg-neutral-200 transition-colors rounded-sm text-[10px] font-black uppercase tracking-widest text-editorial-text"
+                  >
+                    Browse Lexicon Index
+                  </button>
                 </div>
               </div>
             </div>
 
-            <div className="lg:col-span-4 space-y-6">
-              {/* Stat Card */}
-              <div className="bg-editorial-accent border border-editorial-border p-6 rounded-sm">
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-editorial-meta mb-4">Module Statistics</h4>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-end">
-                    <span className="text-xs text-editorial-muted">Total Solved</span>
-                    <span className="text-2xl font-serif font-black">{history.length}</span>
-                  </div>
-                  <div className="flex justify-between items-end">
-                    <span className="text-xs text-editorial-muted">Global Accuracy</span>
-                    <span className="text-2xl font-serif font-black">{analytics.accuracy}%</span>
-                  </div>
-                  <div className="flex justify-between items-end">
-                    <span className="text-xs text-editorial-muted">Review Queue</span>
-                    <span className="text-2xl font-serif font-black text-amber-600">{reviewStackIds.length}</span>
-                  </div>
-
-                  <div className="pt-4 border-t border-editorial-border/60">
-                    <div className="flex justify-between text-[9px] uppercase font-black tracking-wider text-editorial-meta mb-2">
-                      <span>Completed Progress</span>
-                      <span>{Math.round((history.length / SENTENCE_COMPLETION_DATA.length) * 100)}%</span>
-                    </div>
-                    <div className="w-full h-1 bg-white border border-editorial-border overflow-hidden rounded-full">
-                      <div 
-                        className="h-full bg-editorial-text"
-                        style={{ width: `${Math.min(100, Math.round((history.length / SENTENCE_COMPLETION_DATA.length) * 100))}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
+            {/* Chapter Coursework Grid */}
+            <div className="border-t border-editorial-border pt-10">
+              <div className="mb-8">
+                <span className="text-[9px] font-black uppercase tracking-[0.3em] text-emerald-600 block mb-2">Standard Chapter Index</span>
+                <h3 className="text-3xl font-serif italic text-editorial-text leading-tight mb-2">
+                  PDF Chapter Progression (Chapters 1 – 20)
+                </h3>
+                <p className="text-sm text-editorial-muted font-serif">
+                  Select a registered curriculum series below to instantly review or study standard 501 Verbal sentence completion prompts.
+                </p>
               </div>
 
-              {/* Dictionary Brief */}
-              <div className="bg-white border border-editorial-border p-6 rounded-sm">
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-editorial-meta mb-3">Vocabulary Support</h4>
-                <p className="text-xs text-editorial-muted leading-relaxed mb-4">
-                  Access a detailed list of verified academic definitions directly linked to the 501 test booklet questions.
-                </p>
-                <button 
-                  onClick={() => setViewMode('dictionary')}
-                  className="w-full py-2.5 bg-neutral-100 hover:bg-neutral-200 transition-colors rounded-sm text-[10px] font-black uppercase tracking-widest text-editorial-text"
-                >
-                  Browse Lexicon Index
-                </button>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {Array.from({ length: 20 }, (_, idx) => idx + 1).map(ch => {
+                  const totalQuestions = SENTENCE_COMPLETION_DATA.filter(q => q.chapter === ch).length;
+                  const chQs = SENTENCE_COMPLETION_DATA.filter(q => q.chapter === ch);
+                  const chHistory = history.filter(h => chQs.some(q => q.id === h.questionId));
+                  const uniqueCorrect = new Set(chHistory.filter(h => h.isCorrect).map(h => h.questionId)).size;
+                  const uniqueAnswered = new Set(chHistory.map(h => h.questionId)).size;
+                  const progressRate = Math.round((uniqueCorrect / (totalQuestions || 1)) * 100);
+
+                  return (
+                    <div 
+                      key={ch}
+                      onClick={() => {
+                        setFilterChapter(ch);
+                        setCurrentQuestionIndex(0);
+                        setSelectedKey(null);
+                        setIsAnswerSubmitted(false);
+                        setShowExplanation(false);
+                        setViewMode('practice');
+                      }}
+                      className="bg-white border border-editorial-border p-6 rounded-sm shadow-editorial hover:shadow-editorial-lg hover:border-editorial-text transition-all group cursor-pointer flex flex-col justify-between"
+                    >
+                      <div>
+                        <div className="flex justify-between items-center mb-3">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-editorial-meta">
+                            Chapter {String(ch).padStart(2, '0')}
+                          </span>
+                          {uniqueCorrect === totalQuestions && totalQuestions > 0 ? (
+                            <span className="text-[8px] uppercase tracking-wider font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-sm border border-emerald-200">
+                              Mastered
+                            </span>
+                          ) : uniqueAnswered > 0 ? (
+                            <span className="text-[8px] uppercase tracking-wider font-black text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-sm border border-amber-200">
+                              In Progress
+                            </span>
+                          ) : (
+                            <span className="text-[8px] uppercase tracking-wider font-black text-editorial-meta bg-neutral-50 px-2.5 py-0.5  rounded-sm border border-editorial-border">
+                              Not Started
+                            </span>
+                          )}
+                        </div>
+                        
+                        <h4 className="text-xl font-serif italic text-editorial-text mb-1 group-hover:text-black transition-colors">
+                          Unit Series {ch}
+                        </h4>
+                        <p className="text-[11px] font-mono text-editorial-meta mb-4">
+                          Questions {ch === 20 ? '476 – 501' : `${(ch - 1) * 25 + 1} – ${ch * 25}`}
+                        </p>
+                      </div>
+
+                      <div className="space-y-2 mt-4">
+                        <div className="flex justify-between text-[9px] uppercase font-black text-editorial-meta tracking-wider">
+                          <span>Accuracy</span>
+                          <span>{uniqueCorrect} / {totalQuestions} Correct</span>
+                        </div>
+                        <div className="w-full h-1 bg-neutral-100 border border-editorial-border/40 overflow-hidden rounded-full">
+                          <div 
+                            className="h-full bg-editorial-text transition-all duration-300"
+                            style={{ width: `${progressRate}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -440,6 +524,29 @@ export function SentenceCompletionView() {
                 </div>
 
                 <div className="space-y-6">
+                  <div>
+                    <label className="text-[9px] font-black uppercase tracking-wider text-editorial-meta block mb-2">Academic Chapter</label>
+                    <select
+                      value={filterChapter || ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setFilterChapter(val ? parseInt(val, 10) : null);
+                        setCurrentQuestionIndex(0);
+                        setSelectedKey(null);
+                        setIsAnswerSubmitted(false);
+                        setShowExplanation(false);
+                      }}
+                      className="w-full px-3 py-2 bg-neutral-50 text-editorial-text border border-editorial-border rounded-sm text-[10px] uppercase font-black tracking-wider focus:outline-none focus:border-editorial-text cursor-pointer"
+                    >
+                      <option value="">All Chapters (1 – 20)</option>
+                      {Array.from({ length: 20 }, (_, idx) => idx + 1).map(ch => (
+                        <option key={ch} value={ch}>
+                          Chapter {ch} ({ch === 20 ? 'Q476–501' : `Q${(ch - 1) * 25 + 1}–${ch * 25}`})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
                   <div>
                     <label className="text-[9px] font-black uppercase tracking-wider text-editorial-meta block mb-2">Core Difficulty</label>
                     <div className="flex flex-col gap-1.5">
@@ -484,7 +591,7 @@ export function SentenceCompletionView() {
 
                 <div className="mt-8 pt-4 border-t border-editorial-border text-center">
                   <button 
-                    onClick={() => { setFilterType(null); setFilterDifficulty(null); setCurrentQuestionIndex(0); }}
+                    onClick={() => { setFilterType(null); setFilterDifficulty(null); setFilterChapter(null); setCurrentQuestionIndex(0); }}
                     className="text-[9px] uppercase font-black text-editorial-meta tracking-widest hover:text-editorial-text transition-colors"
                   >
                     Reset Active Filters
@@ -649,7 +756,7 @@ export function SentenceCompletionView() {
                     Try adjusting your difficulty or cognitive filters.
                   </p>
                   <button 
-                    onClick={() => { setFilterType(null); setFilterDifficulty(null); }}
+                    onClick={() => { setFilterType(null); setFilterDifficulty(null); setFilterChapter(null); }}
                     className="px-6 py-2.5 bg-editorial-text text-white text-[10px] uppercase tracking-widest font-black rounded-sm"
                   >
                     Reset Active Filters
