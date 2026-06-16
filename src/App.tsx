@@ -19,7 +19,8 @@ import {
   Newspaper,
   LayoutDashboard,
   Settings,
-  HelpCircle
+  HelpCircle,
+  Award
 } from 'lucide-react';
 import { VOCABULARY_DATA } from './data';
 import { BARRON_800_DATA } from './constants/barronData';
@@ -31,9 +32,10 @@ import { Dashboard } from './components/Dashboard';
 import { StudySession } from './components/StudySession';
 import { WordListEntry } from './components/WordListEntry';
 import { PhrasalVerbView } from './components/PhrasalVerbView';
+import { SentenceCompletionView } from './components/SentenceCompletionView';
 
 type WordStatus = 'new' | 'mastered' | 'review';
-type AppView = 'dashboard' | 'study' | 'list' | 'bookmarks' | 'review-stack' | 'practice' | 'phrasal-verbs' | 'editorial' | 'idioms' | 'barron-study';
+type AppView = 'dashboard' | 'study' | 'list' | 'bookmarks' | 'review-stack' | 'practice' | 'phrasal-verbs' | 'editorial' | 'idioms' | 'barron-study' | 'sentence-completion';
 
 export default function App() {
   const [currentBlockId, setCurrentBlockId] = useState<string | null>(() => {
@@ -407,6 +409,12 @@ export default function App() {
                 onClick={() => { setView('practice'); setIsSidebarOpen(false); }}
               />
               <NavItem 
+                active={view === 'sentence-completion'} 
+                icon={<Award size={18} />} 
+                label="Sentence Completion" 
+                onClick={() => { setView('sentence-completion'); setIsSidebarOpen(false); }}
+              />
+              <NavItem 
                 active={view === 'editorial'} 
                 icon={<Newspaper size={18} />} 
                 label="Editorial Reader" 
@@ -619,6 +627,12 @@ export default function App() {
                   bookmarks={bookmarks} onToggleBookmark={toggleBookmark} 
                   preferences={preferences}
                 />
+              </motion.div>
+            )}
+
+            {view === 'sentence-completion' && (
+              <motion.div key="sentence-completion" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 flex flex-col overflow-hidden">
+                <SentenceCompletionView />
               </motion.div>
             )}
 

@@ -2,5 +2,7 @@
   "name": "Lexicon Master",
   "description": "An interactive GRE-style vocabulary builder featuring curated lessons, intensive flashcards, and a systematic phrasal verb archive.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

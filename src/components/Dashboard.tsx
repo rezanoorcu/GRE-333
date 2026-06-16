@@ -12,7 +12,8 @@ import {
   Clock,
   LayoutDashboard,
   Type,
-  Newspaper
+  Newspaper,
+  Award
 } from 'lucide-react';
 import { VOCABULARY_DATA } from '../data';
 import { BARRON_800_DATA } from '../constants/barronData';
@@ -265,6 +266,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
               description="Performance-based testing and cognitive reinforcement."
               onClick={() => onNavigate('practice')}
               delay={0.4}
+            />
+            <ModuleCard 
+              icon={<Award size={20} />}
+              title="Sentence Completion"
+              count="501 Set"
+              description="Interactive strategic prompts to master verbal reasoning logic."
+              onClick={() => onNavigate('sentence-completion')}
+              delay={0.45}
             />
             <ModuleCard 
               icon={<Star size={20} />}
